@@ -320,7 +320,7 @@ function ActivateCardPage() {
                 onChange={(e) => setReviewUrl(e.target.value)}
                 placeholder="https://g.page/r/.../review or review link"
                 required
-                className="h-10 text-sm font-mono text-xs"
+                className="h-10 font-mono text-xs"
               />
               <p className="text-[11px] text-slate-500">
                 Tip: Search your business on Google Maps &gt; Share &gt; Copy Link, or use your

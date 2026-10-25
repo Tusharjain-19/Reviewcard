@@ -94,9 +94,9 @@ function generateRandomCardId(prefix = "RC"): string {
   return `${prefix.toUpperCase()}-${num}`;
 }
 
-function generateIdSequence(prefix = "RC", count = 4): string[] {
+function generateIdSequence(prefix = "RC", count = 4, isClient = false): string[] {
   const cleanPrefix = prefix.trim().toUpperCase() || "RC";
-  const baseNum = Math.floor(1000 + Math.random() * (9000 - count));
+  const baseNum = isClient ? Math.floor(1000 + Math.random() * (9000 - count)) : 1001;
   const list: string[] = [];
   for (let i = 0; i < count; i++) {
     list.push(`${cleanPrefix}-${baseNum + i}`);
@@ -104,10 +104,10 @@ function generateIdSequence(prefix = "RC", count = 4): string[] {
   return list;
 }
 
-export function BatchCardStudio() {
+function BatchCardStudio() {
   const [prefix, setPrefix] = useState("RC");
   const [cardCount, setCardCount] = useState<number>(4);
-  const [codes, setCodes] = useState<string[]>(() => generateIdSequence("RC", 4));
+  const [codes, setCodes] = useState<string[]>(() => generateIdSequence("RC", 4, false));
   const [slots, setSlots] = useState<CardSlotData[]>([]);
   const [activeSheetIndex, setActiveSheetIndex] = useState<number>(0);
   const [zoomScale, setZoomScale] = useState<number>(1);
@@ -131,10 +131,10 @@ export function BatchCardStudio() {
   const saveBatch = useServerFn(saveBatchBlankCards);
   const [savingDb, setSavingDb] = useState(false);
 
-  // Auto scale for mobile screens on mount
+  // Randomize IDs and calculate scale for mobile on client mount
   useEffect(() => {
+    setCodes(generateIdSequence("RC", 4, true));
     if (typeof window !== "undefined" && window.innerWidth < 850) {
-      // Scale down so 210mm (~794px) fits nicely on mobile screens
       const scale = Math.max(0.42, Math.min(0.85, (window.innerWidth - 32) / 800));
       setZoomScale(scale);
     }
@@ -626,7 +626,7 @@ export function BatchCardStudio() {
         {/* Center Canvas / Sheet Viewer */}
         <main className="flex-1 bg-slate-200/70 p-4 md:p-8 flex flex-col items-center justify-start overflow-x-auto print:p-0 print:bg-white print:overflow-visible">
           {/* Sheet Selector & Zoom Toolbar */}
-          <div className="w-full max-w-[850px] mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border shadow-xs print:hidden">
+          <div className="w-full max-w-212.5 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border shadow-xs print:hidden">
             {/* Sheet Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto">
               <span className="text-xs font-semibold text-slate-500 px-2 shrink-0 flex items-center gap-1">

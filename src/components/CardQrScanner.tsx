@@ -195,7 +195,7 @@ export function CardQrScanner({ onScanSuccess, onCancel }: CardQrScannerProps) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-2xl">
       {/* Top Controls Bar */}
-      <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-3.5 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-3.5 bg-linear-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-2">
           <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-xs font-semibold tracking-wide text-slate-200">
@@ -246,8 +246,8 @@ export function CardQrScanner({ onScanSuccess, onCancel }: CardQrScannerProps) {
       />
 
       {/* Camera Video Viewport */}
-      <div className="relative flex flex-col items-center justify-center min-h-[340px] bg-black">
-        <div id={containerId} className="w-full h-full max-w-[420px]" />
+      <div className="relative flex flex-col items-center justify-center min-h-85 bg-black">
+        <div id={containerId} className="w-full h-full max-w-105" />
 
         {/* Viewfinder Target Reticle Overlay */}
         {isScanning && !scannedCode && (
@@ -260,7 +260,7 @@ export function CardQrScanner({ onScanSuccess, onCancel }: CardQrScannerProps) {
               <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b-4 border-r-4 border-blue-500 rounded-br-lg" />
 
               {/* Scanning Laser Guide */}
-              <div className="absolute inset-x-2 top-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent animate-bounce opacity-80" />
+              <div className="absolute inset-x-2 top-0 h-0.5 bg-linear-to-r from-transparent via-blue-400 to-transparent animate-bounce opacity-80" />
             </div>
           </div>
         )}

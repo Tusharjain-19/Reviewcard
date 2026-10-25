@@ -569,8 +569,8 @@ function CardStudio() {
                 className="absolute inset-0 transition-colors"
                 style={{ backgroundColor: color }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-black opacity-30" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-40" />
+              <div className="absolute inset-0 bg-linear-to-r from-white via-transparent to-black opacity-30" />
+              <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-40" />
 
               <label
                 htmlFor="nativeColorPicker"

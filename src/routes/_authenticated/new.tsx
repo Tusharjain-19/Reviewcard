@@ -523,7 +523,7 @@ function Builder() {
         </div>
 
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="mx-auto h-[700px] w-[340px] max-w-full overflow-y-auto rounded-[2.5rem] border-8 border-foreground bg-background shadow-lift">
+          <div className="mx-auto h-175 w-85 max-w-full overflow-y-auto rounded-[2.5rem] border-8 border-foreground bg-background shadow-lift">
             <LinkPage b={{ ...b, reviewUrl }} preview />
           </div>
         </aside>
