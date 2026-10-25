@@ -112,25 +112,36 @@ export const deleteBusiness = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ id: z.string().uuid() }))
   .handler(async ({ data, context }) => {
-    // Delete any associated card design records first
-    await context.supabase.from("card_designs").delete().eq("business_id", data.id);
+    // 1. Delete associated card designs
+    await context.supabase
+      .from("card_designs")
+      .delete()
+      .eq("business_id", data.id)
+      .eq("owner_id", context.userId);
 
-    // Delete business record
-    const { error } = await context.supabase
+    // 2. Mark business as archived in database.
+    // This is allowed by the RLS policy `business_owner_update` and
+    // guarantees `listBusinesses` (.neq("status", "archived")) will NEVER return it on refresh.
+    const { error: archiveError } = await context.supabase
+      .from("businesses")
+      .update({
+        status: "archived",
+        data: { status: "archived" } as unknown as Json,
+      })
+      .eq("id", data.id)
+      .eq("owner_id", context.userId);
+
+    if (archiveError) {
+      console.error("Archive error during delete:", archiveError);
+      throw new Error("Could not delete this card from database");
+    }
+
+    // 3. Also attempt hard delete (allowed by RLS `business_owner_delete_draft` if never published)
+    await context.supabase
       .from("businesses")
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-
-    if (error) {
-      // If hard delete fails, mark as archived so it is excluded from listBusinesses permanently
-      const { error: archErr } = await context.supabase
-        .from("businesses")
-        .update({ status: "archived" })
-        .eq("id", data.id)
-        .eq("owner_id", context.userId);
-      if (archErr) throw new Error("Could not delete the business card");
-    }
 
     return { ok: true, id: data.id };
   });
