@@ -555,7 +555,7 @@ function Builder() {
             mobileTab === "form" ? "hidden lg:block" : "block"
           }`}
         >
-          <div className="mx-auto h-[min(680px,calc(100vh-210px))] w-full max-w-[340px] overflow-y-auto rounded-[2.5rem] border-8 border-slate-900 bg-background shadow-2xl">
+          <div className="mx-auto h-[min(680px,calc(100vh-210px))] w-full max-w-85 overflow-y-auto rounded-[2.5rem] border-8 border-slate-900 bg-background shadow-2xl">
             <LinkPage b={{ ...b, reviewUrl }} preview />
           </div>
         </aside>

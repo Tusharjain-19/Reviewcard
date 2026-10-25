@@ -1104,7 +1104,7 @@ function CardStudio() {
             >
               {/* A4 Print Sheet (4 Cards in 2x2 grid, 95x136mm each) */}
               <div
-                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl relative transition-all duration-200 ${
+                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl ${
                   showCutGuides ? "show-cut-guides" : ""
                 }`}
                 style={{
