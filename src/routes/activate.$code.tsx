@@ -60,7 +60,9 @@ function ActivateCardPage() {
   const [color, setColor] = useState("#1a73e8");
 
   // Auth State
-  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string | undefined } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string | undefined } | null>(
+    null,
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

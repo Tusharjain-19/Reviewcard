@@ -80,11 +80,11 @@ export function LinkPage({ b, preview = false }: { b: Business; preview?: boolea
             {b.name.trim().charAt(0) || "?"}
           </div>
         )}
-        <h1 className="mt-4 max-w-full break-words text-center text-3xl">
+        <h1 className="mt-4 max-w-full wrap-break-word text-center text-3xl">
           {b.name || "Your business"}
         </h1>
         {b.tagline && (
-          <p className="mt-1 max-w-full break-words text-center opacity-75">{b.tagline}</p>
+          <p className="mt-1 max-w-full wrap-break-word text-center opacity-75">{b.tagline}</p>
         )}
         <div className="business-buttons mt-8 flex w-full flex-col">
           {buttonIds(b).map((id) => {
@@ -123,7 +123,7 @@ export function LinkPage({ b, preview = false }: { b: Business; preview?: boolea
                   }}
                 >
                   <Icon className={`h-5 w-5 shrink-0 ${review ? "fill-star text-star" : ""}`} />
-                  <span className="min-w-0 flex-1 break-words text-center">
+                  <span className="min-w-0 flex-1 wrap-break-word text-center">
                     {review ? (b.reviewLabel ?? "Leave us a Google review") : l?.label}
                   </span>
                   <span className="w-5" />

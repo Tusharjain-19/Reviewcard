@@ -347,7 +347,7 @@ function BatchCardStudio() {
       </header>
 
       {/* Mobile Tab Switcher (< 1024px) */}
-      <div className="lg:hidden print:hidden border-b bg-white p-2 sticky top-[57px] z-30 flex gap-2 shadow-2xs">
+      <div className="lg:hidden print:hidden border-b bg-white p-2 sticky top-14.25 z-30 flex gap-2 shadow-2xs">
         <button
           type="button"
           onClick={() => setMobileTab("controls")}

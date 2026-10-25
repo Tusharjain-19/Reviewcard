@@ -187,7 +187,7 @@ function Builder() {
       </header>
 
       {/* Mobile Tab Switcher (< 1024px) */}
-      <div className="lg:hidden p-2 bg-slate-100 border-b flex gap-2 sticky top-[57px] z-20">
+      <div className="lg:hidden p-2 bg-slate-100 border-b flex gap-2 sticky top-14.25 z-20">
         <button
           type="button"
           onClick={() => setMobileTab("form")}
