@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 import { ReviewCardItem, ContactlessNfcIcon } from "@/components/ReviewCardItem";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/cards/$slug")({
   head: () => pageMeta("Card Studio", "Design and print Google Review cards and A4 print sheets."),
@@ -132,6 +133,7 @@ function CardStudio() {
   const [saving, setSaving] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [copiedHex, setCopiedHex] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"controls" | "preview">("preview");
 
   // Card Edition State (Personalized vs Universal Card without business name)
   const [cardEdition, setCardEdition] = useState<"personalized" | "universal">("personalized");
@@ -301,9 +303,12 @@ function CardStudio() {
             </Link>
           </Button>
           <div className="h-4 w-px bg-slate-200" />
-          <h1 className="font-display text-lg font-bold">
-            {b.name} <span className="text-muted-foreground font-normal">| Print Studio</span>
-          </h1>
+          <div className="flex items-center gap-2">
+            <BrandLogo size="sm" showWordmark={false} />
+            <h1 className="font-display text-base md:text-lg font-bold">
+              {b.name} <span className="text-muted-foreground font-normal">| Print Studio</span>
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -335,15 +340,48 @@ function CardStudio() {
             className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Printer className="h-4 w-4" />
-            Print A4 Sheet
+            <span className="hidden sm:inline">Print A4 Sheet</span>
+            <span className="sm:hidden">Print</span>
           </Button>
         </div>
       </header>
 
+      {/* Mobile Tab Switcher (Visible only on mobile/tablet screens < 1024px) */}
+      <div className="lg:hidden print:hidden border-b bg-white p-2 sticky top-[57px] z-30 flex gap-2 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab("controls")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "controls"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Palette className="h-4 w-4" />
+          Customize Design
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "preview"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Radio className="h-4 w-4" />
+          Live Preview
+        </button>
+      </div>
+
       {/* ---------------- MAIN LAYOUT ---------------- */}
       <div className="mx-auto flex flex-col lg:flex-row print:block">
         {/* Left Sidebar Controls */}
-        <aside className="print:hidden w-full lg:w-96 border-r bg-white p-6 space-y-6 shrink-0">
+        <aside
+          className={`print:hidden w-full lg:w-96 border-r bg-white p-4 sm:p-6 space-y-6 shrink-0 ${
+            mobileTab === "preview" ? "hidden lg:block" : "block"
+          }`}
+        >
           <div>
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Sheet & Card Layout
@@ -951,7 +989,11 @@ function CardStudio() {
         </aside>
 
         {/* ---------------- CENTER CANVAS / PREVIEW AREA ---------------- */}
-        <main className="flex-1 bg-slate-100 p-6 md:p-10 flex justify-center items-start overflow-auto print:p-0 print:bg-white print:overflow-visible">
+        <main
+          className={`flex-1 bg-slate-100 p-3 sm:p-6 md:p-10 flex justify-center items-start overflow-auto print:p-0 print:bg-white print:overflow-visible ${
+            mobileTab === "controls" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           {viewMode === "a4" ? (
             /* A4 Print Sheet (4 Cards in 2x2 grid, 95x136mm each) */
             <div

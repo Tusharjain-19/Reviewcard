@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 import { ReviewCardItem, ContactlessNfcIcon } from "@/components/ReviewCardItem";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/cards/batch")({
   head: () =>
@@ -130,6 +131,7 @@ function BatchCardStudio() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const saveBatch = useServerFn(saveBatchBlankCards);
   const [savingDb, setSavingDb] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"controls" | "preview">("preview");
 
   // Randomize IDs and calculate scale for mobile on client mount
   useEffect(() => {
@@ -281,7 +283,8 @@ function BatchCardStudio() {
             </Link>
           </Button>
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-          <div>
+          <div className="flex items-center gap-2">
+            <BrandLogo size="sm" showWordmark={false} />
             <h1 className="font-display text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
               Batch Card Studio
               <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
@@ -316,10 +319,42 @@ function BatchCardStudio() {
         </div>
       </header>
 
+      {/* Mobile Tab Switcher (< 1024px) */}
+      <div className="lg:hidden print:hidden border-b bg-white p-2 sticky top-[57px] z-30 flex gap-2 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab("controls")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "controls"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Palette className="h-4 w-4" />
+          Batch Settings
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "preview"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-slate-100 text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Layers className="h-4 w-4" />
+          Sheet Preview
+        </button>
+      </div>
+
       {/* Main Studio Body: Sidebar Controls + Center Canvas */}
       <div className="flex-1 flex flex-col lg:flex-row print:block">
         {/* Left Settings Sidebar */}
-        <aside className="print:hidden w-full lg:w-96 border-b lg:border-b-0 lg:border-r bg-white p-5 space-y-6 shrink-0 lg:h-[calc(100vh-57px)] lg:overflow-y-auto">
+        <aside
+          className={`print:hidden w-full lg:w-96 border-b lg:border-b-0 lg:border-r bg-white p-4 sm:p-5 space-y-6 shrink-0 lg:h-[calc(100vh-57px)] lg:overflow-y-auto ${
+            mobileTab === "preview" ? "hidden lg:block" : "block"
+          }`}
+        >
           {/* Card Quantity Selection */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -624,7 +659,11 @@ function BatchCardStudio() {
         </aside>
 
         {/* Center Canvas / Sheet Viewer */}
-        <main className="flex-1 bg-slate-200/70 p-4 md:p-8 flex flex-col items-center justify-start overflow-x-auto print:p-0 print:bg-white print:overflow-visible">
+        <main
+          className={`flex-1 bg-slate-200/70 p-3 sm:p-4 md:p-8 flex flex-col items-center justify-start overflow-x-auto print:p-0 print:bg-white print:overflow-visible ${
+            mobileTab === "controls" ? "hidden lg:flex" : "flex"
+          }`}
+        >
           {/* Sheet Selector & Zoom Toolbar */}
           <div className="w-full max-w-212.5 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border shadow-xs print:hidden">
             {/* Sheet Tabs */}

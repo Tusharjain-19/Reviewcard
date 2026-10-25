@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/auth")({
   head: () => pageMeta("Sign in", "Manage your businesses, review pages and print designs."),
@@ -81,8 +82,8 @@ function AuthPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-6 py-12">
       <div>
-        <h1 className="font-display text-4xl">ReviewCard</h1>
-        <h2 className="mt-3 text-xl text-muted-foreground">
+        <BrandLogo size="lg" className="mb-3" />
+        <h2 className="mt-2 text-xl text-muted-foreground">
           {mode === "signup"
             ? "Create an account"
             : mode === "reset"

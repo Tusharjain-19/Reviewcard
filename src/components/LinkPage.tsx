@@ -22,6 +22,7 @@ import {
   type Business,
   type LinkType,
 } from "@/lib/reviewcard";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const ICONS: Record<LinkType, typeof Star> = {
   whatsapp: MessageCircle,
@@ -131,7 +132,10 @@ export function LinkPage({ b, preview = false }: { b: Business; preview?: boolea
             );
           })}
         </div>
-        <p className="mt-10 text-xs opacity-65">Powered by ReviewCard</p>
+        <div className="mt-10 flex items-center justify-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity">
+          <span className="text-[11px] font-medium text-slate-500">Powered by</span>
+          <BrandLogo size="sm" />
+        </div>
       </div>
     </div>
   );

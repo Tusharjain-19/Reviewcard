@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { BrandLogo } from "@/components/BrandLogo";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 
@@ -110,13 +111,8 @@ function Dashboard() {
       {/* ---------------- TOP MOBILE-RESPONSIVE APP HEADER ---------------- */}
       <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white font-black text-base shadow-sm">
-              G
-            </span>
-            <span className="font-display text-xl font-bold tracking-tight text-slate-900">
-              ReviewCard
-            </span>
+          <Link to="/dashboard" className="flex items-center">
+            <BrandLogo size="md" />
           </Link>
 
           <div className="flex items-center gap-2">

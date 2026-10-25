@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 import { reviewUrlFromInput } from "@/lib/reviewcard";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/activate/$code")({
   head: ({ params }) =>
@@ -270,7 +271,11 @@ function ActivateCardPage() {
             </Link>
           </div>
 
-          <h1 className="mt-4 font-display text-2xl md:text-3xl font-extrabold tracking-tight">
+          <div className="mt-4 mb-2">
+            <BrandLogo size="md" />
+          </div>
+
+          <h1 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight">
             Activate Your ReviewCard
           </h1>
           <p className="mt-1.5 text-sm text-slate-600">

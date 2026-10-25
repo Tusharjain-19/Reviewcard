@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 import { CardQrScanner } from "@/components/CardQrScanner";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/activate/")({
   validateSearch: (search: Record<string, unknown>): { id?: string; code?: string } => {
@@ -73,13 +74,8 @@ function ActivateIndexPage() {
       {/* Top Header */}
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white font-black text-base shadow-sm">
-              G
-            </span>
-            <span className="font-display text-lg font-bold tracking-tight text-slate-900">
-              ReviewCard
-            </span>
+          <Link to="/" className="flex items-center">
+            <BrandLogo size="md" />
           </Link>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild>

@@ -71,6 +71,7 @@ function Builder() {
   const [qr, setQr] = useState("");
   const [slugOk, setSlugOk] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"form" | "preview">("form");
   const save = useServerFn(saveCloudBusiness);
   const fetchBusiness = useServerFn(getOwnedBusiness);
   const available = useServerFn(checkSlug);
@@ -176,16 +177,43 @@ function Builder() {
 
   return (
     <main className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-5">
+      <header className="mx-auto flex max-w-6xl items-center gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b lg:border-b-0 bg-white lg:bg-transparent sticky top-0 lg:static z-20">
         <Button asChild variant="ghost" size="sm">
           <Link to="/dashboard">
-            <ArrowLeft /> Back
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Link>
         </Button>
-        <h1 className="font-display text-2xl">{edit ? "Edit business" : "New business"}</h1>
+        <h1 className="font-display text-xl sm:text-2xl font-bold">{edit ? "Edit Business" : "New Business"}</h1>
       </header>
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 pb-20 lg:grid-cols-[1fr_380px]">
-        <div className="space-y-6">
+
+      {/* Mobile Tab Switcher (< 1024px) */}
+      <div className="lg:hidden p-2 bg-slate-100 border-b flex gap-2 sticky top-[57px] z-20">
+        <button
+          type="button"
+          onClick={() => setMobileTab("form")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "form"
+              ? "bg-slate-900 text-white shadow-xs"
+              : "bg-white text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          Form Details
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("preview")}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === "preview"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-white text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          Live Preview
+        </button>
+      </div>
+
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 pt-4 pb-20 lg:grid-cols-[1fr_380px]">
+        <div className={`space-y-6 ${mobileTab === "preview" ? "hidden lg:block" : "block"}`}>
           <Section title="1. Basics">
             <Field label="Business name">
               <Input
@@ -522,7 +550,11 @@ function Builder() {
           </Section>
         </div>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside
+          className={`lg:sticky lg:top-6 lg:self-start ${
+            mobileTab === "form" ? "hidden lg:block" : "block"
+          }`}
+        >
           <div className="mx-auto h-175 w-85 max-w-full overflow-y-auto rounded-[2.5rem] border-8 border-foreground bg-background shadow-lift">
             <LinkPage b={{ ...b, reviewUrl }} preview />
           </div>
