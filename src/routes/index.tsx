@@ -23,11 +23,11 @@ function HomePage() {
   }, [navigate]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6 bg-slate-50">
+    <main className="flex min-h-screen max-w-full overflow-x-hidden items-center justify-center p-6 bg-slate-50 text-slate-900">
       <div className="flex flex-col items-center gap-4 text-center">
-        <BrandLogo size="xl" />
+        <BrandLogo size="xl" to="/auth" />
         <p className="text-muted-foreground text-sm">Redirecting to your account...</p>
-        <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+        <Button asChild className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs">
           <Link to="/auth">Open ReviewCard</Link>
         </Button>
       </div>

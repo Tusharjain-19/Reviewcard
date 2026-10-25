@@ -254,7 +254,7 @@ function ActivateCardPage() {
 
   // Card Activation Form Screen
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 md:py-14 text-slate-900">
+    <main className="min-h-screen max-w-full overflow-x-hidden bg-slate-50 px-4 py-8 md:py-14 text-slate-900">
       <div className="mx-auto max-w-lg">
         {/* Top Header Card */}
         <div className="rounded-2xl border bg-white p-6 md:p-8 shadow-xs">
@@ -274,7 +274,7 @@ function ActivateCardPage() {
           </div>
 
           <div className="mt-4 mb-2">
-            <BrandLogo size="md" />
+            <BrandLogo size="md" to="/" />
           </div>
 
           <h1 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight">

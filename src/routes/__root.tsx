@@ -9,30 +9,53 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Home, QrCode, AlertTriangle } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { BrandLogo } from "@/components/BrandLogo";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-900">
+      <div className="w-full max-w-md text-center bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+        <div className="flex justify-center">
+          <BrandLogo size="md" to="/" />
+        </div>
+
+        <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-inner">
+          <span className="font-display text-4xl font-black">404</span>
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            Page Not Found
+          </h1>
+          <p className="text-sm text-slate-600 max-w-sm mx-auto">
+            The page, smart card, or review link you are looking for doesn't exist, has expired, or
+            has been moved.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
           <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            to="/dashboard"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
           >
-            Go home
+            <Home className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <Link
+            to="/activate"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 active:scale-95"
+          >
+            <QrCode className="h-4 w-4 text-blue-600" />
+            Activate Card
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -41,33 +64,46 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-900">
+      <div className="w-full max-w-md text-center bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+        <div className="flex justify-center">
+          <BrandLogo size="md" to="/" />
+        </div>
+
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 shadow-inner">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+            Something Went Wrong
+          </h1>
+          <p className="text-sm text-slate-600">
+            An unexpected error occurred while loading this page. Please try refreshing or return to
+            the dashboard.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
           <button
+            type="button"
             onClick={() => {
-              router.invalidate();
+              void router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
           >
-            Try again
+            Try Again
           </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          <Link
+            to="/dashboard"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 active:scale-95"
           >
-            Go home
-          </a>
+            Go to Dashboard
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -75,14 +111,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ReviewCard" },
-      { name: "description", content: "Google reviews and links for local businesses" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5" },
+      { title: "ReviewCard — Smart Contactless Google Review Cards & Pages" },
+      {
+        name: "description",
+        content:
+          "Create contactless Google review smart cards, NFC landing pages, and batch print sheets for local businesses.",
+      },
       { name: "author", content: "ReviewCard" },
-      { property: "og:title", content: "ReviewCard" },
-      { property: "og:description", content: "Google reviews and links for local businesses" },
+      { property: "og:site_name", content: "ReviewCard" },
+      { property: "og:title", content: "ReviewCard — Smart Contactless Google Review Cards & Pages" },
+      {
+        property: "og:description",
+        content:
+          "Create contactless Google review smart cards, NFC landing pages, and batch print sheets for local businesses.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#1a73e8" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -96,6 +144,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico" },
+      { rel: "apple-touch-icon", href: "/favicon.svg" },
     ],
   }),
   shellComponent: RootShell,
@@ -106,11 +156,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden max-w-full">
       <head>
         <HeadContent />
       </head>
-      <body suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className="overflow-x-hidden max-w-full min-h-screen antialiased bg-slate-50 text-slate-900"
+      >
         {children}
         <Scripts />
       </body>
@@ -132,8 +185,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="w-full max-w-full overflow-x-hidden min-h-screen flex flex-col">
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </div>
       <Toaster />
     </QueryClientProvider>
   );

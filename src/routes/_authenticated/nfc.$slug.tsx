@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Copy, ArrowLeft } from "lucide-react";
+import { Copy, ArrowLeft, Radio, ExternalLink } from "lucide-react";
 import { shortUrl } from "@/lib/reviewcard";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
 import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/nfc/$slug")({
-  head: () => pageMeta("NFC encoding", "Prepare NFC tags for your business review page."),
+  head: () => pageMeta("NFC Tag Setup", "Program and encode contactless NFC smart review cards."),
   component: NfcPage,
 });
 
@@ -21,25 +22,37 @@ function NfcPage() {
 
   const handleCopy = () => {
     void navigator.clipboard.writeText(url).then(() => {
-      toast.success("NFC URL copied to clipboard");
+      toast.success("NFC URL copied to clipboard!");
     });
   };
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 px-6 py-12">
-      <Button asChild variant="ghost" className="gap-2">
-        <Link to="/dashboard">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </Button>
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-50 flex flex-col text-slate-900">
+      <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
+          <BrandLogo size="md" to="/dashboard" />
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back to</span> Dashboard
+            </Link>
+          </Button>
+        </div>
+      </header>
 
-      <div className="space-y-1">
-        <h1 className="font-display text-3xl">NFC Setup · {slug}</h1>
-        <p className="text-muted-foreground">
-          Program your contactless NFC tag to route directly to your review page.
-        </p>
-      </div>
+      <main className="mx-auto w-full max-w-2xl space-y-6 px-4 sm:px-6 py-8 sm:py-12 flex-1">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-2">
+            <Radio className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+            <span>Contactless NFC Programming</span>
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            NFC Setup · {slug}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600">
+            Program your physical NFC smart card chip to route directly to your review page.
+          </p>
+        </div>
 
       <div className="space-y-3">
         <label className="text-sm font-medium">Encoded URL</label>
@@ -69,5 +82,6 @@ function NfcPage() {
         </ol>
       </div>
     </main>
-  );
+  </div>
+);
 }

@@ -43,7 +43,7 @@ function PublicPage() {
 
   if (!b) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center text-slate-900">
+      <main className="flex min-h-screen max-w-full overflow-x-hidden flex-col items-center justify-center bg-slate-50 p-6 text-center text-slate-900">
         <div className="w-full max-w-md rounded-2xl border bg-white p-8 shadow-lg">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-4">
             <svg
@@ -83,7 +83,7 @@ function PublicPage() {
   }
 
   return (
-    <main>
+    <main className="max-w-full overflow-x-hidden min-h-screen">
       <LinkPage b={b} />
     </main>
   );

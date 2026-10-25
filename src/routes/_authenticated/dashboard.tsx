@@ -19,6 +19,7 @@ import {
   Building2,
   Share2,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { businessesQuery, statsQuery } from "@/lib/queries";
 import { deleteBusiness, saveCloudBusiness } from "@/lib/businesses.functions";
@@ -107,20 +108,32 @@ function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/70 pb-16 text-slate-900">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-50/70 pb-16 text-slate-900">
       {/* ---------------- TOP MOBILE-RESPONSIVE APP HEADER ---------------- */}
-      <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link to="/dashboard" className="flex items-center">
+      <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-3 sm:px-6 py-3 sm:py-4 shadow-2xs max-w-full overflow-x-hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+          <Link to="/dashboard" className="flex items-center min-w-0 shrink-0">
             <BrandLogo size="md" />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 sm:px-2.5 text-xs text-slate-600 hover:text-slate-900 gap-1.5"
+              title="Account Settings"
+            >
+              <Link to="/settings">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowSignOutDialog(true)}
-              className="h-9 px-2.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 gap-1.5"
+              className="h-9 px-2 sm:px-2.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 gap-1.5"
               title="Sign Out"
             >
               <LogOut className="h-4 w-4" />
@@ -155,28 +168,28 @@ function Dashboard() {
             {/* Action 2: Batch Print 4 */}
             <Link
               to="/cards/batch"
-              className="flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+              className="flex items-center min-w-0 gap-2 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
             >
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-200 transition-colors">
-                <Printer className="h-5 w-5 text-slate-700" />
+              <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-200 transition-colors">
+                <Printer className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">Batch Print</div>
-                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">4+ Cards Sheet</p>
+                <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5 truncate">4+ Cards Sheet</p>
               </div>
             </Link>
 
             {/* Action 3: Add Business Page */}
             <Link
               to="/new"
-              className="flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+              className="flex items-center min-w-0 gap-2 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
             >
-              <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-                <Plus className="h-5 w-5" />
+              <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">New Business</div>
-                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Custom Link</p>
+                <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5 truncate">Custom Link</p>
               </div>
             </Link>
           </div>
@@ -185,29 +198,29 @@ function Dashboard() {
         {/* ---------------- STATS COUNTERS ---------------- */}
         <section
           aria-label="Overview Stats"
-          className="grid grid-cols-3 gap-2.5 sm:gap-4 rounded-2xl border bg-white p-4 shadow-xs"
+          className="grid grid-cols-3 gap-1.5 sm:gap-4 rounded-2xl border bg-white p-3 sm:p-4 shadow-xs"
         >
-          <div className="text-center sm:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-center sm:text-left min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Businesses
             </span>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-slate-900 mt-0.5">
+            <p className="font-display text-xl sm:text-3xl font-bold text-slate-900 mt-0.5 truncate">
               {visibleList.length}
             </p>
           </div>
-          <div className="text-center sm:text-left border-x px-2 sm:px-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-center sm:text-left border-x px-1.5 sm:px-4 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Page Views
             </span>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-slate-900 mt-0.5">
+            <p className="font-display text-xl sm:text-3xl font-bold text-slate-900 mt-0.5 truncate">
               {stats.reduce((s, x) => s + Number(x.views), 0)}
             </p>
           </div>
-          <div className="text-center sm:text-left">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="text-center sm:text-left min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 block truncate">
               Review Taps
             </span>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-emerald-600 mt-0.5">
+            <p className="font-display text-xl sm:text-3xl font-bold text-emerald-600 mt-0.5 truncate">
               {stats.reduce((s, x) => s + Number(x.reviews), 0)}
             </p>
           </div>
@@ -217,19 +230,19 @@ function Dashboard() {
         <section className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 w-full max-w-md">
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 pointer-events-none" />
               <Input
                 aria-label="Search businesses"
                 placeholder="Search business name or slug..."
-                className="pl-9 h-10 text-sm bg-white border-slate-200 rounded-xl"
+                className="pl-9 h-10 text-sm bg-white border-slate-200 rounded-xl w-full"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
             {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full max-w-full min-w-0 no-scrollbar">
               {[
                 { key: "all", label: "All" },
                 { key: "published", label: "Published" },
@@ -245,7 +258,7 @@ function Dashboard() {
                     key={p.key}
                     type="button"
                     onClick={() => setFilter(p.key)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                       filter === p.key
                         ? "bg-slate-900 text-white border-slate-900 shadow-xs"
                         : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
@@ -274,22 +287,22 @@ function Dashboard() {
             return (
               <article
                 key={b.id}
-                className="flex flex-col justify-between rounded-2xl border bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow"
+                className="flex flex-col justify-between rounded-2xl border bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow min-w-0"
               >
                 {/* Top Info Row */}
                 <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       {/* Business Avatar / Initial Badge */}
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-bold text-base shadow-xs">
                         {b.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="min-w-0">
-                        <h2 className="font-display text-lg font-bold text-slate-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <h2 className="font-display text-base sm:text-lg font-bold text-slate-900 truncate">
                           {b.name}
                         </h2>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-                          <span>{b.category || "Local Business"}</span>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 min-w-0">
+                          <span className="truncate max-w-[120px] sm:max-w-none">{b.category || "Local Business"}</span>
                           <span>·</span>
                           <span className="font-mono text-blue-600 truncate">/r/{b.slug}</span>
                         </div>
@@ -343,7 +356,7 @@ function Dashboard() {
                   </div>
 
                   {/* Secondary Quick Utility Toolbar (Thumb-friendly buttons) */}
-                  <div className="flex items-center justify-between gap-1 pt-1">
+                  <div className="flex items-center justify-between gap-1 pt-1 flex-wrap sm:flex-nowrap">
                     {/* Live Review Page */}
                     <Button
                       asChild
@@ -393,14 +406,20 @@ function Dashboard() {
                       className="h-9 w-9 text-slate-500 hover:text-slate-800 rounded-lg"
                       title={b.status === "published" ? "Pause card" : "Publish card"}
                       onClick={() =>
-                        action(() =>
-                          save({
+                        action(async () => {
+                          const nextStatus = b.status === "published" ? "paused" : "published";
+                          await save({
                             data: {
                               ...b,
-                              status: b.status === "published" ? "paused" : "published",
+                              status: nextStatus,
                             },
-                          }),
-                        )
+                          });
+                          toast.success(
+                            nextStatus === "published"
+                              ? `${b.name} is now published and active!`
+                              : `${b.name} has been paused`,
+                          );
+                        })
                       }
                     >
                       {b.status === "published" ? (

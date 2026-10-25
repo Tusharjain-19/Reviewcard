@@ -145,7 +145,8 @@ function CardStudio() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const w = window.innerWidth;
-      if (w < 640) setZoomScale(0.42);
+      if (w < 400) setZoomScale(0.38);
+      else if (w < 640) setZoomScale(0.42);
       else if (w < 1024) setZoomScale(0.72);
       else setZoomScale(1);
     }
@@ -318,35 +319,36 @@ function CardStudio() {
       .toUpperCase() || "RC";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-50 text-slate-900">
       {/* ---------------- SCREEN HEADER ---------------- */}
-      <header className="print:hidden sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3.5 shadow-xs">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+      <header className="print:hidden sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 border-b bg-white px-3 sm:px-6 py-3 shadow-xs max-w-full overflow-x-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground h-9 px-2 sm:px-3 text-xs">
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
-              Dashboard
+              <span className="hidden sm:inline">Dashboard</span>
             </Link>
           </Button>
-          <div className="h-4 w-px bg-slate-200" />
-          <div className="flex items-center gap-2">
-            <BrandLogo size="sm" showWordmark={false} />
-            <h1 className="font-display text-base md:text-lg font-bold">
-              {b.name} <span className="text-muted-foreground font-normal">| Print Studio</span>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-2 min-w-0">
+            <BrandLogo size="sm" showWordmark={false} to="/dashboard" />
+            <h1 className="font-display text-sm md:text-base font-bold truncate max-w-[140px] sm:max-w-xs">
+              {b.name} <span className="text-muted-foreground font-normal hidden sm:inline">| Print Studio</span>
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="gap-2"
+            className="h-9 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold"
           >
             <Save className="h-4 w-4" />
-            {saving ? "Saving..." : "Save"}
+            <span className="hidden sm:inline">{saving ? "Saving..." : "Save Design"}</span>
+            <span className="sm:hidden">{saving ? "..." : "Save"}</span>
           </Button>
 
           <Button
@@ -354,16 +356,17 @@ function CardStudio() {
             size="sm"
             onClick={handleDownloadPdf}
             disabled={exportingPdf}
-            className="gap-2"
+            className="h-9 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold"
           >
             <Download className="h-4 w-4" />
-            {exportingPdf ? "Generating PDF..." : "Export PDF"}
+            <span className="hidden sm:inline">{exportingPdf ? "Generating..." : "Export PDF"}</span>
+            <span className="sm:hidden">{exportingPdf ? "..." : "PDF"}</span>
           </Button>
 
           <Button
             size="sm"
             onClick={() => window.print()}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-9 px-2.5 sm:px-3.5 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
           >
             <Printer className="h-4 w-4" />
             <span className="hidden sm:inline">Print A4 Sheet</span>
@@ -921,7 +924,7 @@ function CardStudio() {
                     id="bizNameInput"
                     value={bizName}
                     onChange={(e) => setBizName(e.target.value)}
-                    placeholder="The Night Watch Cafe"
+                    placeholder={b.name || "Enter business display name"}
                     maxLength={40}
                   />
                 </div>
@@ -937,7 +940,7 @@ function CardStudio() {
                     id="bizCategoryInput"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Specialty Coffee & Bakery"
+                    placeholder={b.category || "e.g. Specialty Coffee & Bakery"}
                     maxLength={40}
                   />
                 </div>

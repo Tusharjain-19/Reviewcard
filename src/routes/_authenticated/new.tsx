@@ -16,6 +16,8 @@ import { LinkPage } from "@/components/LinkPage";
 import { LogoCropper } from "@/components/LogoCropper";
 import { ColorField } from "@/components/ColorField";
 import { ButtonEditor } from "@/components/ButtonEditor";
+import { BrandLogo } from "@/components/BrandLogo";
+import { pageMeta } from "@/lib/meta";
 import {
   LINK_LABELS,
   THEME_COLORS,
@@ -31,22 +33,11 @@ import {
 export const Route = createFileRoute("/_authenticated/new")({
   validateSearch: (s: Record<string, unknown>): { edit?: string } =>
     typeof s["edit"] === "string" ? { edit: s["edit"] } : {},
-  head: () => ({
-    meta: [
-      { title: "Set up a business | ReviewCard" },
-      {
-        name: "description",
-        content: "Create a review link page and QR code for a local business.",
-      },
-      { property: "og:title", content: "Set up a business | ReviewCard" },
-      {
-        property: "og:description",
-        content: "Create a review link page and QR code for a local business.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  head: ({ search }) =>
+    pageMeta(
+      search.edit ? "Edit Business Details" : "Create Business Page",
+      "Set up your contactless Google Review page, custom links and print card destinations.",
+    ),
   component: Builder,
 });
 
@@ -176,14 +167,21 @@ function Builder() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="mx-auto flex max-w-6xl items-center gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b lg:border-b-0 bg-white lg:bg-transparent sticky top-0 lg:static z-20">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/dashboard">
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Link>
-        </Button>
-        <h1 className="font-display text-xl sm:text-2xl font-bold">{edit ? "Edit Business" : "New Business"}</h1>
+    <main className="min-h-screen max-w-full overflow-x-hidden bg-background">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b lg:border-b-0 bg-white lg:bg-transparent sticky top-0 lg:static z-20">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back to</span> Dashboard
+            </Link>
+          </Button>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <BrandLogo size="sm" to="/dashboard" />
+        </div>
+        <h1 className="font-display text-base sm:text-xl font-bold truncate">
+          {edit ? `Edit ${b.name || "Business"}` : "New Business Page"}
+        </h1>
       </header>
 
       {/* Mobile Tab Switcher (< 1024px) */}
@@ -308,7 +306,29 @@ function Builder() {
                   }
                   const reader = new FileReader();
                   reader.onload = () => {
-                    if (typeof reader.result === "string") set({ cover: reader.result });
+                    if (typeof reader.result === "string") {
+                      const img = new Image();
+                      img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        const maxW = 1200;
+                        const scale = Math.min(1, maxW / img.width);
+                        canvas.width = Math.round(img.width * scale);
+                        canvas.height = Math.round(img.height * scale);
+                        const ctx = canvas.getContext("2d");
+                        if (ctx) {
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          let compressed = canvas.toDataURL("image/webp", 0.82);
+                          if (!compressed.startsWith("data:image/webp")) {
+                            compressed = canvas.toDataURL("image/jpeg", 0.82);
+                          }
+                          set({ cover: compressed });
+                          toast.success("Cover image optimized and loaded!");
+                        } else {
+                          set({ cover: reader.result as string });
+                        }
+                      };
+                      img.src = reader.result;
+                    }
                   };
                   reader.readAsDataURL(file);
                 }}

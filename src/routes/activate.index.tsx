@@ -70,19 +70,22 @@ function ActivateIndexPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-50 flex flex-col justify-between">
       {/* Top Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center">
+      <header className="border-b bg-white/95 backdrop-blur-md px-3 sm:px-6 py-3.5 sticky top-0 z-30 shadow-2xs">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+          <Link to="/" className="flex items-center min-w-0 shrink-0">
             <BrandLogo size="md" />
           </Link>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Button variant="ghost" size="sm" asChild className="h-9 px-2 sm:px-3 text-xs text-slate-700">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
-            <Button size="sm" asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Link to="/cards/batch">Batch Print (4)</Link>
+            <Button size="sm" asChild className="h-9 px-2.5 sm:px-3.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs">
+              <Link to="/cards/batch">
+                <span className="hidden sm:inline">Batch Print (4)</span>
+                <span className="sm:hidden">Print (4)</span>
+              </Link>
             </Button>
           </div>
         </div>

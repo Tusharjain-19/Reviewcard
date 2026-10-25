@@ -31,7 +31,12 @@ export function LogoCropper({
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas unavailable");
       ctx.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, 480, 480);
-      onSave(canvas.toDataURL("image/png"));
+      let compressedLogo = canvas.toDataURL("image/webp", 0.88);
+      if (!compressedLogo.startsWith("data:image/webp")) {
+        compressedLogo = canvas.toDataURL("image/png");
+      }
+      onSave(compressedLogo);
+      toast.success("Logo cropped and optimized!");
     } catch {
       toast.error("Couldn't crop that logo. Please try another image.");
     } finally {

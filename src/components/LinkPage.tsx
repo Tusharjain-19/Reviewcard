@@ -134,7 +134,7 @@ export function LinkPage({ b, preview = false }: { b: Business; preview?: boolea
         </div>
         <div className="mt-10 flex items-center justify-center gap-1.5 opacity-70 hover:opacity-100 transition-opacity">
           <span className="text-[11px] font-medium text-slate-500">Powered by</span>
-          <BrandLogo size="sm" />
+          <BrandLogo size="sm" to="/" />
         </div>
       </div>
     </div>

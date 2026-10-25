@@ -1,10 +1,13 @@
 import React from "react";
+import { Link } from "@tanstack/react-router";
 
 interface BrandLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   showWordmark?: boolean;
   className?: string;
   theme?: "light" | "dark";
+  to?: string;
+  href?: string;
 }
 
 const SIZE_MAP = {
@@ -24,10 +27,12 @@ export function BrandLogo({
   showWordmark = true,
   className = "",
   theme = "light",
+  to,
+  href,
 }: BrandLogoProps) {
   const s = SIZE_MAP[size];
 
-  return (
+  const content = (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       {/* Smart Card + Review Icon Emblem */}
       <div
@@ -158,4 +163,30 @@ export function BrandLogo({
       )}
     </div>
   );
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className="inline-flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        title="ReviewCard Home"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        className="inline-flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        title="ReviewCard Home"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return content;
 }

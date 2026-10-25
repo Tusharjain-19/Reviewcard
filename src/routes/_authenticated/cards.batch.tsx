@@ -148,7 +148,8 @@ function BatchCardStudio() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const w = window.innerWidth;
-      if (w < 640) setZoomScale(0.42);
+      if (w < 400) setZoomScale(0.38);
+      else if (w < 640) setZoomScale(0.42);
       else if (w < 1024) setZoomScale(0.72);
       else setZoomScale(1);
     }
@@ -318,49 +319,51 @@ function BatchCardStudio() {
   const currentSheetSlots = slots.slice(activeSheetIndex * 4, activeSheetIndex * 4 + 4);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-100 flex flex-col">
       {/* Top Application Bar */}
-      <header className="print:hidden border-b bg-white px-4 md:px-6 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-xs">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild className="gap-1 text-slate-600">
+      <header className="print:hidden border-b bg-white px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 sticky top-0 z-30 shadow-xs max-w-full overflow-x-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+          <Button variant="ghost" size="sm" asChild className="gap-1 text-slate-600 h-9 px-2 sm:px-3 text-xs">
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
-              Dashboard
+              <span className="hidden sm:inline">Dashboard</span>
             </Link>
           </Button>
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2">
-            <BrandLogo size="sm" showWordmark={false} />
-            <h1 className="font-display text-sm md:text-base font-bold text-slate-900 flex items-center gap-2">
-              Batch Card Studio
-              <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                {codes.length} Cards ({totalSheets} {totalSheets === 1 ? "Sheet" : "Sheets"})
+          <div className="flex items-center gap-2 min-w-0">
+            <BrandLogo size="sm" showWordmark={false} to="/dashboard" />
+            <h1 className="font-display text-xs sm:text-base font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 truncate">
+              <span className="truncate">Batch Studio</span>
+              <span className="text-[10px] sm:text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
+                {codes.length} Cards
               </span>
             </h1>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button
             onClick={handleSaveToDatabase}
             disabled={savingDb}
             variant="outline"
             size="sm"
-            className="gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100 font-semibold"
+            className="h-9 px-2.5 sm:px-3 gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100 font-semibold text-xs"
           >
             <Save className="h-4 w-4 text-emerald-600" />
-            {savingDb ? "Saving..." : `Save All to DB (${codes.length})`}
+            <span className="hidden sm:inline">{savingDb ? "Saving..." : `Save to DB (${codes.length})`}</span>
+            <span className="sm:hidden">{savingDb ? "..." : `Save (${codes.length})`}</span>
           </Button>
 
           <Button
             onClick={handleExportPdf}
             disabled={exportingPdf}
             size="sm"
-            className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
+            className="h-9 px-2.5 sm:px-3.5 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs"
           >
             <Download className="h-4 w-4" />
-            {exportingPdf ? "Generating PDF..." : `Export PDF (${codes.length} Cards)`}
+            <span className="hidden sm:inline">{exportingPdf ? "Generating..." : `Export PDF (${codes.length})`}</span>
+            <span className="sm:hidden">{exportingPdf ? "..." : `PDF (${codes.length})`}</span>
           </Button>
         </div>
       </header>
