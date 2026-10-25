@@ -268,17 +268,17 @@ export interface ReviewCardSheetOptions {
   category: string;
   url: string;
   color: string;
-  headline?: string;
-  qrDotColor?: string;
-  qrBgColor?: string;
-  includeNfc?: boolean;
-  includeStars?: boolean;
-  logo?: string;
-  isUniversal?: boolean;
-  universalBadge?: "google" | "star" | "nfc" | "heart";
-  universalTitle?: string;
-  universalSubtitle?: string;
-  cardId?: string;
+  headline?: string | undefined;
+  qrDotColor?: string | undefined;
+  qrBgColor?: string | undefined;
+  includeNfc?: boolean | undefined;
+  includeStars?: boolean | undefined;
+  logo?: string | null | undefined;
+  isUniversal?: boolean | undefined;
+  universalBadge?: "google" | "star" | "nfc" | "heart" | undefined;
+  universalTitle?: string | undefined;
+  universalSubtitle?: string | undefined;
+  cardId?: string | undefined;
 }
 
 async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | null> {
@@ -339,6 +339,7 @@ export async function exportA4SheetPdf(
 ) {
   const cards = Array.isArray(cardOrCards) ? cardOrCards : [cardOrCards];
   const firstCard = cards[0];
+  if (!firstCard) return;
   const pdf = await PDFDocument.create();
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
@@ -396,7 +397,8 @@ export async function exportA4SheetPdf(
       const cardIndex = pageIdx * cardsPerPage + i;
       if (cardIndex >= cards.length && cards.length > 1) continue;
       const pos = positions[i];
-      const card = cards[cardIndex] || firstCard;
+      if (!pos) continue;
+      const card = cards[cardIndex] ?? firstCard;
       const primaryCol = colour(card.color || "#1a73e8");
       const x = pt(pos.x);
       const y = pt(pos.y);

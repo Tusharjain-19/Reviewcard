@@ -134,7 +134,7 @@ function CardStudio() {
   const [copiedHex, setCopiedHex] = useState(false);
 
   // Card Edition State (Personalized vs Universal Card without business name)
-  const [cardEdition, setCardEdition] = useState<"business" | "universal">("business");
+  const [cardEdition, setCardEdition] = useState<"personalized" | "universal">("personalized");
   const [universalTemplate, setUniversalTemplate] = useState<"google" | "star" | "nfc" | "heart">(
     "google",
   );
@@ -181,6 +181,7 @@ function CardStudio() {
       setQrDotColor("#065f46");
     }
   };
+  const handleTemplateSelect = applyUniversalTemplate;
 
   // Generate crisp QR code whenever target URL, qrDotColor, or qrBgColor changes
   useEffect(() => {
@@ -502,9 +503,9 @@ function CardStudio() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQrDestination("direct")}
+                      onClick={() => setQrDestination("review")}
                       className={`py-1.5 px-2 rounded-md text-[11px] font-medium border text-center transition-colors ${
-                        qrDestination === "direct"
+                        qrDestination === "review"
                           ? "bg-blue-600 text-white border-blue-600 shadow-xs font-bold"
                           : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                       }`}

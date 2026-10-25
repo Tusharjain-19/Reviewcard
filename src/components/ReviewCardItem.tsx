@@ -35,20 +35,20 @@ export interface ReviewCardItemProps {
   name: string;
   category: string;
   color: string;
-  qrDotColor?: string;
-  qrBgColor?: string;
+  qrDotColor?: string | undefined;
+  qrBgColor?: string | undefined;
   headline: string;
-  url?: string;
+  url?: string | undefined;
   qr: string;
-  logo?: string | null;
+  logo?: string | null | undefined;
   initials: string;
   includeStars: boolean;
   includeNfc: boolean;
-  isUniversal?: boolean;
-  universalBadge?: "google" | "star" | "nfc" | "heart";
-  headerTitle?: string;
-  headerSubtitle?: string;
-  cardId?: string;
+  isUniversal?: boolean | undefined;
+  universalBadge?: "google" | "star" | "nfc" | "heart" | undefined;
+  headerTitle?: string | undefined;
+  headerSubtitle?: string | undefined;
+  cardId?: string | undefined;
 }
 
 export function ReviewCardItem({

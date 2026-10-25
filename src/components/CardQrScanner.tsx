@@ -25,17 +25,18 @@ export function parseCardCode(rawText: string): string | null {
       if (idParam) return idParam.trim().toLowerCase();
 
       const segments = url.pathname.split("/").filter(Boolean);
+      const seg0 = segments[0];
+      const seg1 = segments[1];
       if (
         segments.length >= 2 &&
-        (segments[0] === "activate" ||
-          segments[0] === "r" ||
-          segments[0] === "cards" ||
-          segments[0] === "nfc")
+        seg0 &&
+        seg1 &&
+        (seg0 === "activate" || seg0 === "r" || seg0 === "cards" || seg0 === "nfc")
       ) {
-        return segments[1].trim().toLowerCase();
+        return seg1.trim().toLowerCase();
       }
-      if (segments.length === 1 && segments[0] !== "activate") {
-        return segments[0].trim().toLowerCase();
+      if (segments.length === 1 && seg0 && seg0 !== "activate") {
+        return seg0.trim().toLowerCase();
       }
     }
   } catch {

@@ -59,7 +59,7 @@ function ActivateCardPage() {
   const [color, setColor] = useState("#1a73e8");
 
   // Auth State
-  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email?: string | undefined } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -262,6 +262,7 @@ function ActivateCardPage() {
             </span>
             <Link
               to="/activate"
+              search={{}}
               className="text-xs font-medium text-blue-600 hover:underline flex items-center gap-1"
             >
               <QrCode className="h-3.5 w-3.5" />

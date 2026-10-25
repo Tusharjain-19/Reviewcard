@@ -8,10 +8,14 @@ import { toast } from "sonner";
 import { CardQrScanner } from "@/components/CardQrScanner";
 
 export const Route = createFileRoute("/activate/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    id: typeof search.id === "string" ? search.id : undefined,
-    code: typeof search.code === "string" ? search.code : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { id?: string; code?: string } => {
+    const res: { id?: string; code?: string } = {};
+    const id = search["id"];
+    const code = search["code"];
+    if (typeof id === "string") res.id = id;
+    if (typeof code === "string") res.code = code;
+    return res;
+  },
   head: () =>
     pageMeta(
       "Scan & Activate ReviewCard",

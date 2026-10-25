@@ -737,7 +737,8 @@ function BatchCardStudio() {
                       qrDotColor={qrDotColor}
                       qrBgColor={qrBgColor}
                       headline={headline}
-                      qrDataUrl={slot.qrDataUrl}
+                      qr={slot.qrDataUrl}
+                      initials="G"
                       includeNfc={includeNfc}
                       includeStars={includeStars}
                       isUniversal={true}
