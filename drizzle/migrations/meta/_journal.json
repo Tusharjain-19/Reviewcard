@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792911154699,
+      "tag": "0000_reviewcard_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792911230719,
+      "tag": "0001_reviewcard_access_and_counts",
+      "breakpoints": true
+    }
+  ]
+}

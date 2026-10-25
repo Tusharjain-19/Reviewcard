@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Google Review Cards & Stickers | A4 Print Sheet (4 Cards)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #1a73e8;
+        --primary-dark: #0d47a1;
+        --star-gold: #f59e0b;
+        --paper-bg: #f1f5f9;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: var(--paper-bg);
+        color: #0f172a;
+        min-height: 100vh;
+      }
+
+      /* ---------------- SCREEN ONLY TOOLBAR ---------------- */
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 12px 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .toolbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: -0.02em;
+      }
+
+      .toolbar-brand svg {
+        width: 22px;
+        height: 22px;
+        fill: #3b82f6;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-primary {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      }
+      .btn-primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: #334155;
+        color: #f8fafc;
+      }
+      .btn-secondary:hover {
+        background: #475569;
+      }
+
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+        color: #cbd5e1;
+      }
+
+      .toggle-label input {
+        accent-color: #2563eb;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+
+      .toolbar-hint {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+
+      /* ---------------- A4 SHEET CONTAINER ---------------- */
+      .sheet-wrapper {
+        padding: 24px 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      .sheet {
+        width: 210mm;
+        height: 297mm;
+        background: #ffffff;
+        padding: 9.5mm 7mm 9.5mm 7mm;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        display: grid;
+        grid-template-columns: 95mm 95mm;
+        grid-template-rows: 136mm 136mm;
+        gap: 6mm 6mm;
+        justify-content: center;
+        position: relative;
+        page-break-after: always;
+      }
+
+      /* Cut guides */
+      .cut-guide-h,
+      .cut-guide-v {
+        display: none;
+        position: absolute;
+        pointer-events: none;
+      }
+      .show-cut .cut-guide-h {
+        display: block;
+        left: 0;
+        right: 0;
+        top: calc(9.5mm + 136mm + 3mm);
+        border-top: 0.2mm dashed #94a3b8;
+      }
+      .show-cut .cut-guide-v {
+        display: block;
+        top: 0;
+        bottom: 0;
+        left: calc(7mm + 95mm + 3mm);
+        border-left: 0.2mm dashed #94a3b8;
+      }
+
+      /* ---------------- INDIVIDUAL CARD (95 x 136 mm) ---------------- */
+      .card-container {
+        position: relative;
+        width: 95mm;
+        height: 136mm;
+      }
+
+      .show-cut .card-container::after {
+        content: "✂ cut";
+        position: absolute;
+        top: -2.5mm;
+        right: 2mm;
+        font-size: 5pt;
+        color: #94a3b8;
+        letter-spacing: 0.5px;
+        pointer-events: none;
+      }
+
+      .card {
+        width: 95mm;
+        height: 136mm;
+        border-radius: 5mm;
+        background: var(--card-bg, #1a73e8);
+        color: #ffffff;
+        padding: 5.5mm 5mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      @media screen {
+        .card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+      }
+
+      /* Top Card Header */
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 3.5mm;
+        height: 16mm;
+      }
+
+      .card-avatar {
+        width: 14mm;
+        height: 14mm;
+        border-radius: 50%;
+        background: #ffffff;
+        color: var(--card-bg, #1a73e8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 13pt;
+        flex-shrink: 0;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+
+      .card-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .card-meta {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .card-biz-name {
+        font-size: 13pt;
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        letter-spacing: -0.01em;
+      }
+
+      .card-biz-cat {
+        font-size: 7pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.92;
+        margin-top: 0.8mm;
+      }
+
+      /* White Center Review Panel */
+      .review-panel {
+        background: #ffffff;
+        color: #0f172a;
+        border-radius: 4.5mm;
+        padding: 3.5mm 3.5mm;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .google-badge {
+        display: flex;
+        align-items: center;
+        gap: 1.8mm;
+        margin-bottom: 1.2mm;
+      }
+
+      .google-g-icon {
+        width: 5.2mm;
+        height: 5.2mm;
+      }
+
+      .google-badge-text {
+        font-size: 8.5pt;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #1e293b;
+      }
+
+      .stars-row {
+        display: flex;
+        gap: 1.2mm;
+        margin-bottom: 2mm;
+      }
+
+      .star-svg {
+        width: 5.2mm;
+        height: 5.2mm;
+        fill: var(--star-gold);
+      }
+
+      .cta-headline {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 11pt;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--card-bg, #1a73e8);
+        margin-bottom: 2mm;
+      }
+
+      .qr-frame {
+        width: 44mm;
+        height: 44mm;
+        padding: 1.5mm;
+        background: #ffffff;
+        border-radius: 3mm;
+        border: 0.4mm solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2mm;
+      }
+
+      .qr-frame canvas,
+      .qr-frame svg,
+      .qr-frame img {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .short-url {
+        font-size: 7.2pt;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.02em;
+        font-family: monospace;
+        max-width: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Bottom NFC Wave Bar (Centered & slightly lifted) */
+      .nfc-bar {
+        height: 14mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3.5mm;
+        padding: 0 2mm;
+        margin-bottom: 1.5mm;
+        width: 100%;
+      }
+
+      .nfc-badge {
+        width: 10.5mm;
+        height: 10.5mm;
+        border-radius: 50%;
+        border: 0.5mm solid rgba(255, 255, 255, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .nfc-badge svg {
+        width: 6mm;
+        height: 6mm;
+        fill: #ffffff;
+      }
+
+      .nfc-text {
+        line-height: 1.15;
+      }
+
+      .nfc-text-title {
+        font-size: 8.5pt;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .nfc-text-sub {
+        font-size: 6.8pt;
+        opacity: 0.9;
+      }
+
+      /* ---------------- MODAL DRAWER FOR EDITING ---------------- */
+      .editor-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .editor-modal.active {
+        display: flex;
+      }
+
+      .editor-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 440px;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .editor-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .editor-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #64748b;
+      }
+
+      .form-group {
+        margin-bottom: 14px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #334155;
+      }
+
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      /* ---------------- PRINT RULES ---------------- */
+      @media print {
+        body {
+          background: #ffffff;
+        }
+        .toolbar,
+        .editor-modal {
+          display: none !important;
+        }
+        .sheet-wrapper {
+          padding: 0;
+        }
+        .sheet {
+          margin: 0;
+          box-shadow: none;
+          width: 210mm;
+          height: 297mm;
+        }
+        .card {
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="show-cut">
+    <!-- Toolbar -->
+    <header class="toolbar">
+      <div class="toolbar-brand">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+          />
+        </svg>
+        ReviewCard · A4 4-Card Print Sheet
+      </div>
+
+      <div class="toolbar-actions">
+        <label class="toggle-label">
+          <input
+            type="checkbox"
+            id="cutToggle"
+            checked
+            onchange="document.body.classList.toggle('show-cut', this.checked)"
+          />
+          Show Cut Guides
+        </label>
+
+        <button class="btn btn-secondary" onclick="duplicateFirstCard()">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          Make All 4 Identical
+        </button>
+
+        <button class="btn btn-secondary" onclick="randomizeColors()">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+            <path
+              d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"
+            />
+          </svg>
+          Color Theme
+        </button>
+
+        <button class="btn btn-primary" onclick="window.print()">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          Print A4 Sheet
+        </button>
+      </div>
+    </header>
+
+    <div class="sheet-wrapper">
+      <div class="sheet" id="sheetContainer">
+        <div class="cut-guide-h"></div>
+        <div class="cut-guide-v"></div>
+        <!-- 4 Cards Rendered Dynamically Here -->
+      </div>
+    </div>
+
+    <!-- Quick Edit Drawer -->
+    <div class="editor-modal" id="editorModal" onclick="if (event.target === this) closeEditor();">
+      <div class="editor-card">
+        <div class="editor-title">
+          <span>Edit Card <span id="editingCardIndex">1</span></span>
+          <button class="editor-close" onclick="closeEditor()">&times;</button>
+        </div>
+
+        <div class="form-group">
+          <label>Business Name</label>
+          <input type="text" id="editName" oninput="updateCurrentCard()" />
+        </div>
+
+        <div class="form-group">
+          <label>Category / Subtitle</label>
+          <input type="text" id="editCat" oninput="updateCurrentCard()" />
+        </div>
+
+        <div class="form-group">
+          <label>Review Link / Slug</label>
+          <input type="text" id="editUrl" placeholder="https://..." oninput="updateCurrentCard()" />
+        </div>
+
+        <div class="form-group">
+          <label>Card Color Theme</label>
+          <select id="editColor" onchange="updateCurrentCard()">
+            <option value="#1a73e8">Google Classic Blue (#1a73e8)</option>
+            <option value="#18181b">Luxury Onyx Black (#18181b)</option>
+            <option value="#065f46">Forest Emerald (#065f46)</option>
+            <option value="#991b1b">Ruby Burgundy (#991b1b)</option>
+            <option value="#4338ca">Royal Indigo (#4338ca)</option>
+            <option value="#d97706">Warm Amber (#d97706)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Upload Logo (Optional)</label>
+          <input
+            type="file"
+            id="editLogoInput"
+            accept="image/*"
+            onchange="handleLogoUpload(this)"
+          />
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px">
+          <button class="btn btn-primary" onclick="closeEditor()">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+    <script>
+      // 4 Default Businesses (Ready for printing or individual editing)
+      let cardsData = [
+        {
+          name: "The Artisan Bakery",
+          cat: "Artisan Breads & Coffee",
+          url: "https://reviewcard.link/r/artisan-bakery",
+          color: "#1a73e8",
+          logo: "",
+        },
+        {
+          name: "Bella Vista Bistro",
+          cat: "Italian Cuisine",
+          url: "https://reviewcard.link/r/bella-vista",
+          color: "#065f46",
+          logo: "",
+        },
+        {
+          name: "Luxe Dental Clinic",
+          cat: "Cosmetic & Family Dentistry",
+          url: "https://reviewcard.link/r/luxe-dental",
+          color: "#18181b",
+          logo: "",
+        },
+        {
+          name: "Apex Auto Care",
+          cat: "Detailing & Service",
+          url: "https://reviewcard.link/r/apex-auto",
+          color: "#4338ca",
+          logo: "",
+        },
+      ];
+
+      let currentEditIndex = 0;
+
+      // Render cards into A4 grid
+      function renderCards() {
+        const sheet = document.getElementById("sheetContainer");
+        // Clear cards, keep guides
+        sheet.querySelectorAll(".card-container").forEach((el) => el.remove());
+
+        cardsData.slice(0, 4).forEach((data, index) => {
+          const container = document.createElement("div");
+          container.className = "card-container";
+
+          const card = document.createElement("div");
+          card.className = "card";
+          card.style.setProperty("--card-bg", data.color);
+          card.title = "Click to edit this card";
+          card.onclick = () => openEditor(index);
+
+          // Avatar
+          const initials = data.name
+            .split(" ")
+            .map((w) => w[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+          const avatarHtml = data.logo
+            ? `<img src="${data.logo}" alt="${data.name}">`
+            : `<span>${initials}</span>`;
+
+          // QR Code SVG generator
+          let qrSvg = "";
+          try {
+            const qr = qrcode(0, "M");
+            qr.addData(data.url || "https://reviewcard.link");
+            qr.make();
+            qrSvg = qr.createSvgTag(3, 0);
+          } catch (e) {
+            qrSvg = `<div style="font-size:7pt;color:#666;">QR unavailable</div>`;
+          }
+
+          card.innerHTML = `
+        <div class="card-header">
+          <div class="card-avatar">${avatarHtml}</div>
+          <div class="card-meta">
+            <div class="card-biz-name">${escapeHtml(data.name)}</div>
+            <div class="card-biz-cat">${escapeHtml(data.cat)}</div>
+          </div>
+        </div>
+
+        <div class="review-panel">
+          <div class="google-badge">
+            <svg class="google-g-icon" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span class="google-badge-text">Google Reviews</span>
+          </div>
+
+          <div class="stars-row">
+            ${Array(5)
+              .fill(0)
+              .map(
+                () => `
+              <svg class="star-svg" viewBox="0 0 24 24">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            `,
+              )
+              .join("")}
+          </div>
+
+          <div class="cta-headline">Review Us On Google</div>
+
+          <div class="qr-frame">
+            ${qrSvg}
+          </div>
+        </div>
+
+        <div class="nfc-bar">
+          <div class="nfc-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round">
+              <path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" />
+              <path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" />
+              <path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" />
+              <path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" />
+            </svg>
+          </div>
+          <div class="nfc-text">
+            <div class="nfc-text-title">Tap Phone on Card</div>
+            <div class="nfc-text-sub">Instant NFC review link</div>
+          </div>
+        </div>
+      `;
+
+          container.appendChild(card);
+          sheet.appendChild(container);
+        });
+      }
+
+      // Quick Duplicate first card to all 4
+      function duplicateFirstCard() {
+        const first = cardsData[0];
+        cardsData = [{ ...first }, { ...first }, { ...first }, { ...first }];
+        renderCards();
+      }
+
+      // Randomize Color Themes
+      const themePalette = ["#1a73e8", "#18181b", "#065f46", "#991b1b", "#4338ca", "#d97706"];
+      function randomizeColors() {
+        cardsData.forEach((card) => {
+          card.color = themePalette[Math.floor(Math.random() * themePalette.length)];
+        });
+        renderCards();
+      }
+
+      // Modal Editing
+      function openEditor(index) {
+        currentEditIndex = index;
+        const card = cardsData[index];
+        document.getElementById("editingCardIndex").textContent = index + 1;
+        document.getElementById("editName").value = card.name;
+        document.getElementById("editCat").value = card.cat;
+        document.getElementById("editUrl").value = card.url;
+        document.getElementById("editColor").value = card.color;
+        document.getElementById("editorModal").classList.add("active");
+      }
+
+      function closeEditor() {
+        document.getElementById("editorModal").classList.remove("active");
+      }
+
+      function updateCurrentCard() {
+        const card = cardsData[currentEditIndex];
+        card.name = document.getElementById("editName").value;
+        card.cat = document.getElementById("editCat").value;
+        card.url = document.getElementById("editUrl").value;
+        card.color = document.getElementById("editColor").value;
+        renderCards();
+      }
+
+      function handleLogoUpload(input) {
+        if (input.files && input.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            cardsData[currentEditIndex].logo = e.target.result;
+            renderCards();
+          };
+          reader.readAsDataURL(input.files[0]);
+        }
+      }
+
+      function escapeHtml(str) {
+        return (str || "").replace(/[&<>"']/g, function (m) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+        });
+      }
+
+      // Initialize
+      renderCards();
+    </script>
+  </body>
+</html>
