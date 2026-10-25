@@ -185,18 +185,20 @@ function CardStudio() {
   };
   const handleTemplateSelect = applyUniversalTemplate;
 
-  // Generate crisp QR code whenever target URL, qrDotColor, or qrBgColor changes
+  // Generate crisp QR code whenever target URL, qrDotColor, or qrBgColor changes (high-speed SVG)
   useEffect(() => {
-    QRCode.toDataURL(currentTargetUrl, {
+    QRCode.toString(currentTargetUrl, {
+      type: "svg",
       margin: 1,
       errorCorrectionLevel: "M",
-      width: 600,
       color: {
         dark: qrDotColor || "#000000",
         light: qrBgColor || "#ffffff",
       },
     })
-      .then(setQrCodeDataUrl)
+      .then((svg) => {
+        setQrCodeDataUrl(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+      })
       .catch((err) => console.error("QR Code generation error:", err));
   }, [currentTargetUrl, qrDotColor, qrBgColor]);
 

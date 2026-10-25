@@ -105,6 +105,36 @@ function generateIdSequence(prefix = "RC", count = 4, isClient = false): string[
   return list;
 }
 
+const qrCache = new Map<string, string>();
+
+async function getFastQrDataUrl(
+  targetUrl: string,
+  dotColor = "#000000",
+  bgColor = "#ffffff",
+): Promise<string> {
+  const cacheKey = `${targetUrl}:${dotColor}:${bgColor}`;
+  const cached = qrCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const svg = await QRCode.toString(targetUrl, {
+      type: "svg",
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: dotColor,
+        light: bgColor,
+      },
+    });
+    const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    qrCache.set(cacheKey, dataUrl);
+    return dataUrl;
+  } catch (err) {
+    console.error("Fast QR generation failed:", err);
+    return "";
+  }
+}
+
 function BatchCardStudio() {
   const [prefix, setPrefix] = useState("RC");
   const [cardCount, setCardCount] = useState<number>(4);
@@ -185,30 +215,27 @@ function BatchCardStudio() {
     setQrDotColor(p.qrDotColor);
   };
 
-  // Generate QR codes for all codes
+  // Generate QR codes for all codes with high-speed SVG generator + cache
   useEffect(() => {
+    let active = true;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     Promise.all(
       codes.map(async (code) => {
         const cleanSlug = code.toLowerCase().replace(/[^a-z0-9-]/g, "");
         const targetUrl = `${origin}/activate/${cleanSlug}`;
-        try {
-          const qrDataUrl = await QRCode.toDataURL(targetUrl, {
-            margin: 1,
-            errorCorrectionLevel: "M",
-            width: 500,
-            color: {
-              dark: qrDotColor || "#000000",
-              light: qrBgColor || "#ffffff",
-            },
-          });
-          return { id: code, qrDataUrl };
-        } catch (e) {
-          console.error("QR Code generation error:", e);
-          return { id: code, qrDataUrl: "" };
-        }
+        const qrDataUrl = await getFastQrDataUrl(
+          targetUrl,
+          qrDotColor || "#000000",
+          qrBgColor || "#ffffff",
+        );
+        return { id: code, qrDataUrl };
       }),
-    ).then(setSlots);
+    ).then((res) => {
+      if (active) setSlots(res);
+    });
+    return () => {
+      active = false;
+    };
   }, [codes, qrDotColor, qrBgColor]);
 
   // Export all cards to Multi-Page A4 PDF

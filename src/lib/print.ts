@@ -281,8 +281,35 @@ export interface ReviewCardSheetOptions {
   cardId?: string | undefined;
 }
 
+// Vector SVG Assets for Pixel-Perfect PDF Export (Rendered at 300 DPI)
+const GOOGLE_G_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><g transform="translate(46, 46)"><path fill="#4285F4" d="M106.85 55.21c0-3.15-.27-6.3-8.55-9.31H54v20.29h29.7c-1.3 6.84-5.13 12.6-10.8 16.56v13.72h17.46c10.21-9.4 16.49-23.26 16.49-41.26z"/><path fill="#34A853" d="M54 108c14.58 0 26.77-4.86 35.68-13.09l-17.46-13.72c-4.86 3.24-11.02 5.22-18.22 5.22-14.04 0-25.96-9.45-30.24-22.18H5.62v14.17C14.67 96.12 33.12 108 54 108z"/><path fill="#FBBC05" d="M23.76 64.23c-1.12-3.24-1.71-6.7-1.71-10.23s.59-6.99 1.71-10.23V29.6H5.62C1.98 36.81 0 45.09 0 54s1.98 17.19 5.62 24.4l18.14-14.17z"/><path fill="#EA4335" d="M54 21.37c7.96 0 15.07 2.74 20.7 8.1l15.39-15.39C80.73 5.35 68.54 0 54 0 33.12 0 14.67 11.88 5.62 29.6l18.14 14.17c4.28-12.73 16.2-22.4 30.24-22.4z"/></g></svg>`;
+
+const GOOGLE_G_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>`;
+
+const FIVE_STARS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="56" viewBox="0 0 160 26"><g fill="#f59e0b">${[0, 1, 2, 3, 4].map((i) => `<path transform="translate(${i * 32 + 4}, 1)" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>`).join("")}</g></svg>`;
+
+const NFC_BOTTOM_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.88"/><g stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" fill="none"><path d="M14 16a7 7 0 0 1 0 8"/><path d="M18 13a11 11 0 0 1 0 14"/><path d="M22 10a15 15 0 0 1 0 20"/><path d="M10 19a2.5 2.5 0 0 1 0 2"/></g></svg>`;
+
+const STAR_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><path fill="#f59e0b" transform="translate(40, 40) scale(5)" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+
+const HEART_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><path fill="#059669" transform="translate(40, 40) scale(5)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+
+const NFC_BLUE_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><g stroke="#1a73e8" stroke-width="7" stroke-linecap="round" fill="none" transform="translate(48, 48) scale(2.6)"><path d="M6 8a9 9 0 0 1 0 8"/><path d="M10 5a14 14 0 0 1 0 14"/><path d="M14 2a19 19 0 0 1 0 20"/><path d="M2 11a4 4 0 0 1 0 2"/></g></svg>`;
+
+const WHITE_PANEL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="680" height="680" viewBox="0 0 85 85"><rect x="0" y="0" width="85" height="85" rx="4.5" ry="4.5" fill="#ffffff"/></svg>`;
+
+function getCardBgSvg(colorHex: string) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="760" height="1088" viewBox="0 0 95 136"><rect x="0" y="0" width="95" height="136" rx="5" ry="5" fill="${colorHex}"/></svg>`;
+}
+
 async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | null> {
   try {
+    const dataUrl = src.startsWith("data:")
+      ? src
+      : src.startsWith("<svg")
+        ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(src)}`
+        : src;
+
     if (typeof document !== "undefined") {
       const pngBytes = await new Promise<Uint8Array | null>((resolve) => {
         const img = new Image();
@@ -290,11 +317,13 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
         img.onload = () => {
           try {
             const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth || 200;
-            canvas.height = img.naturalHeight || 200;
+            canvas.width = Math.max(img.naturalWidth || 200, 400);
+            canvas.height = Math.max(img.naturalHeight || 200, 400);
             const ctx = canvas.getContext("2d");
             if (!ctx) return resolve(null);
-            ctx.drawImage(img, 0, 0);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             canvas.toBlob((blob) => {
               if (!blob) return resolve(null);
               blob
@@ -307,7 +336,7 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
           }
         };
         img.onerror = () => resolve(null);
-        img.src = src;
+        img.src = dataUrl;
       });
 
       if (pngBytes) {
@@ -315,7 +344,11 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
       }
     }
 
-    const res = await fetch(src);
+    if (dataUrl.startsWith("data:image/svg+xml")) {
+      return null;
+    }
+
+    const res = await fetch(dataUrl);
     const buf = new Uint8Array(await res.arrayBuffer());
     if (buf[0] === 0x89 && buf[1] === 0x50) {
       return await pdf.embedPng(buf);
@@ -329,7 +362,7 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
       return await pdf.embedJpg(buf);
     }
   } catch (e) {
-    console.warn("Could not embed logo in PDF:", e);
+    console.warn("Could not embed image in PDF:", e);
     return null;
   }
 }
@@ -344,9 +377,37 @@ export async function exportA4SheetPdf(
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const fontRegular = await pdf.embedFont(StandardFonts.Helvetica);
 
-  // Preload logos for cards
+  // 1. Preload common vector marks and icons
+  const [
+    googleBadgeImg,
+    googleGIconImg,
+    fiveStarsImg,
+    nfcBottomIconImg,
+    starBadgeImg,
+    heartBadgeImg,
+    nfcBadgeImg,
+    whitePanelImg,
+  ] = await Promise.all([
+    loadPdfImage(pdf, GOOGLE_G_BADGE_SVG),
+    loadPdfImage(pdf, GOOGLE_G_ICON_SVG),
+    loadPdfImage(pdf, FIVE_STARS_SVG),
+    loadPdfImage(pdf, NFC_BOTTOM_ICON_SVG),
+    loadPdfImage(pdf, STAR_BADGE_SVG),
+    loadPdfImage(pdf, HEART_BADGE_SVG),
+    loadPdfImage(pdf, NFC_BLUE_BADGE_SVG),
+    loadPdfImage(pdf, WHITE_PANEL_SVG),
+  ]);
+
+  // Preload card backgrounds and custom logos
+  const cardBgMap = new Map<string, PDFImage>();
   const logoMap = new Map<string, PDFImage>();
+
   for (const c of cards) {
+    const col = c.color || "#1a73e8";
+    if (!cardBgMap.has(col)) {
+      const bgImg = await loadPdfImage(pdf, getCardBgSvg(col));
+      if (bgImg) cardBgMap.set(col, bgImg);
+    }
     if (c.logo && !logoMap.has(c.logo)) {
       const img = await loadPdfImage(pdf, c.logo);
       if (img) logoMap.set(c.logo, img);
@@ -378,7 +439,7 @@ export async function exportA4SheetPdf(
   for (let pageIdx = 0; pageIdx < numPages; pageIdx++) {
     const page = pdf.addPage([pageWidth, pageHeight]);
 
-    // Cut lines across page
+    // Cut guidelines across page
     const cutColor = rgb(0.7, 0.7, 0.7);
     page.drawLine({
       start: { x: 0, y: pt(297 - marginY - cardH - gapY / 2) },
@@ -405,48 +466,40 @@ export async function exportA4SheetPdf(
       const w = pt(cardW);
       const h = pt(cardH);
 
-      // 1. Card Background
-      page.drawRectangle({
-        x,
-        y,
-        width: w,
-        height: h,
-        color: primaryCol,
-      });
+      // 1. Card Background with 5mm rounded corners
+      const bgImg = cardBgMap.get(card.color || "#1a73e8");
+      if (bgImg) {
+        page.drawImage(bgImg, { x, y, width: w, height: h });
+      } else {
+        page.drawRectangle({ x, y, width: w, height: h, color: primaryCol });
+      }
 
       // 2. Card Header
       const avatarSize = pt(14);
       const avatarX = x + pt(5);
-      const avatarY = y + h - pt(5) - avatarSize;
-      page.drawRectangle({
-        x: avatarX,
-        y: avatarY,
-        width: avatarSize,
-        height: avatarSize,
-        color: rgb(1, 1, 1),
-      });
+      const avatarY = y + h - pt(5.5) - avatarSize;
 
       if (card.isUniversal) {
-        // Universal badge symbol (no business initials or business name)
-        const badgeSymbol =
-          card.universalBadge === "google"
-            ? "G"
-            : card.universalBadge === "star"
-              ? "*"
+        const badgeImg =
+          card.universalBadge === "star"
+            ? starBadgeImg
+            : card.universalBadge === "heart"
+              ? heartBadgeImg
               : card.universalBadge === "nfc"
-                ? "))"
-                : "♥";
+                ? nfcBadgeImg
+                : googleBadgeImg;
 
-        const symbolW = fontBold.widthOfTextAtSize(badgeSymbol, 11);
-        page.drawText(badgeSymbol, {
-          x: avatarX + (avatarSize - symbolW) / 2,
-          y: avatarY + pt(3.5),
-          size: 11,
-          font: fontBold,
-          color: primaryCol,
-        });
+        if (badgeImg) {
+          page.drawImage(badgeImg, {
+            x: avatarX,
+            y: avatarY,
+            width: avatarSize,
+            height: avatarSize,
+          });
+        }
 
-        const titleText = (card.universalTitle || "REVIEW US ON GOOGLE").slice(0, 24);
+        // Header Title
+        const titleText = (card.universalTitle || "REVIEW US ON GOOGLE").slice(0, 26);
         page.drawText(titleText, {
           x: avatarX + avatarSize + pt(3.5),
           y: avatarY + pt(7.5),
@@ -455,7 +508,8 @@ export async function exportA4SheetPdf(
           color: rgb(1, 1, 1),
         });
 
-        const subText = (card.universalSubtitle || "SCAN OR TAP WITH PHONE").slice(0, 30);
+        // Header Subtitle
+        const subText = (card.universalSubtitle || "SCAN OR TAP WITH PHONE").slice(0, 32);
         page.drawText(subText, {
           x: avatarX + avatarSize + pt(3.5),
           y: avatarY + pt(1.5),
@@ -473,6 +527,14 @@ export async function exportA4SheetPdf(
             height: avatarSize,
           });
         } else {
+          // Circular badge with business initials
+          page.drawRectangle({
+            x: avatarX,
+            y: avatarY,
+            width: avatarSize,
+            height: avatarSize,
+            color: rgb(1, 1, 1),
+          });
           const initials =
             card.name
               .split(" ")
@@ -510,43 +572,66 @@ export async function exportA4SheetPdf(
         });
       }
 
-      // 3. Review Panel (white background)
+      // 3. Inner White Review Panel (4.5mm rounded corners)
       const panelPadX = pt(5);
       const panelX = x + panelPadX;
       const panelW = w - panelPadX * 2;
       const panelH = pt(85);
       const panelY = y + pt(16);
 
-      page.drawRectangle({
-        x: panelX,
-        y: panelY,
-        width: panelW,
-        height: panelH,
-        color: rgb(1, 1, 1),
-      });
-
-      // Panel Header: Google Reviews
-      const googleText = "Google Reviews";
-      const gTextW = fontBold.widthOfTextAtSize(googleText, 9);
-      page.drawText(googleText, {
-        x: panelX + (panelW - gTextW) / 2,
-        y: panelY + panelH - pt(7),
-        size: 9,
-        font: fontBold,
-        color: rgb(0.15, 0.2, 0.3),
-      });
-
-      // Stars
-      if (card.includeStars !== false) {
-        const starText = "* * * * *";
-        const starW = fontBold.widthOfTextAtSize(starText, 10);
-        page.drawText(starText, {
-          x: panelX + (panelW - starW) / 2,
-          y: panelY + panelH - pt(12),
-          size: 10,
-          font: fontBold,
-          color: rgb(0.96, 0.62, 0.04),
+      if (whitePanelImg) {
+        page.drawImage(whitePanelImg, {
+          x: panelX,
+          y: panelY,
+          width: panelW,
+          height: panelH,
         });
+      } else {
+        page.drawRectangle({
+          x: panelX,
+          y: panelY,
+          width: panelW,
+          height: panelH,
+          color: rgb(1, 1, 1),
+        });
+      }
+
+      // Panel Header: Google "G" logo icon + "Google Reviews"
+      const googleGSize = pt(5.2);
+      const googleText = "Google Reviews";
+      const gTextW = fontBold.widthOfTextAtSize(googleText, 8.5);
+      const totalGoogleW = googleGSize + pt(1.8) + gTextW;
+      const googleStartX = panelX + (panelW - totalGoogleW) / 2;
+      const googleY = panelY + panelH - pt(7.5);
+
+      if (googleGIconImg) {
+        page.drawImage(googleGIconImg, {
+          x: googleStartX,
+          y: googleY - pt(0.5),
+          width: googleGSize,
+          height: googleGSize,
+        });
+      }
+      page.drawText(googleText, {
+        x: googleStartX + googleGSize + pt(1.8),
+        y: googleY + pt(0.8),
+        size: 8.5,
+        font: fontBold,
+        color: rgb(0.12, 0.16, 0.24),
+      });
+
+      // 5 Golden Stars
+      if (card.includeStars !== false) {
+        const starsW = pt(30);
+        const starsH = pt(5);
+        if (fiveStarsImg) {
+          page.drawImage(fiveStarsImg, {
+            x: panelX + (panelW - starsW) / 2,
+            y: panelY + panelH - pt(14),
+            width: starsW,
+            height: starsH,
+          });
+        }
       }
 
       // Headline
@@ -554,7 +639,7 @@ export async function exportA4SheetPdf(
       const headW = fontBold.widthOfTextAtSize(headline, 10);
       page.drawText(headline, {
         x: panelX + (panelW - headW) / 2,
-        y: panelY + panelH - pt(17.5),
+        y: panelY + panelH - pt(19),
         size: 10,
         font: fontBold,
         color: primaryCol,
@@ -563,7 +648,7 @@ export async function exportA4SheetPdf(
       // QR Code
       const qrSize = pt(40);
       const qrX = panelX + (panelW - qrSize) / 2;
-      const qrY = panelY + pt(13);
+      const qrY = panelY + pt(11);
       const qr = QRCode.create(card.url, { errorCorrectionLevel: "M" });
       const count = qr.modules.size;
       const module = qrSize / (count + 4);
@@ -593,29 +678,53 @@ export async function exportA4SheetPdf(
         }
       }
 
-      // Printed Card ID below QR code
+      // Printed Card ID
       if (card.cardId) {
-        const idText = `Card ID: ${card.cardId}`;
-        const idW = fontBold.widthOfTextAtSize(idText, 7.5);
+        const idText = `CARD ID: ${card.cardId}`;
+        const idW = fontBold.widthOfTextAtSize(idText, 7);
         page.drawText(idText, {
           x: panelX + (panelW - idW) / 2,
-          y: panelY + pt(4.5),
-          size: 7.5,
+          y: panelY + pt(3.5),
+          size: 7,
           font: fontBold,
-          color: rgb(0.2, 0.25, 0.35),
+          color: rgb(0.28, 0.33, 0.41),
         });
       }
 
-      // 4. Bottom NFC Bar (Centered in middle & lifted slightly)
+      // 4. Bottom NFC Bar
       if (card.includeNfc !== false) {
-        const nfcText = "Tap Phone on Card | Instant NFC Review";
-        const nfcW = fontBold.widthOfTextAtSize(nfcText, 7.5);
-        page.drawText(nfcText, {
-          x: x + (w - nfcW) / 2,
-          y: y + pt(7.5),
-          size: 7.5,
+        const nfcIconSize = pt(9.5);
+        const topText = "Tap Phone on Card";
+        const topTextW = fontBold.widthOfTextAtSize(topText, 8.2);
+        const subText = "Instant NFC review link";
+        const subTextW = fontRegular.widthOfTextAtSize(subText, 6.5);
+        const textBlockW = Math.max(topTextW, subTextW);
+        const totalNfcW = nfcIconSize + pt(3.5) + textBlockW;
+        const nfcStartX = x + (w - totalNfcW) / 2;
+
+        if (nfcBottomIconImg) {
+          page.drawImage(nfcBottomIconImg, {
+            x: nfcStartX,
+            y: y + pt(3.2),
+            width: nfcIconSize,
+            height: nfcIconSize,
+          });
+        }
+
+        page.drawText(topText, {
+          x: nfcStartX + nfcIconSize + pt(3.5),
+          y: y + pt(8.2),
+          size: 8.2,
           font: fontBold,
           color: rgb(1, 1, 1),
+        });
+
+        page.drawText(subText, {
+          x: nfcStartX + nfcIconSize + pt(3.5),
+          y: y + pt(4.8),
+          size: 6.5,
+          font: fontRegular,
+          color: rgb(0.9, 0.9, 0.9),
         });
       }
     }
