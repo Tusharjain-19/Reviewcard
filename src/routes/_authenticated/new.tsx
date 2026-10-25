@@ -551,14 +551,37 @@ function Builder() {
         </div>
 
         <aside
-          className={`lg:sticky lg:top-6 lg:self-start ${
+          className={`lg:sticky lg:top-6 lg:self-start flex justify-center py-4 lg:py-0 ${
             mobileTab === "form" ? "hidden lg:block" : "block"
           }`}
         >
-          <div className="mx-auto h-175 w-85 max-w-full overflow-y-auto rounded-[2.5rem] border-8 border-foreground bg-background shadow-lift">
+          <div className="mx-auto h-[min(680px,calc(100vh-210px))] w-full max-w-[340px] overflow-y-auto rounded-[2.5rem] border-8 border-slate-900 bg-background shadow-2xl">
             <LinkPage b={{ ...b, reviewUrl }} preview />
           </div>
         </aside>
+      </div>
+
+      {/* ---------------- MOBILE FLOATING BOTTOM BAR ---------------- */}
+      <div className="lg:hidden fixed bottom-3 left-3 right-3 z-30 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl p-2.5 flex items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!b.name.trim() || !slugOk || busy}
+          onClick={() => publish("draft")}
+          className="flex-1 h-10 font-bold text-xs"
+        >
+          Save Draft
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          disabled={!canPublish || busy}
+          onClick={() => publish()}
+          className="flex-1 h-10 font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+        >
+          {busy ? "Saving..." : edit ? "Save Changes" : "Publish"}
+        </Button>
       </div>
       {cropSource && (
         <LogoCropper

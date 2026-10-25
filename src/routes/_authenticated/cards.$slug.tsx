@@ -17,6 +17,11 @@ import {
   Store,
   Sparkles,
   Heart,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Eye,
+  Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ownedBusinessQuery } from "@/lib/queries";
@@ -134,6 +139,25 @@ function CardStudio() {
   const [exportingPdf, setExportingPdf] = useState(false);
   const [copiedHex, setCopiedHex] = useState(false);
   const [mobileTab, setMobileTab] = useState<"controls" | "preview">("preview");
+  const [zoomScale, setZoomScale] = useState(1);
+
+  // Auto-fit responsive zoom scale on mobile/tablet mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const w = window.innerWidth;
+      if (w < 640) setZoomScale(0.42);
+      else if (w < 1024) setZoomScale(0.72);
+      else setZoomScale(1);
+    }
+  }, []);
+
+  const handleFitScreen = () => {
+    if (typeof window === "undefined") return;
+    const padding = window.innerWidth < 640 ? 24 : 48;
+    const availableWidth = window.innerWidth - (window.innerWidth >= 1024 ? 384 : 0) - padding;
+    const target = Math.max(0.35, Math.min(1.2, Number((availableWidth / 794).toFixed(2))));
+    setZoomScale(target);
+  };
 
   // Card Edition State (Personalized vs Universal Card without business name)
   const [cardEdition, setCardEdition] = useState<"personalized" | "universal">("personalized");
@@ -992,77 +1016,160 @@ function CardStudio() {
 
         {/* ---------------- CENTER CANVAS / PREVIEW AREA ---------------- */}
         <main
-          className={`flex-1 bg-slate-100 p-3 sm:p-6 md:p-10 flex justify-center items-start overflow-auto print:p-0 print:bg-white print:overflow-visible ${
+          className={`flex-1 bg-slate-200/70 p-3 sm:p-4 md:p-8 flex flex-col items-center justify-start overflow-x-auto print:p-0 print:bg-white print:overflow-visible pb-24 lg:pb-8 ${
             mobileTab === "controls" ? "hidden lg:flex" : "flex"
           }`}
         >
+          {/* Zoom & ViewMode Control Toolbar (Print Hidden) */}
+          <div className="w-full max-w-212.5 mb-4 flex flex-wrap items-center justify-between gap-2.5 bg-white p-2.5 rounded-xl border shadow-xs print:hidden">
+            {/* ViewMode Switcher */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("a4")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  viewMode === "a4"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <Printer className="h-3.5 w-3.5" />
+                A4 Sheet (4 Cards)
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("single")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  viewMode === "single"
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <Radio className="h-3.5 w-3.5" />
+                Single Card
+              </button>
+            </div>
+
+            {/* Zoom Controls (Enabled for A4 Sheet mode) */}
+            {viewMode === "a4" && (
+              <div className="flex items-center gap-1.5 ml-auto">
+                <button
+                  type="button"
+                  onClick={handleFitScreen}
+                  className="px-2 py-1 text-xs font-semibold rounded-md border bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center gap-1"
+                  title="Fit Sheet to Screen Width"
+                >
+                  <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
+                  Fit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((s) => Math.max(0.35, Number((s - 0.08).toFixed(2))))}
+                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-xs font-mono font-semibold text-slate-600 px-1 w-12 text-center">
+                  {Math.round(zoomScale * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale((s) => Math.min(1.4, Number((s + 0.08).toFixed(2))))}
+                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(1)}
+                  className="px-2 py-1 text-xs font-semibold rounded-md border text-slate-600 hover:bg-slate-100"
+                  title="Reset Zoom to 100%"
+                >
+                  100%
+                </button>
+              </div>
+            )}
+          </div>
+
           {viewMode === "a4" ? (
-            /* A4 Print Sheet (4 Cards in 2x2 grid, 95x136mm each) */
+            /* Scalable Container for A4 Sheet with responsive bounding box */
             <div
-              className={`print:m-0 print:shadow-none bg-white shadow-2xl relative transition-all duration-200 ${
-                showCutGuides ? "show-cut-guides" : ""
-              }`}
+              className="relative flex justify-center items-start transition-all max-w-full"
               style={{
-                width: "210mm",
-                minHeight: "297mm",
-                padding: "9.5mm 7mm",
-                display: "grid",
-                gridTemplateColumns: "95mm 95mm",
-                gridTemplateRows: "136mm 136mm",
-                gap: "6mm 6mm",
-                justifyContent: "center",
-                boxSizing: "border-box",
+                width: `${Math.round(794 * zoomScale)}px`,
+                height: `${Math.round(1123 * zoomScale)}px`,
               }}
             >
-              {/* Center Cut Lines across sheet */}
-              {showCutGuides && (
-                <>
-                  <div
-                    className="absolute pointer-events-none left-0 right-0 border-t border-dashed border-slate-400/80"
-                    style={{ top: "calc(9.5mm + 136mm + 3mm)" }}
-                  />
-                  <div
-                    className="absolute pointer-events-none top-0 bottom-0 border-l border-dashed border-slate-400/80"
-                    style={{ left: "calc(7mm + 95mm + 3mm)" }}
-                  />
-                </>
-              )}
+              {/* A4 Print Sheet (4 Cards in 2x2 grid, 95x136mm each) */}
+              <div
+                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl relative transition-all duration-200 ${
+                  showCutGuides ? "show-cut-guides" : ""
+                }`}
+                style={{
+                  transform: `scale(${zoomScale})`,
+                  width: "210mm",
+                  minHeight: "297mm",
+                  padding: "9.5mm 7mm",
+                  display: "grid",
+                  gridTemplateColumns: "95mm 95mm",
+                  gridTemplateRows: "136mm 136mm",
+                  gap: "6mm 6mm",
+                  justifyContent: "center",
+                  boxSizing: "border-box",
+                }}
+              >
+                {/* Center Cut Lines across sheet */}
+                {showCutGuides && (
+                  <>
+                    <div
+                      className="absolute pointer-events-none left-0 right-0 border-t border-dashed border-slate-400/80"
+                      style={{ top: "calc(9.5mm + 136mm + 3mm)" }}
+                    />
+                    <div
+                      className="absolute pointer-events-none top-0 bottom-0 border-l border-dashed border-slate-400/80"
+                      style={{ left: "calc(7mm + 95mm + 3mm)" }}
+                    />
+                  </>
+                )}
 
-              {/* 4 Cards Rendered on A4 Page */}
-              {[1, 2, 3, 4].map((slot) => (
-                <div key={slot} className="relative" style={{ width: "95mm", height: "136mm" }}>
-                  {showCutGuides && (
-                    <span className="print:hidden absolute -top-4 right-1 text-[8px] font-mono text-slate-400 pointer-events-none">
-                      ✂ cut
-                    </span>
-                  )}
-                  <ReviewCardItem
-                    name={bizName}
-                    category={category}
-                    color={color}
-                    qrDotColor={qrDotColor}
-                    qrBgColor={qrBgColor}
-                    headline={headline}
-                    url={currentTargetUrl}
-                    qr={qrCodeDataUrl}
-                    logo={b.logo}
-                    initials={initials}
-                    includeStars={includeStars}
-                    includeNfc={includeNfc}
-                    isUniversal={cardEdition === "universal"}
-                    universalBadge={universalTemplate}
-                    headerTitle={universalTitle}
-                    headerSubtitle={universalSubtitle}
-                    cardId={b.slug.toUpperCase()}
-                  />
-                </div>
-              ))}
+                {/* 4 Cards Rendered on A4 Page */}
+                {[1, 2, 3, 4].map((slot) => (
+                  <div key={slot} className="relative" style={{ width: "95mm", height: "136mm" }}>
+                    {showCutGuides && (
+                      <span className="print:hidden absolute -top-4 right-1 text-[8px] font-mono text-slate-400 pointer-events-none">
+                        ✂ cut
+                      </span>
+                    )}
+                    <ReviewCardItem
+                      name={bizName}
+                      category={category}
+                      color={color}
+                      qrDotColor={qrDotColor}
+                      qrBgColor={qrBgColor}
+                      headline={headline}
+                      url={currentTargetUrl}
+                      qr={qrCodeDataUrl}
+                      logo={b.logo}
+                      initials={initials}
+                      includeStars={includeStars}
+                      includeNfc={includeNfc}
+                      isUniversal={cardEdition === "universal"}
+                      universalBadge={universalTemplate}
+                      headerTitle={universalTitle}
+                      headerSubtitle={universalSubtitle}
+                      cardId={b.slug.toUpperCase()}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             /* Single Card Focused View */
-            <div className="py-8 flex flex-col items-center">
+            <div className="py-4 sm:py-8 flex flex-col items-center max-w-full">
               <div
-                className="bg-white shadow-xl rounded-2xl p-4 border"
+                className="bg-white shadow-xl rounded-2xl p-4 border max-w-full overflow-hidden"
                 style={{
                   width: "105mm",
                   height: "150mm",
@@ -1093,12 +1200,72 @@ function CardStudio() {
                   />
                 </div>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">
+              <p className="mt-4 text-xs text-muted-foreground text-center">
                 Standard 95mm × 136mm Counter Card
               </p>
             </div>
           )}
         </main>
+      </div>
+
+      {/* ---------------- MOBILE FLOATING BOTTOM ACTION BAR ---------------- */}
+      <div className="lg:hidden print:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl p-2.5 flex items-center justify-between gap-2">
+        {mobileTab === "controls" ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 h-10 font-bold text-xs gap-1.5"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? "Saving..." : "Save Design"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setMobileTab("preview")}
+              className="flex-1 h-10 font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm"
+            >
+              <Eye className="h-4 w-4" />
+              View Preview →
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMobileTab("controls")}
+              className="flex-1 h-10 font-bold text-xs gap-1.5 text-slate-700"
+            >
+              <Palette className="h-4 w-4" />
+              Edit Design
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={exportingPdf}
+              onClick={handleDownloadPdf}
+              className="flex-1 h-10 font-bold text-xs bg-slate-900 hover:bg-black text-white gap-1.5 shadow-sm"
+            >
+              <Download className="h-4 w-4" />
+              {exportingPdf ? "Generating..." : "Export PDF"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => window.print()}
+              className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+              title="Print"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Global Print Styles to enforce exact A4 100% scale output */}

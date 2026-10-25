@@ -133,7 +133,7 @@ function Dashboard() {
       <main className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-8 space-y-6">
         {/* ---------------- MOBILE-FIRST QUICK ACTIONS BAR ---------------- */}
         <section aria-label="Quick Actions" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Action 1: Scan & Activate */}
+          {/* Action 1: Scan & Activate (Featured Hero on Mobile) */}
           <Link
             to="/activate"
             className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl border-2 border-blue-500/20 bg-linear-to-r from-blue-50 to-indigo-50/40 hover:border-blue-500/50 hover:shadow-md transition-all group"
@@ -141,42 +141,45 @@ function Dashboard() {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm group-hover:scale-105 transition-transform">
               <QrCode className="h-5 w-5" />
             </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                Scan / Activate Card
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-bold text-slate-900 flex items-center justify-between">
+                <span>Scan / Activate Card</span>
                 <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               </div>
-              <p className="text-xs text-slate-600 mt-0.5">Scan QR or enter card ID</p>
+              <p className="text-xs text-slate-600 mt-0.5 truncate">Scan QR with camera or enter ID</p>
             </div>
           </Link>
 
-          {/* Action 2: Batch Print 4 */}
-          <Link
-            to="/cards/batch"
-            className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-200 transition-colors">
-              <Printer className="h-5 w-5 text-slate-700" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900">Batch Print (4+ Cards)</div>
-              <p className="text-xs text-slate-600 mt-0.5">Multi-card A4 sheets</p>
-            </div>
-          </Link>
+          {/* Action 2 & 3: Side-by-side 2-col on mobile, regular columns on sm+ */}
+          <div className="grid grid-cols-2 gap-2.5 sm:contents">
+            {/* Action 2: Batch Print 4 */}
+            <Link
+              to="/cards/batch"
+              className="flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-200 transition-colors">
+                <Printer className="h-5 w-5 text-slate-700" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">Batch Print</div>
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">4+ Cards Sheet</p>
+              </div>
+            </Link>
 
-          {/* Action 3: Add Business Page */}
-          <Link
-            to="/new"
-            className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-              <Plus className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900">Add New Business</div>
-              <p className="text-xs text-slate-600 mt-0.5">Create custom review link</p>
-            </div>
-          </Link>
+            {/* Action 3: Add Business Page */}
+            <Link
+              to="/new"
+              className="flex items-center gap-2.5 sm:gap-3.5 p-3 sm:p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                <Plus className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">New Business</div>
+                <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 truncate">Custom Link</p>
+              </div>
+            </Link>
+          </div>
         </section>
 
         {/* ---------------- STATS COUNTERS ---------------- */}
@@ -428,6 +431,31 @@ function Dashboard() {
             );
           })}
         </section>
+
+        {/* ---------------- SEARCH & FILTER EMPTY STATE ---------------- */}
+        {visibleList.length > 0 && filteredList.length === 0 && (
+          <div className="py-12 text-center rounded-2xl border bg-white p-6 my-4 space-y-3 shadow-xs">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+              <Search className="h-5 w-5" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No businesses match your filter</h3>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto">
+              No results found for &ldquo;{search}&rdquo; with &ldquo;{filter}&rdquo; status.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setFilter("all");
+              }}
+              className="mt-2 text-xs"
+            >
+              Reset Filters
+            </Button>
+          </div>
+        )}
 
         {/* ---------------- EMPTY STATE ---------------- */}
         {visibleList.length === 0 && (

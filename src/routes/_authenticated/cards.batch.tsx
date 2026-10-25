@@ -20,6 +20,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Eye,
 } from "lucide-react";
 import { exportA4SheetPdf, type ReviewCardSheetOptions } from "@/lib/print";
 import { saveBatchBlankCards } from "@/lib/businesses.functions";
@@ -142,6 +143,24 @@ function BatchCardStudio() {
   const [slots, setSlots] = useState<CardSlotData[]>([]);
   const [activeSheetIndex, setActiveSheetIndex] = useState<number>(0);
   const [zoomScale, setZoomScale] = useState<number>(1);
+
+  // Auto-fit responsive zoom scale on mobile/tablet mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const w = window.innerWidth;
+      if (w < 640) setZoomScale(0.42);
+      else if (w < 1024) setZoomScale(0.72);
+      else setZoomScale(1);
+    }
+  }, []);
+
+  const handleFitScreen = () => {
+    if (typeof window === "undefined") return;
+    const padding = window.innerWidth < 640 ? 24 : 48;
+    const availableWidth = window.innerWidth - (window.innerWidth >= 1024 ? 384 : 0) - padding;
+    const target = Math.max(0.35, Math.min(1.2, Number((availableWidth / 794).toFixed(2))));
+    setZoomScale(target);
+  };
 
   // Card Design Settings
   const [template, setTemplate] = useState<"google" | "star" | "nfc" | "heart">("google");
@@ -718,7 +737,16 @@ function BatchCardStudio() {
             <div className="flex items-center gap-1.5 ml-auto">
               <button
                 type="button"
-                onClick={() => setZoomScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
+                onClick={handleFitScreen}
+                className="px-2 py-1 text-xs font-semibold rounded-md border bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center gap-1"
+                title="Fit Sheet to Screen Width"
+              >
+                <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
+                Fit
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomScale((s) => Math.max(0.35, Number((s - 0.08).toFixed(2))))}
                 className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
                 title="Zoom Out"
               >
@@ -729,7 +757,7 @@ function BatchCardStudio() {
               </span>
               <button
                 type="button"
-                onClick={() => setZoomScale((s) => Math.min(1.4, Number((s + 0.1).toFixed(2))))}
+                onClick={() => setZoomScale((s) => Math.min(1.4, Number((s + 0.08).toFixed(2))))}
                 className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
                 title="Zoom In"
               >
@@ -746,17 +774,21 @@ function BatchCardStudio() {
             </div>
           </div>
 
-          {/* Scalable Container for A4 Sheet */}
+          {/* Scalable Container for A4 Sheet with responsive bounding box */}
           <div
-            className="transition-transform origin-top duration-150 max-w-full"
-            style={{ transform: `scale(${zoomScale})` }}
+            className="relative flex justify-center items-start transition-all max-w-full"
+            style={{
+              width: `${Math.round(794 * zoomScale)}px`,
+              height: `${Math.round(1123 * zoomScale)}px`,
+            }}
           >
             {/* A4 Sheet Container (210mm x 297mm) */}
             <div
-              className={`print:m-0 print:shadow-none bg-white shadow-2xl relative transition-all duration-200 ${
+              className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl relative transition-all duration-200 ${
                 showCutGuides ? "show-cut-guides" : ""
               }`}
               style={{
+                transform: `scale(${zoomScale})`,
                 width: "210mm",
                 minHeight: "297mm",
                 padding: "9.5mm 7mm",
@@ -817,6 +849,66 @@ function BatchCardStudio() {
             </div>
           </div>
         </main>
+      </div>
+
+      {/* ---------------- MOBILE FLOATING BOTTOM ACTION BAR ---------------- */}
+      <div className="lg:hidden print:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl p-2.5 flex items-center justify-between gap-2">
+        {mobileTab === "controls" ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSaveToDatabase}
+              disabled={savingDb}
+              className="flex-1 h-10 font-bold text-xs gap-1.5"
+            >
+              <Save className="h-4 w-4" />
+              {savingDb ? "Saving..." : "Save to DB"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setMobileTab("preview")}
+              className="flex-1 h-10 font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm"
+            >
+              <Eye className="h-4 w-4" />
+              Sheet Preview →
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMobileTab("controls")}
+              className="flex-1 h-10 font-bold text-xs gap-1.5 text-slate-700"
+            >
+              <Palette className="h-4 w-4" />
+              Settings
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={exportingPdf}
+              onClick={handleExportPdf}
+              className="flex-1 h-10 font-bold text-xs bg-slate-900 hover:bg-black text-white gap-1.5 shadow-sm"
+            >
+              <Download className="h-4 w-4" />
+              {exportingPdf ? "Exporting..." : "Export PDF"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => window.print()}
+              className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+              title="Print"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
