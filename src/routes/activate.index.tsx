@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { QrCode, ArrowRight, Camera, Keyboard, Sparkles, ShieldCheck } from "lucide-react";
+import { QrCode, ArrowRight, Camera, Keyboard, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
@@ -78,10 +78,19 @@ function ActivateIndexPage() {
             <BrandLogo size="md" />
           </Link>
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <Button variant="ghost" size="sm" asChild className="h-9 px-2 sm:px-3 text-xs text-slate-700">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-9 px-2 sm:px-3 text-xs text-slate-700"
+            >
               <Link to="/dashboard">Dashboard</Link>
             </Button>
-            <Button size="sm" asChild className="h-9 px-2.5 sm:px-3.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs">
+            <Button
+              size="sm"
+              asChild
+              className="h-9 px-2.5 sm:px-3.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
+            >
               <Link to="/cards/batch">
                 <span className="hidden sm:inline">Batch Print (4)</span>
                 <span className="sm:hidden">Print (4)</span>

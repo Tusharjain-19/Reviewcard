@@ -170,7 +170,12 @@ function Builder() {
     <main className="min-h-screen max-w-full overflow-x-hidden bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-b lg:border-b-0 bg-white lg:bg-transparent sticky top-0 lg:static z-20">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to</span> Dashboard

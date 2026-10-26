@@ -110,7 +110,10 @@ function AuthPage() {
         <form onSubmit={submit} className="space-y-4">
           {mode === "signup" && (
             <div className="space-y-1.5">
-              <label htmlFor="authName" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label
+                htmlFor="authName"
+                className="text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
                 Display Name
               </label>
               <Input
@@ -126,7 +129,10 @@ function AuthPage() {
           )}
 
           <div className="space-y-1.5">
-            <label htmlFor="authEmail" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <label
+              htmlFor="authEmail"
+              className="text-xs font-bold uppercase tracking-wider text-slate-700"
+            >
               Email Address
             </label>
             <Input
@@ -144,7 +150,10 @@ function AuthPage() {
 
           {mode !== "reset" && (
             <div className="space-y-1.5">
-              <label htmlFor="authPassword" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label
+                htmlFor="authPassword"
+                className="text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -177,7 +186,10 @@ function AuthPage() {
             </div>
           )}
 
-          <Button className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs" disabled={busy}>
+          <Button
+            className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
+            disabled={busy}
+          >
             {busy
               ? "Please wait..."
               : mode === "signup"
@@ -189,7 +201,10 @@ function AuthPage() {
         </form>
 
         {notice && (
-          <p role="status" className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs sm:text-sm text-blue-900">
+          <p
+            role="status"
+            className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs sm:text-sm text-blue-900"
+          >
             {notice}
           </p>
         )}

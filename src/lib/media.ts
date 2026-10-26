@@ -18,11 +18,21 @@ export async function uploadBusinessMedia(b: Business): Promise<Business> {
     if (!source.startsWith("data:")) continue;
     const blob = await (await fetch(source)).blob();
     const path = `${data.user.id}/${crypto.randomUUID()}.${blob.type === "image/jpeg" ? "jpg" : "png"}`;
-    const result = await supabase.storage
-      .from("business-media")
-      .upload(path, blob, { contentType: blob.type });
-    if (result.error) throw new Error("Could not upload the image");
-    next[pathField] = path;
+    try {
+      const result = await supabase.storage
+        .from("business-media")
+        .upload(path, blob, { contentType: blob.type });
+      if (!result.error) {
+        next[pathField] = path;
+      } else {
+        console.warn(
+          "Storage upload warning, using compressed inline image:",
+          result.error.message,
+        );
+      }
+    } catch (e) {
+      console.warn("Storage upload fallback to compressed inline image:", e);
+    }
   }
   return next;
 }

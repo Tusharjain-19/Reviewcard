@@ -70,14 +70,7 @@ export function BrandLogo({
           </defs>
 
           {/* Main Card Base */}
-          <rect
-            x="2"
-            y="4"
-            width="44"
-            height="40"
-            rx="12"
-            fill="url(#rc-card-bg)"
-          />
+          <rect x="2" y="4" width="44" height="40" rx="12" fill="url(#rc-card-bg)" />
 
           {/* Glaze reflection top half */}
           <path
@@ -107,7 +100,7 @@ export function BrandLogo({
           <g transform="translate(13, 14)">
             {/* White background badge disc */}
             <circle cx="11" cy="11" r="10.5" fill="#ffffff" />
-            
+
             {/* Google G Paths (Official Geometry scaled to 16x16) */}
             {/* Blue arm */}
             <path
@@ -131,13 +124,19 @@ export function BrandLogo({
             />
           </g>
 
-          {/* Small 5-Star accent badge on bottom-left */}
-          <path
-            d="M8.5 35L9.6 32.7L12 32.5L10.2 30.9L10.7 28.5L8.5 29.8L6.3 28.5L6.8 30.9L5 32.5L7.4 32.7L8.5 35Z"
-            fill="url(#rc-star-gold)"
-            stroke="#b45309"
-            strokeWidth="0.5"
+          {/* Smart Contactless Chip on bottom-left */}
+          <rect
+            x="6"
+            y="29"
+            width="8"
+            height="6.5"
+            rx="1.5"
+            fill="#fbbf24"
+            stroke="#d97706"
+            strokeWidth="0.8"
           />
+          <line x1="10" y1="29" x2="10" y2="35.5" stroke="#b45309" strokeWidth="0.6" />
+          <line x1="6" y1="32.25" x2="14" y2="32.25" stroke="#b45309" strokeWidth="0.6" />
         </svg>
       </div>
 
@@ -151,9 +150,7 @@ export function BrandLogo({
           >
             Review
           </span>
-          <span
-            className={`font-display font-black tracking-tight ${s.text} text-blue-600 ml-0.5`}
-          >
+          <span className={`font-display font-black tracking-tight ${s.text} text-blue-600 ml-0.5`}>
             Card
           </span>
           <span className="ml-1.5 hidden sm:inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 tracking-wider uppercase border border-blue-200/60">

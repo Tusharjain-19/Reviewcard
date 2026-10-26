@@ -19,7 +19,12 @@ function PrivacyPage() {
       <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <BrandLogo size="md" to="/" />
-          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to</span> Dashboard
@@ -38,7 +43,8 @@ function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-xs sm:text-sm text-slate-600">
-            Last updated: October 2026. How we protect your business information and customer privacy.
+            Last updated: October 2026. How we protect your business information and customer
+            privacy.
           </p>
         </div>
 
@@ -46,34 +52,42 @@ function PrivacyPage() {
           <section className="space-y-2">
             <h2 className="font-display text-base font-bold text-slate-900">1. Account Data</h2>
             <p>
-              ReviewCard stores account details, business profiles, uploaded logo images and saved print
-              designs to provide this service. Your account is secured by Supabase authentication.
+              ReviewCard stores account details, business profiles, uploaded logo images and saved
+              print designs to provide this service. Your account is secured by Supabase
+              authentication.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-base font-bold text-slate-900">2. Customer Interactions & Analytics</h2>
+            <h2 className="font-display text-base font-bold text-slate-900">
+              2. Customer Interactions & Analytics
+            </h2>
             <p>
-              When customers scan physical cards or visit your review page, we record aggregate page views,
-              button taps, source parameters and timestamps. We never record customer names, phone numbers,
-              cookies or exact IP addresses.
+              When customers scan physical cards or visit your review page, we record aggregate page
+              views, button taps, source parameters and timestamps. We never record customer names,
+              phone numbers, cookies or exact IP addresses.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-base font-bold text-slate-900">3. Third-Party Links</h2>
+            <h2 className="font-display text-base font-bold text-slate-900">
+              3. Third-Party Links
+            </h2>
             <p>
-              External buttons route customers directly to third-party services (such as Google Maps, WhatsApp,
-              or Instagram) which operate under their own privacy policies. ReviewCard never intercepts or alters
-              reviews left on Google.
+              External buttons route customers directly to third-party services (such as Google
+              Maps, WhatsApp, or Instagram) which operate under their own privacy policies.
+              ReviewCard never intercepts or alters reviews left on Google.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="font-display text-base font-bold text-slate-900">4. Business Slugs & Data Retention</h2>
+            <h2 className="font-display text-base font-bold text-slate-900">
+              4. Business Slugs & Data Retention
+            </h2>
             <p>
-              Business addresses and print URLs are permanent to ensure existing printed cards always function.
-              Account holders may archive cards or pause destination routing at any time from their dashboard.
+              Business addresses and print URLs are permanent to ensure existing printed cards
+              always function. Account holders may archive cards or pause destination routing at any
+              time from their dashboard.
             </p>
           </section>
 

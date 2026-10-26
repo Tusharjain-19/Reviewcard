@@ -69,7 +69,15 @@ export const saveCloudBusiness = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
-    const clean = { ...data, logo: undefined, logoOriginal: undefined, cover: undefined };
+    // Preserve lightweight compressed logo data URL (under 85 KB) so it is always available immediately
+    const compressedLogo =
+      typeof data.logo === "string" && data.logo.length < 85000 ? data.logo : undefined;
+    const clean = {
+      ...data,
+      logo: compressedLogo,
+      logoOriginal: undefined,
+      cover: undefined,
+    };
     const payload = {
       owner_id: context.userId,
       slug: data.slug,
@@ -191,8 +199,10 @@ export const publicBusiness = createServerFn({ method: "GET" })
     };
     delete b.logoOriginal;
     delete b.logoOriginalPath;
-    // Public images use a stable, publication-checked delivery route rather than expiring links.
-    if (b.logoPath) b.logo = `/api/public/media/${encodeURIComponent(b.slug)}?kind=logo`;
+    // Deliver public logo via stable route if path exists, or directly via compressed data URL
+    if (b.logoPath) {
+      b.logo = `/api/public/media/${encodeURIComponent(b.slug)}?kind=logo`;
+    }
     if (b.coverPath) b.cover = `/api/public/media/${encodeURIComponent(b.slug)}?kind=cover`;
     return b;
   });

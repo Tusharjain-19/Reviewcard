@@ -27,16 +27,18 @@ export function LogoCropper({
       image.src = source;
       await image.decode();
       const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 480;
+      canvas.width = canvas.height = 180;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas unavailable");
-      ctx.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, 480, 480);
-      let compressedLogo = canvas.toDataURL("image/webp", 0.88);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, 180, 180);
+      let compressedLogo = canvas.toDataURL("image/webp", 0.8);
       if (!compressedLogo.startsWith("data:image/webp")) {
         compressedLogo = canvas.toDataURL("image/png");
       }
       onSave(compressedLogo);
-      toast.success("Logo cropped and optimized!");
+      toast.success("Logo cropped and optimized (~5 KB)!");
     } catch {
       toast.error("Couldn't crop that logo. Please try another image.");
     } finally {

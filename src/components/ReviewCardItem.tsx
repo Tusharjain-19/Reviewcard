@@ -1,6 +1,6 @@
 import React from "react";
 
-// Official Contactless NFC Broadcast Wave SVG Icon
+// Official Contactless NFC Broadcast Wave SVG Icon (Real NFC specification)
 export function ContactlessNfcIcon({
   size = 24,
   className = "",
@@ -14,22 +14,36 @@ export function ContactlessNfcIcon({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 400 400"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
       strokeLinecap="round"
-      strokeLinejoin="round"
       className={className}
       style={style}
     >
-      <path d="M6 8a9 9 0 0 1 0 8" />
-      <path d="M10 5a14 14 0 0 1 0 14" />
-      <path d="M14 2a19 19 0 0 1 0 20" />
-      <path d="M2 11a4 4 0 0 1 0 2" />
+      <path d="M 120 140 C 148 170 148 200 120 230" strokeWidth="26" />
+      <path d="M 160 115 C 198 155 198 215 160 255" strokeWidth="28" />
+      <path d="M 200 90 C 248 140 248 230 200 280" strokeWidth="30" />
+      <path d="M 240 65 C 298 125 298 245 240 305" strokeWidth="32" />
+      <text
+        x="200"
+        y="375"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        fontSize="68"
+        fontWeight="900"
+        textAnchor="middle"
+        letterSpacing="6"
+        fill="currentColor"
+        stroke="none"
+      >
+        NFC
+      </text>
     </svg>
   );
 }
+
+import type { CanvasElement } from "./CardCanvaEditor";
+import { STICKER_SVGS } from "./CardCanvaEditor";
 
 export interface ReviewCardItemProps {
   name: string;
@@ -49,6 +63,14 @@ export interface ReviewCardItemProps {
   headerTitle?: string | undefined;
   headerSubtitle?: string | undefined;
   cardId?: string | undefined;
+  customDesign?: string | null | undefined;
+  qrX?: number | undefined;
+  qrY?: number | undefined;
+  qrSize?: number | undefined;
+  qrFrame?: "white" | "none" | "dark" | undefined;
+  cardWidth?: number | undefined;
+  cardHeight?: number | undefined;
+  elements?: CanvasElement[] | undefined;
 }
 
 export function ReviewCardItem({
@@ -68,7 +90,218 @@ export function ReviewCardItem({
   headerTitle,
   headerSubtitle,
   cardId,
+  customDesign,
+  qrX,
+  qrY,
+  qrSize,
+  qrFrame = "white",
+  cardWidth = 105,
+  cardHeight = 148,
+  elements,
 }: ReviewCardItemProps) {
+  // If arbitrary canvas elements are supplied from the Canva Studio, render them directly
+  if (elements && elements.length > 0) {
+    return (
+      <div
+        style={{
+          width: `${cardWidth}mm`,
+          height: `${cardHeight}mm`,
+          borderRadius: "5mm",
+          backgroundColor: color,
+          backgroundImage: customDesign ? `url(${customDesign})` : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          position: "relative",
+        }}
+        className="shadow-sm font-sans select-none"
+      >
+        {elements.map((elem) => {
+          if (elem.type === "text") {
+            return (
+              <div
+                key={elem.id}
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  fontFamily: elem.fontFamily || "Inter, sans-serif",
+                  fontSize: `${(elem.fontSize || 12) * 0.95}pt`,
+                  fontWeight: elem.fontWeight === "bold" ? 700 : 400,
+                  fontStyle: elem.fontStyle === "italic" ? "italic" : "normal",
+                  color: elem.fill || "#ffffff",
+                  textAlign: elem.align || "center",
+                  lineHeight: 1.25,
+                  transform: elem.rotation ? `rotate(${elem.rotation}deg)` : undefined,
+                  transformOrigin: "center center",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {elem.text}
+              </div>
+            );
+          }
+          if (elem.type === "qr") {
+            const framePadding = elem.qrFrame === "white" ? "1.8mm" : "0";
+            return (
+              <div
+                key={elem.id}
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  height: `${elem.height}mm`,
+                  padding: framePadding,
+                  backgroundColor:
+                    elem.qrFrame === "white"
+                      ? "#ffffff"
+                      : elem.qrFrame === "dark"
+                        ? "#0f172a"
+                        : "transparent",
+                  borderRadius: elem.qrFrame !== "none" ? "2.5mm" : "0",
+                  boxShadow: elem.qrFrame !== "none" ? "0 4px 12px rgba(0,0,0,0.18)" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxSizing: "border-box",
+                }}
+              >
+                {qr ? (
+                  <img
+                    src={qr}
+                    alt="QR Code"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "block",
+                      imageRendering: "crisp-edges",
+                    }}
+                  />
+                ) : (
+                  <div style={{ fontSize: "8pt", color: "#94a3b8" }}>Generating QR…</div>
+                )}
+              </div>
+            );
+          }
+          if (elem.type === "logo") {
+            const logoSrc = elem.src || logo;
+            return (
+              <div
+                key={elem.id}
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  height: `${elem.height}mm`,
+                  borderRadius: "50%",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {logoSrc ? (
+                  <img
+                    src={logoSrc}
+                    alt="Logo"
+                    style={{ width: "90%", height: "90%", objectFit: "contain" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: "10pt", fontWeight: 800, color }}>LOGO</span>
+                )}
+              </div>
+            );
+          }
+          if (elem.type === "sticker") {
+            const stickerSrc =
+              elem.src || (elem.stickerType ? STICKER_SVGS[elem.stickerType] : null);
+            if (!stickerSrc) return null;
+            return (
+              <img
+                key={elem.id}
+                src={stickerSrc}
+                alt="Sticker"
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  height: `${elem.height}mm`,
+                  objectFit: "contain",
+                  transform: elem.rotation ? `rotate(${elem.rotation}deg)` : undefined,
+                }}
+              />
+            );
+          }
+          return null;
+        })}
+      </div>
+    );
+  }
+  if (customDesign) {
+    const s = qrSize ?? 40;
+    const posX = qrX ?? (95 - s) / 2;
+    const posY = qrY ?? 68;
+
+    return (
+      <div
+        style={{
+          width: "95mm",
+          height: "136mm",
+          borderRadius: "5mm",
+          backgroundColor: color,
+          backgroundImage: `url(${customDesign})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          boxSizing: "border-box",
+          overflow: "hidden",
+          position: "relative",
+        }}
+        className="shadow-sm font-sans select-none"
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: `${posX}mm`,
+            top: `${posY}mm`,
+            width: `${s}mm`,
+            height: `${s}mm`,
+            padding: qrFrame === "white" ? "1.8mm" : "0",
+            backgroundColor:
+              qrFrame === "white" ? "#ffffff" : qrFrame === "dark" ? "#0f172a" : "transparent",
+            borderRadius: qrFrame !== "none" ? "2.5mm" : "0",
+            boxShadow: qrFrame !== "none" ? "0 4px 12px rgba(0,0,0,0.18)" : "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {qr ? (
+            <img
+              src={qr}
+              alt="QR Code"
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                imageRendering: "crisp-edges",
+              }}
+            />
+          ) : (
+            <div style={{ fontSize: "8pt", color: "#94a3b8" }}>Generating QR…</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -146,25 +379,36 @@ export function ReviewCardItem({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: isUniversal ? "11.5pt" : "13pt",
+              fontSize: isUniversal
+                ? (headerTitle || "").length > 24
+                  ? "10pt"
+                  : "11.5pt"
+                : name.length > 32
+                  ? "9.5pt"
+                  : name.length > 20
+                    ? "11pt"
+                    : "13pt",
               fontWeight: 800,
               lineHeight: 1.15,
-              whiteSpace: "nowrap",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              textOverflow: "ellipsis",
+              wordBreak: "break-word",
               letterSpacing: "-0.01em",
             }}
+            title={isUniversal ? headerTitle || "REVIEW US ON GOOGLE" : name}
           >
             {isUniversal ? headerTitle || "REVIEW US ON GOOGLE" : name}
           </div>
           <div
             style={{
-              fontSize: "7pt",
+              fontSize: (category || "").length > 30 ? "6.2pt" : "7pt",
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               opacity: 0.92,
-              marginTop: "0.8mm",
+              marginTop: "0.6mm",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -241,11 +485,12 @@ export function ReviewCardItem({
         {/* Call-to-action Headline */}
         <div
           style={{
-            fontSize: "10.5pt",
-            fontWeight: 700,
+            fontSize: (headline || "").length > 26 ? "9.5pt" : "10.5pt",
+            fontWeight: 800,
             lineHeight: 1.2,
             color: color,
             marginBottom: "1.8mm",
+            letterSpacing: "-0.01em",
           }}
         >
           {headline}
@@ -263,13 +508,19 @@ export function ReviewCardItem({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
           }}
         >
           {qr ? (
             <img
               src={qr}
               alt="QR Code"
-              style={{ width: "100%", height: "100%", display: "block" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                imageRendering: "crisp-edges",
+              }}
             />
           ) : (
             <div style={{ fontSize: "8pt", color: "#94a3b8" }}>Generating QR…</div>

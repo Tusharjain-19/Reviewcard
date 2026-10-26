@@ -36,13 +36,20 @@ function NotFoundPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
-          <Button asChild className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs gap-2">
+          <Button
+            asChild
+            className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs gap-2"
+          >
             <Link to="/dashboard">
               <Home className="h-4 w-4" />
               Dashboard
             </Link>
           </Button>
-          <Button asChild variant="outline" className="h-10 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 gap-2">
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 gap-2"
+          >
             <Link to="/activate">
               <QrCode className="h-4 w-4 text-blue-600" />
               Activate Card

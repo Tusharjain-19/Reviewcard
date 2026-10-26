@@ -120,7 +120,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "author", content: "ReviewCard" },
       { property: "og:site_name", content: "ReviewCard" },
-      { property: "og:title", content: "ReviewCard — Smart Contactless Google Review Cards & Pages" },
+      {
+        property: "og:title",
+        content: "ReviewCard — Smart Contactless Google Review Cards & Pages",
+      },
       {
         property: "og:description",
         content:

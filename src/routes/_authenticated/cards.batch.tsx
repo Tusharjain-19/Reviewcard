@@ -9,9 +9,7 @@ import {
   Save,
   Check,
   Scissors,
-  Star,
   RefreshCw,
-  Sparkles,
   Heart,
   Palette,
   ExternalLink,
@@ -323,7 +321,12 @@ function BatchCardStudio() {
       {/* Top Application Bar */}
       <header className="print:hidden border-b bg-white px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 sticky top-0 z-30 shadow-xs max-w-full overflow-x-hidden">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <Button variant="ghost" size="sm" asChild className="gap-1 text-slate-600 h-9 px-2 sm:px-3 text-xs">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="gap-1 text-slate-600 h-9 px-2 sm:px-3 text-xs"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -351,7 +354,9 @@ function BatchCardStudio() {
             className="h-9 px-2.5 sm:px-3 gap-1.5 border-emerald-300 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100 font-semibold text-xs"
           >
             <Save className="h-4 w-4 text-emerald-600" />
-            <span className="hidden sm:inline">{savingDb ? "Saving..." : `Save to DB (${codes.length})`}</span>
+            <span className="hidden sm:inline">
+              {savingDb ? "Saving..." : `Save to DB (${codes.length})`}
+            </span>
             <span className="sm:hidden">{savingDb ? "..." : `Save (${codes.length})`}</span>
           </Button>
 
@@ -362,7 +367,9 @@ function BatchCardStudio() {
             className="h-9 px-2.5 sm:px-3.5 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs"
           >
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">{exportingPdf ? "Generating..." : `Export PDF (${codes.length})`}</span>
+            <span className="hidden sm:inline">
+              {exportingPdf ? "Generating..." : `Export PDF (${codes.length})`}
+            </span>
             <span className="sm:hidden">{exportingPdf ? "..." : `PDF (${codes.length})`}</span>
           </Button>
         </div>
@@ -668,8 +675,8 @@ function BatchCardStudio() {
 
             <label className="flex items-center justify-between text-sm cursor-pointer">
               <span className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
-                5-Star Rating Badge
+                <span className="text-amber-500 font-bold text-xs">★★★★★</span>
+                5-Star Rating Row
               </span>
               <input
                 type="checkbox"

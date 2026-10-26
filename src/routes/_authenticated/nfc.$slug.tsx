@@ -31,7 +31,12 @@ function NfcPage() {
       <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <BrandLogo size="md" to="/dashboard" />
-          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to</span> Dashboard
@@ -54,34 +59,34 @@ function NfcPage() {
           </p>
         </div>
 
-      <div className="space-y-3">
-        <label className="text-sm font-medium">Encoded URL</label>
-        <p className="break-all rounded-md border bg-muted/40 p-4 font-mono text-sm">{url}</p>
-        <Button onClick={handleCopy} className="gap-2">
-          <Copy className="h-4 w-4" />
-          Copy URL
-        </Button>
-      </div>
+        <div className="space-y-3">
+          <label className="text-sm font-medium">Encoded URL</label>
+          <p className="break-all rounded-md border bg-muted/40 p-4 font-mono text-sm">{url}</p>
+          <Button onClick={handleCopy} className="gap-2">
+            <Copy className="h-4 w-4" />
+            Copy URL
+          </Button>
+        </div>
 
-      <div className="rounded-lg border bg-card p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Encoding Instructions</h2>
-        <ol className="list-decimal space-y-3 pl-5 text-sm text-muted-foreground">
-          <li>Open NFC Tools (or any NFC tag writer app) on an NFC-enabled smartphone.</li>
-          <li>
-            Choose <strong>Write → Add a record → URL / URI</strong>, then paste the copied address
-            above.
-          </li>
-          <li>
-            Write to an <strong>NTAG213</strong> or <strong>NTAG215</strong> tag and scan to test it
-            before locking.
-          </li>
-          <li>
-            Lock the tag after testing. Use an anti-metal / on-metal tag if placing on metallic
-            surfaces.
-          </li>
-        </ol>
-      </div>
-    </main>
-  </div>
-);
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <h2 className="font-semibold text-lg">Encoding Instructions</h2>
+          <ol className="list-decimal space-y-3 pl-5 text-sm text-muted-foreground">
+            <li>Open NFC Tools (or any NFC tag writer app) on an NFC-enabled smartphone.</li>
+            <li>
+              Choose <strong>Write → Add a record → URL / URI</strong>, then paste the copied
+              address above.
+            </li>
+            <li>
+              Write to an <strong>NTAG213</strong> or <strong>NTAG215</strong> tag and scan to test
+              it before locking.
+            </li>
+            <li>
+              Lock the tag after testing. Use an anti-metal / on-metal tag if placing on metallic
+              surfaces.
+            </li>
+          </ol>
+        </div>
+      </main>
+    </div>
+  );
 }

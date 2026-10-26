@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Sparkles,
   Check,
   Radio,
   ArrowRight,
@@ -207,7 +206,7 @@ function ActivateCardPage() {
       <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-md rounded-2xl border bg-white p-8 text-center shadow-xl animate-in fade-in zoom-in-95 duration-200">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <Sparkles className="h-8 w-8" />
+            <ShieldCheck className="h-8 w-8" />
           </div>
           <h1 className="mt-4 font-display text-2xl font-bold text-slate-900">
             Card Successfully Activated!

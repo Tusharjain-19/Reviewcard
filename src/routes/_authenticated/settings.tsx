@@ -9,7 +9,8 @@ import { pageMeta } from "@/lib/meta";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => pageMeta("Account Settings", "Manage your profile, public name and ReviewCard preferences."),
+  head: () =>
+    pageMeta("Account Settings", "Manage your profile, public name and ReviewCard preferences."),
   loader: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) {
@@ -66,7 +67,12 @@ function SettingsPage() {
       <header className="sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-4 shadow-2xs">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <BrandLogo size="md" to="/dashboard" />
-          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs text-slate-600 hover:text-slate-900">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to</span> Dashboard
@@ -85,9 +91,15 @@ function SettingsPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSave} className="rounded-2xl border bg-white p-5 sm:p-6 shadow-xs space-y-5">
+        <form
+          onSubmit={handleSave}
+          className="rounded-2xl border bg-white p-5 sm:p-6 shadow-xs space-y-5"
+        >
           <div className="space-y-1.5">
-            <label htmlFor="displayName" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <label
+              htmlFor="displayName"
+              className="text-xs font-bold uppercase tracking-wider text-slate-700"
+            >
               Display Name
             </label>
             <Input

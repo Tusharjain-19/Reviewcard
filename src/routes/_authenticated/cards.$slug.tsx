@@ -1,32 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense, useRef } from "react";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
   Printer,
   Download,
   Save,
-  Check,
-  Scissors,
-  Radio,
-  Star,
-  Copy,
-  Palette,
-  Pipette,
-  Store,
-  Sparkles,
-  Heart,
+  Move,
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Eye,
-  Layers,
+  Scissors,
+  Check,
+  Palette,
+  SlidersHorizontal,
+  ChevronRight,
+  Radio,
+  ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ownedBusinessQuery } from "@/lib/queries";
 import { shortUrl } from "@/lib/reviewcard";
-import { exportA4SheetPdf } from "@/lib/print";
+import { exportReviewCardPdf } from "@/lib/print";
+import { CardExportDialog } from "@/components/CardExportDialog";
+import {
+  type CanvasElement,
+  createDefaultA6Elements,
+  STICKER_SVGS,
+  isLightColor,
+} from "@/components/CardCanvaEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pageMeta } from "@/lib/meta";
@@ -34,87 +38,36 @@ import { toast } from "sonner";
 import { ReviewCardItem, ContactlessNfcIcon } from "@/components/ReviewCardItem";
 import { BrandLogo } from "@/components/BrandLogo";
 
+// Client-only lazy import of Konva Canva Editor (preserves SSR safety per AGENTS.md rules)
+const CardCanvaEditor = lazy(() =>
+  import("@/components/CardCanvaEditor").then((m) => ({ default: m.CardCanvaEditor })),
+);
+
 export const Route = createFileRoute("/_authenticated/cards/$slug")({
-  head: () => pageMeta("Card Studio", "Design and print Google Review cards and A4 print sheets."),
+  head: () =>
+    pageMeta(
+      "Card Studio",
+      "Choose default Google Review card design or customize in Canva Studio.",
+    ),
   loader: ({ params, context }) =>
     context.queryClient.ensureQueryData(ownedBusinessQuery(params.slug)),
   component: CardStudio,
 });
 
-// Color conversion helpers for Google-style color picker
-function hexToRgb(hex: string) {
-  const clean = hex.replace("#", "");
-  if (clean.length !== 6 && clean.length !== 3) return { r: 26, g: 115, b: 232 };
-  const expanded =
-    clean.length === 3
-      ? clean
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : clean;
-  const num = parseInt(expanded, 16);
-  if (isNaN(num)) return { r: 26, g: 115, b: 232 };
-  return {
-    r: (num >> 16) & 255,
-    g: (num >> 8) & 255,
-    b: num & 255,
-  };
-}
+const QUICK_THEMES = [
+  { id: "clean-white", name: "Minimal Light", color: "#ffffff", tag: "Pure Light" },
+  { id: "google-blue", name: "Google Blue", color: "#1a73e8", tag: "Official" },
+  { id: "emerald", name: "Artisan Emerald", color: "#065f46", tag: "Cafe & Organic" },
+  { id: "ruby", name: "Ruby Bistro", color: "#991b1b", tag: "Restaurant" },
+  { id: "amber", name: "Warm Amber", color: "#d97706", tag: "Coffee & Bakery" },
+  { id: "onyx", name: "Luxury Onyx", color: "#18181b", tag: "Modern Dark" },
+];
 
-function rgbToHsl(r: number, g: number, b: number) {
-  const red = r / 255;
-  const green = g / 255;
-  const blue = b / 255;
-  const max = Math.max(red, green, blue);
-  const min = Math.min(red, green, blue);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case red:
-        h = (green - blue) / d + (green < blue ? 6 : 0);
-        break;
-      case green:
-        h = (blue - red) / d + 2;
-        break;
-      case blue:
-        h = (red - green) / d + 4;
-        break;
-    }
-    h /= 6;
-  }
-  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
-}
-
-function rgbToCmyk(r: number, g: number, b: number) {
-  if (r === 0 && g === 0 && b === 0) return { c: 0, m: 0, y: 0, k: 100 };
-  const c1 = 1 - r / 255;
-  const m1 = 1 - g / 255;
-  const y1 = 1 - b / 255;
-  const k = Math.min(c1, Math.min(m1, y1));
-  if (k === 1) return { c: 0, m: 0, y: 0, k: 100 };
-  return {
-    c: Math.round(((c1 - k) / (1 - k)) * 100),
-    m: Math.round(((m1 - k) / (1 - k)) * 100),
-    y: Math.round(((y1 - k) / (1 - k)) * 100),
-    k: Math.round(k * 100),
-  };
-}
-
-const THEME_PALETTES = [
-  { name: "Google Blue", hex: "#1a73e8" },
-  { name: "Google Red", hex: "#ea4335" },
-  { name: "Google Amber", hex: "#fbbc05" },
-  { name: "Google Green", hex: "#34a853" },
-  { name: "Luxury Onyx", hex: "#18181b" },
-  { name: "Forest Emerald", hex: "#065f46" },
-  { name: "Ruby Burgundy", hex: "#991b1b" },
-  { name: "Royal Indigo", hex: "#4338ca" },
-  { name: "Sunset Coral", hex: "#f97316" },
-  { name: "Deep Violet", hex: "#7c3aed" },
+const HEADLINE_SUGGESTIONS = [
+  "Review Us On Google",
+  "How Was Your Experience?",
+  "Tap Phone or Scan QR",
+  "Loved Your Visit? Review Us",
 ];
 
 function CardStudio() {
@@ -122,95 +75,157 @@ function CardStudio() {
   const { data: b } = useSuspenseQuery(ownedBusinessQuery(slug));
 
   const initialUrl = typeof window !== "undefined" ? shortUrl(slug, "qr") : `/r/${slug}`;
+  const [currentTargetUrl] = useState(initialUrl);
 
-  // Customization state
+  // User-friendly view mode: "default" (Normal provided card) | "canva" (Custom Drag & Drop Studio) | "a4" (Print Sheet)
+  const [viewMode, setViewMode] = useState<"default" | "canva" | "a4">("default");
+
+  // Card customization state (Default to Light Mode #ffffff)
   const [bizName, setBizName] = useState(b.name || "Business Name");
   const [category, setCategory] = useState(b.category || "Local Business");
   const [headline, setHeadline] = useState("Review Us On Google");
-  const [color, setColor] = useState(b.theme?.primary || "#1a73e8");
-  const [qrDotColor, setQrDotColor] = useState("#000000");
-  const [qrBgColor, setQrBgColor] = useState("#ffffff");
+  const [color, setColor] = useState("#ffffff"); // Pure Light Mode default
+  const [qrDotColor] = useState("#000000");
+  const [qrBgColor] = useState("#ffffff");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [includeNfc, setIncludeNfc] = useState(true);
   const [includeStars, setIncludeStars] = useState(true);
-  const [showCutGuides, setShowCutGuides] = useState(true);
-  const [viewMode, setViewMode] = useState<"a4" | "single">("a4");
+  const [customDesign, setCustomDesign] = useState<string | null>(null);
+  const [customDesignName, setCustomDesignName] = useState<string>("");
+  const [customQrX, setCustomQrX] = useState(32.5);
+  const [customQrY, setCustomQrY] = useState(74);
+  const [customQrSize, setCustomQrSize] = useState(40);
+  const [customQrFrame, setCustomQrFrame] = useState<"white" | "none" | "dark">("white");
+
+  // Export & modal state
   const [saving, setSaving] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
-  const [copiedHex, setCopiedHex] = useState(false);
-  const [mobileTab, setMobileTab] = useState<"controls" | "preview">("preview");
-  const [zoomScale, setZoomScale] = useState(1);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(0.85);
+  const [showCutGuides, setShowCutGuides] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
-  // Auto-fit responsive zoom scale on mobile/tablet mount
+  // Hidden file input for custom background artwork
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const w = window.innerWidth;
-      if (w < 400) setZoomScale(0.38);
-      else if (w < 640) setZoomScale(0.42);
-      else if (w < 1024) setZoomScale(0.72);
-      else setZoomScale(1);
-    }
+    setIsClient(true);
   }, []);
 
-  const handleFitScreen = () => {
-    if (typeof window === "undefined") return;
-    const padding = window.innerWidth < 640 ? 24 : 48;
-    const availableWidth = window.innerWidth - (window.innerWidth >= 1024 ? 384 : 0) - padding;
-    const target = Math.max(0.35, Math.min(1.2, Number((availableWidth / 794).toFixed(2))));
-    setZoomScale(target);
-  };
-
-  // Card Edition State (Personalized vs Universal Card without business name)
-  const [cardEdition, setCardEdition] = useState<"personalized" | "universal">("personalized");
-  const [universalTemplate, setUniversalTemplate] = useState<"google" | "star" | "nfc" | "heart">(
-    "google",
+  // Canva Elements State (Interactive A6 elements with Light Mode default)
+  const [elements, setElements] = useState<CanvasElement[]>(() =>
+    createDefaultA6Elements({
+      businessName: b.name || "Business Name",
+      category: b.category || "Local Business",
+      headline: "Review Us On Google",
+      logoUrl: b.logo,
+      cardColor: "#ffffff",
+    }),
   );
-  const [universalTitle, setUniversalTitle] = useState("GOOGLE REVIEWS");
-  const [universalSubtitle, setUniversalSubtitle] = useState("OFFICIAL REVIEW CARD");
-  const [qrDestination, setQrDestination] = useState<"review" | "activate">("review");
 
-  // Determine QR URL: direct review page or phone activation onboarding
-  const currentTargetUrl =
-    qrDestination === "activate"
-      ? typeof window !== "undefined"
-        ? `${window.location.origin}/activate/${slug}`
-        : `/activate/${slug}`
-      : typeof window !== "undefined"
-        ? shortUrl(slug, "qr")
-        : `/r/${slug}`;
-
-  // Apply Universal / Pre-Printed Design Template
-  const applyUniversalTemplate = (tpl: "google" | "star" | "nfc" | "heart") => {
-    setUniversalTemplate(tpl);
-    if (tpl === "google") {
-      setUniversalTitle("GOOGLE REVIEWS");
-      setUniversalSubtitle("OFFICIAL REVIEW CARD");
-      setHeadline("Review Us On Google");
-      setColor("#1a73e8");
-      setQrDotColor("#000000");
-    } else if (tpl === "star") {
-      setUniversalTitle("RATE OUR SERVICE");
-      setUniversalSubtitle("YOUR 5-STAR REVIEW MATTERS");
-      setHeadline("Rate Us 5 Stars on Google");
-      setColor("#d97706");
-      setQrDotColor("#18181b");
-    } else if (tpl === "nfc") {
-      setUniversalTitle("TAP OR SCAN TO REVIEW");
-      setUniversalSubtitle("NO APP NEEDED · 10 SECONDS");
-      setHeadline("Tap Phone or Scan QR Code");
-      setColor("#18181b");
-      setQrDotColor("#1a73e8");
-    } else if (tpl === "heart") {
-      setUniversalTitle("YOUR OPINION MATTERS");
-      setUniversalSubtitle("HELP US SERVE YOU BETTER");
-      setHeadline("How Was Your Experience?");
-      setColor("#065f46");
-      setQrDotColor("#065f46");
+  // Synchronized element updates
+  const handleElementsChange = (newElements: CanvasElement[]) => {
+    setElements(newElements);
+    const nameEl = newElements.find((e) => e.id === "elem-biz-name");
+    if (nameEl?.text && nameEl.text !== bizName) {
+      setBizName(nameEl.text);
+    }
+    const catEl = newElements.find((e) => e.id === "elem-biz-cat");
+    if (catEl?.text && catEl.text !== category) {
+      setCategory(catEl.text);
+    }
+    const headEl = newElements.find((e) => e.id === "elem-cta-headline");
+    if (headEl?.text && headEl.text !== headline) {
+      setHeadline(headEl.text);
+    }
+    const qrEl = newElements.find((e) => e.id === "elem-qr-code");
+    if (qrEl) {
+      setCustomQrX(qrEl.x);
+      setCustomQrY(qrEl.y);
+      setCustomQrSize(qrEl.width);
+      if (qrEl.qrFrame) setCustomQrFrame(qrEl.qrFrame);
     }
   };
-  const handleTemplateSelect = applyUniversalTemplate;
 
-  // Generate crisp QR code whenever target URL, qrDotColor, or qrBgColor changes (high-speed SVG)
+  // Color change adapter with adaptive element colors
+  const handleColorSelect = (newColor: string) => {
+    setColor(newColor);
+    const light = isLightColor(newColor);
+    const newTextFill = light ? "#0f172a" : "#ffffff";
+    const newSubFill = light ? "#475569" : "rgba(255, 255, 255, 0.90)";
+    setElements((prev) =>
+      prev.map((el) => {
+        if (el.id === "elem-biz-name" || el.id === "elem-cta-headline") {
+          return { ...el, fill: newTextFill };
+        }
+        if (el.id === "elem-biz-cat" || el.id === "elem-footer-note") {
+          return { ...el, fill: newSubFill };
+        }
+        if (el.id === "elem-sticker-nfc") {
+          return {
+            ...el,
+            stickerType: light ? "nfc" : "nfcWhite",
+            src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
+          };
+        }
+        return el;
+      }),
+    );
+  };
+
+  const handleHeadlineSelect = (text: string) => {
+    setHeadline(text);
+    setElements((prev) => prev.map((el) => (el.id === "elem-cta-headline" ? { ...el, text } : el)));
+  };
+
+  const handleToggleNfc = (checked: boolean) => {
+    setIncludeNfc(checked);
+    const light = isLightColor(color);
+    setElements((prev) => {
+      if (checked) {
+        if (prev.some((e) => e.id === "elem-sticker-nfc")) return prev;
+        return [
+          ...prev,
+          {
+            id: "elem-sticker-nfc",
+            type: "sticker" as const,
+            stickerType: light ? ("nfc" as const) : ("nfcWhite" as const),
+            x: 45.5,
+            y: 119,
+            width: 14,
+            height: 14,
+            src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
+          },
+        ];
+      }
+      return prev.filter((e) => e.id !== "elem-sticker-nfc");
+    });
+  };
+
+  const handleToggleStars = (checked: boolean) => {
+    setIncludeStars(checked);
+    setElements((prev) => {
+      if (checked) {
+        if (prev.some((e) => e.id === "elem-sticker-stars")) return prev;
+        return [
+          ...prev,
+          {
+            id: "elem-sticker-stars",
+            type: "sticker" as const,
+            stickerType: "star5" as const,
+            x: 27.5,
+            y: 62,
+            width: 50,
+            height: 8.5,
+            src: STICKER_SVGS.star5,
+          },
+        ];
+      }
+      return prev.filter((e) => e.id !== "elem-sticker-stars");
+    });
+  };
+
+  // Generate crisp QR code whenever target URL changes
   useEffect(() => {
     QRCode.toString(currentTargetUrl, {
       type: "svg",
@@ -227,6 +242,30 @@ function CardStudio() {
       .catch((err) => console.error("QR Code generation error:", err));
   }, [currentTargetUrl, qrDotColor, qrBgColor]);
 
+  // Artwork file upload handler
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG, WebP, SVG)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setCustomDesign(dataUrl);
+      setCustomDesignName(file.name);
+      toast.success("Card artwork uploaded successfully");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveCustomDesign = () => {
+    setCustomDesign(null);
+    setCustomDesignName("");
+    toast.success("Custom artwork removed");
+  };
+
   // Save design to Supabase card_designs table
   const handleSave = async () => {
     if (!b.id) return;
@@ -239,14 +278,12 @@ function CardStudio() {
         color,
         qrDotColor,
         qrBgColor,
-        cardEdition,
-        universalTemplate,
-        universalTitle,
-        universalSubtitle,
-        qrDestination,
-        includeNfc,
-        includeStars,
-        showCutGuides,
+        customDesign,
+        customQrX,
+        customQrY,
+        customQrSize,
+        customQrFrame,
+        elements,
       };
 
       const { data: user } = await supabase.auth.getUser();
@@ -255,12 +292,12 @@ function CardStudio() {
       const { error } = await supabase.from("card_designs").insert({
         business_id: b.id,
         owner_id: user.user.id,
-        name: `${cardEdition === "universal" ? universalTitle : bizName} | A4 Print Card`,
+        name: `${bizName} | Canva A6 Review Card`,
         design: designPayload,
       });
 
       if (error) throw error;
-      toast.success("Card design saved successfully");
+      toast.success("Card design saved to cloud");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save design");
     } finally {
@@ -268,28 +305,44 @@ function CardStudio() {
     }
   };
 
-  // Export A4 PDF
-  const handleDownloadPdf = async () => {
+  // Open Export PDF Dialog (supports 1 A6 card, 2 on A4, 4 on A4, copies, and cut marks)
+  const handleDownloadPdf = () => {
+    setExportDialogOpen(true);
+  };
+
+  // Execute PDF generation from dialog
+  const handleRunExport = async (options: {
+    copies: number;
+    layout: "a6-single" | "a4-2cards" | "a4-4cards";
+    showCutGuidelines: boolean;
+  }) => {
     setExportingPdf(true);
     try {
-      await exportA4SheetPdf({
-        name: cardEdition === "universal" ? universalTitle : bizName,
-        category: cardEdition === "universal" ? universalSubtitle : category,
-        url: currentTargetUrl,
-        color,
-        qrDotColor,
-        qrBgColor,
-        headline,
-        includeNfc,
-        includeStars,
-        logo: cardEdition === "universal" ? undefined : b.logo,
-        isUniversal: cardEdition === "universal",
-        universalBadge: universalTemplate,
-        universalTitle,
-        universalSubtitle,
-        cardId: b.slug.toUpperCase(),
+      await exportReviewCardPdf({
+        card: {
+          name: bizName,
+          category,
+          url: currentTargetUrl,
+          color,
+          qrDotColor,
+          qrBgColor,
+          headline,
+          includeNfc,
+          includeStars,
+          logo: b.logo,
+          cardId: b.slug.toUpperCase(),
+          customDesign,
+          qrX: customQrX,
+          qrY: customQrY,
+          qrSize: customQrSize,
+          qrFrame: customQrFrame,
+          elements,
+        },
+        copies: options.copies,
+        layout: options.layout,
+        showCutGuidelines: options.showCutGuidelines,
       });
-      toast.success("A4 PDF sheet exported");
+      toast.success("Card PDF downloaded successfully");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "PDF export failed");
     } finally {
@@ -297,18 +350,13 @@ function CardStudio() {
     }
   };
 
-  const copyColorHex = () => {
-    if (navigator?.clipboard) {
-      navigator.clipboard.writeText(color);
-      setCopiedHex(true);
-      toast.success(`Copied ${color} to clipboard`);
-      setTimeout(() => setCopiedHex(false), 2000);
-    }
+  const handleFitScreen = () => {
+    if (typeof window === "undefined") return;
+    const availableWidth = window.innerWidth - 64;
+    const a4PixelWidth = 794;
+    const scale = Math.min(1.2, Math.max(0.4, availableWidth / a4PixelWidth));
+    setZoomScale(Number(scale.toFixed(2)));
   };
-
-  const rgb = hexToRgb(color);
-  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-  const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
 
   const initials =
     bizName
@@ -319,756 +367,438 @@ function CardStudio() {
       .toUpperCase() || "RC";
 
   return (
-    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-50 text-slate-900">
-      {/* ---------------- SCREEN HEADER ---------------- */}
-      <header className="print:hidden sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 border-b bg-white px-3 sm:px-6 py-3 shadow-xs max-w-full overflow-x-hidden">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-muted-foreground h-9 px-2 sm:px-3 text-xs">
+    <div className="min-h-screen w-full bg-[#f1f3f5] text-slate-900 flex flex-col overflow-x-hidden font-sans">
+      {/* Hidden File Input for Custom Background Uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
+      {/* ---------------- 1. TOP HEADER WITH DESIGN MODE SELECTOR ---------------- */}
+      <header className="print:hidden sticky top-0 z-40 h-14 bg-white border-b border-slate-200/90 px-3 sm:px-6 flex items-center justify-between gap-3 shadow-2xs shrink-0">
+        {/* Left: Back Link & Business Title */}
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink-0">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-slate-600 hover:text-slate-900 h-8 px-2 sm:px-2.5 text-xs font-semibold"
+          >
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
           </Button>
+
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+
           <div className="flex items-center gap-2 min-w-0">
             <BrandLogo size="sm" showWordmark={false} to="/dashboard" />
-            <h1 className="font-display text-sm md:text-base font-bold truncate max-w-[140px] sm:max-w-xs">
-              {b.name} <span className="text-muted-foreground font-normal hidden sm:inline">| Print Studio</span>
-            </h1>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className="font-display text-xs sm:text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-xs">
+                {b.name}
+              </h1>
+              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                A6 Light Mode
+              </span>
+            </div>
           </div>
         </div>
 
+        {/* Center: Design Mode Switcher (Default Design vs Custom Canva Studio vs A4 Sheet) */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80 shrink-0">
+          <button
+            type="button"
+            onClick={() => setViewMode("default")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === "default"
+                ? "bg-white text-slate-900 shadow-2xs border border-slate-200"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Palette className="h-3.5 w-3.5 text-blue-600" />
+            <span>Default Design</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode("canva")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === "canva"
+                ? "bg-white text-purple-700 shadow-2xs border border-purple-200"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Move className="h-3.5 w-3.5 text-purple-600" />
+            <span>Custom Canva Studio</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode("a4")}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === "a4"
+                ? "bg-white text-blue-700 shadow-2xs border border-blue-200"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Printer className="h-3.5 w-3.5 text-blue-600" />
+            <span className="hidden sm:inline">A4 Print Sheet</span>
+            <span className="sm:hidden">A4</span>
+          </button>
+        </div>
+
+        {/* Right: Save & Export PDF Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="h-9 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold"
+            className="h-8 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border-slate-200"
+            title="Save card design to cloud"
           >
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">{saving ? "Saving..." : "Save Design"}</span>
-            <span className="sm:hidden">{saving ? "..." : "Save"}</span>
+            <Save className="h-3.5 w-3.5 text-slate-500" />
+            <span className="hidden sm:inline">{saving ? "Saving…" : "Save Design"}</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
+          {/* Canva Purple Export PDF Button */}
+          <button
+            type="button"
             onClick={handleDownloadPdf}
             disabled={exportingPdf}
-            className="h-9 px-2.5 sm:px-3 gap-1.5 text-xs font-semibold"
+            className="h-8 px-3 sm:px-3.5 gap-1.5 text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xs flex items-center cursor-pointer transition-all active:scale-98 disabled:opacity-50"
+            title="Download print-ready PDF (A6 single or A4 sheet)"
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">{exportingPdf ? "Generating..." : "Export PDF"}</span>
-            <span className="sm:hidden">{exportingPdf ? "..." : "PDF"}</span>
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => window.print()}
-            className="h-9 px-2.5 sm:px-3.5 gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
-          >
-            <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">Print A4 Sheet</span>
-            <span className="sm:hidden">Print</span>
-          </Button>
+            <Download className="h-3.5 w-3.5" />
+            <span>{exportingPdf ? "Generating…" : "Export PDF"}</span>
+          </button>
         </div>
       </header>
 
-      {/* Mobile Tab Switcher (Visible only on mobile/tablet screens < 1024px) */}
-      <div className="lg:hidden print:hidden border-b bg-white p-2 sticky top-14.25 z-30 flex gap-2 shadow-2xs">
-        <button
-          type="button"
-          onClick={() => setMobileTab("controls")}
-          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === "controls"
-              ? "bg-slate-900 text-white shadow-xs"
-              : "bg-slate-100 text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Palette className="h-4 w-4" />
-          Customize Design
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobileTab("preview")}
-          className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === "preview"
-              ? "bg-blue-600 text-white shadow-xs"
-              : "bg-slate-100 text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Radio className="h-4 w-4" />
-          Live Preview
-        </button>
-      </div>
-
-      {/* ---------------- MAIN LAYOUT ---------------- */}
-      <div className="mx-auto flex flex-col lg:flex-row print:block">
-        {/* Left Sidebar Controls */}
-        <aside
-          className={`print:hidden w-full lg:w-96 border-r bg-white p-4 sm:p-6 space-y-6 shrink-0 ${
-            mobileTab === "preview" ? "hidden lg:block" : "block"
-          }`}
-        >
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Sheet & Card Layout
-            </h2>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Button
-                variant={viewMode === "a4" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("a4")}
-                className="justify-start gap-2"
-              >
-                <Printer className="h-4 w-4" />
-                A4 (4 Cards)
-              </Button>
-              <Button
-                variant={viewMode === "single" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("single")}
-                className="justify-start gap-2"
-              >
-                <Radio className="h-4 w-4" />
-                Single Card
-              </Button>
-            </div>
-          </div>
-
-          {/* Card Edition Selection: Personalized vs Universal Pre-Printed */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Card Edition
-              </h2>
-              <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                {cardEdition === "universal" ? "Blank / Activation Mode" : "Branded Business"}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setCardEdition("personalized")}
-                className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
-                  cardEdition === "personalized"
-                    ? "border-blue-600 bg-blue-50/70 text-blue-900 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 text-slate-700 bg-slate-50/50"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 font-bold text-xs">
-                  <Store className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Personalized</span>
-                </div>
-                <p className="text-[10px] text-slate-500 leading-tight">
-                  With business name & logo
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCardEdition("universal")}
-                className={`p-2.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
-                  cardEdition === "universal"
-                    ? "border-blue-600 bg-blue-50/70 text-blue-900 shadow-xs ring-1 ring-blue-600"
-                    : "border-slate-200 hover:border-slate-300 text-slate-700 bg-slate-50/50"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 font-bold text-xs">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  <span>Universal</span>
-                </div>
-                <p className="text-[10px] text-slate-500 leading-tight">
-                  No business name · Phone activate
-                </p>
-              </button>
-            </div>
-
-            {/* Universal Template Styles & Activation Routing */}
-            {cardEdition === "universal" && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-3 space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-blue-900">Card Design Style</span>
-                    <span className="text-[10px] text-blue-600 font-medium">4 Styles</span>
+      {/* ---------------- 2. MAIN WORKSPACE VIEW ---------------- */}
+      <div className="flex-1 w-full flex flex-col overflow-hidden">
+        {viewMode === "default" ? (
+          /* =========================================================================
+             VIEW 1: DEFAULT DESIGN (Provided standard clean review card)
+             ========================================================================= */
+          <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-start animate-fade-in">
+            <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Easy Controls & Quick Tweaks */}
+              <div className="lg:col-span-5 space-y-4">
+                {/* Intro Card */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">Default Review Card</h2>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Clean, standard Light Mode A6 layout (105 × 148 mm).
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                      Ready to Print
+                    </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleTemplateSelect("google")}
-                      className={`p-2 rounded-lg border text-left text-xs transition-all flex items-center gap-2 ${
-                        universalTemplate === "google"
-                          ? "bg-white border-blue-600 shadow-xs font-bold text-blue-900 ring-1 ring-blue-500"
-                          : "bg-white/80 border-slate-200 hover:bg-white text-slate-700"
-                      }`}
-                    >
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] font-black text-blue-600">
-                        G
+
+                  {/* 1-Click Color Themes */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Card Theme Color</span>
+                      <span className="text-[10px] font-mono text-slate-400 uppercase">
+                        {color}
                       </span>
-                      <span className="truncate text-[11px]">Google Classic</span>
-                    </button>
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {QUICK_THEMES.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => handleColorSelect(t.color)}
+                          className={`p-2 rounded-xl border transition-all text-left flex items-center gap-2 cursor-pointer ${
+                            color.toLowerCase() === t.color.toLowerCase()
+                              ? "border-blue-600 bg-blue-50/50 shadow-2xs"
+                              : "border-slate-200 bg-white hover:border-slate-300"
+                          }`}
+                        >
+                          <div
+                            className="h-5 w-5 rounded-md border border-slate-300 shrink-0"
+                            style={{ backgroundColor: t.color }}
+                          />
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-slate-800 truncate">
+                              {t.name}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleTemplateSelect("star")}
-                      className={`p-2 rounded-lg border text-left text-xs transition-all flex items-center gap-2 ${
-                        universalTemplate === "star"
-                          ? "bg-white border-amber-600 shadow-xs font-bold text-amber-900 ring-1 ring-amber-500"
-                          : "bg-white/80 border-slate-200 hover:bg-white text-slate-700"
-                      }`}
-                    >
-                      <Star className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
-                      <span className="truncate text-[11px]">5-Star Gold</span>
-                    </button>
+                  {/* Review Headline Selector */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <label className="text-xs font-bold text-slate-700">Review Headline</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {HEADLINE_SUGGESTIONS.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleHeadlineSelect(s)}
+                          className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                            headline === s
+                              ? "bg-slate-900 text-white border-slate-900 font-bold"
+                              : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                    <Input
+                      value={headline}
+                      onChange={(e) => handleHeadlineSelect(e.target.value)}
+                      placeholder="Custom headline..."
+                      className="h-8 text-xs mt-1.5 bg-slate-50"
+                      maxLength={40}
+                    />
+                  </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleTemplateSelect("nfc")}
-                      className={`p-2 rounded-lg border text-left text-xs transition-all flex items-center gap-2 ${
-                        universalTemplate === "nfc"
-                          ? "bg-white border-slate-900 shadow-xs font-bold text-slate-900 ring-1 ring-slate-800"
-                          : "bg-white/80 border-slate-200 hover:bg-white text-slate-700"
-                      }`}
-                    >
-                      <ContactlessNfcIcon size={16} className="text-slate-800 shrink-0" />
-                      <span className="truncate text-[11px]">Smart NFC</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleTemplateSelect("heart")}
-                      className={`p-2 rounded-lg border text-left text-xs transition-all flex items-center gap-2 ${
-                        universalTemplate === "heart"
-                          ? "bg-white border-emerald-600 shadow-xs font-bold text-emerald-900 ring-1 ring-emerald-500"
-                          : "bg-white/80 border-slate-200 hover:bg-white text-slate-700"
-                      }`}
-                    >
-                      <Heart className="h-4 w-4 text-emerald-600 fill-emerald-600 shrink-0" />
-                      <span className="truncate text-[11px]">Feedback</span>
-                    </button>
+                  {/* Badges Toggles */}
+                  <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                    <label className="text-xs font-bold text-slate-700 block">Card Badges</label>
+                    <div className="flex items-center justify-between text-xs py-1">
+                      <span className="flex items-center gap-2 text-slate-700 font-medium">
+                        <ContactlessNfcIcon size={16} className="text-blue-600" />
+                        Real NFC "Tap Phone" Logo
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={includeNfc}
+                        onChange={(e) => handleToggleNfc(e.target.checked)}
+                        className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs py-1">
+                      <span className="flex items-center gap-2 text-slate-700 font-medium">
+                        <span className="text-amber-500 font-bold">★★★★★</span>
+                        5-Star Rating Row
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={includeStars}
+                        onChange={(e) => handleToggleStars(e.target.checked)}
+                        className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* QR Destination Target */}
-                <div className="pt-2 border-t border-blue-100">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 block mb-1.5">
-                    Target Destination
-                  </span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setQrDestination("activate")}
-                      className={`py-1.5 px-2 rounded-md text-[11px] font-medium border text-center transition-colors ${
-                        qrDestination === "activate"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-xs font-bold"
-                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      Activation Flow
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setQrDestination("review")}
-                      className={`py-1.5 px-2 rounded-md text-[11px] font-medium border text-center transition-colors ${
-                        qrDestination === "review"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-xs font-bold"
-                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      Direct Review
-                    </button>
+                {/* THE PROMINENT CTA TO CUSTOM CANVA STUDIO */}
+                <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/80 p-4 shadow-sm hover:shadow-md transition-all hover-card-lift">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Move className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                        Want to Customize Everything?
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                        Freely move & resize elements, upload custom background artwork, change
+                        fonts, and add stickers.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("canva")}
+                        className="mt-3 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer transition-transform active:scale-98"
+                      >
+                        <Move className="h-3.5 w-3.5" />
+                        Open Custom Canva Studio
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <p className="mt-1 text-[10px] text-blue-700 leading-tight">
-                    {qrDestination === "activate"
-                      ? "Pre-printed cards encode /activate/$code. When scanned on a phone, anyone can claim and activate the card."
-                      : "Directly opens the customer review page."}
-                  </p>
                 </div>
 
-                <div className="pt-2 border-t border-blue-200/60">
+                {/* Print Sheet Shortcut Button */}
+                <div className="flex gap-2">
                   <Button
+                    type="button"
+                    onClick={() => setViewMode("a4")}
                     variant="outline"
-                    size="sm"
-                    asChild
-                    className="w-full h-8 text-xs bg-white text-blue-700 hover:bg-blue-50 border-blue-200 font-semibold gap-1.5 shadow-xs"
+                    className="flex-1 h-9 text-xs font-bold gap-1.5 border-slate-300 text-slate-700 hover:bg-white"
                   >
-                    <Link to="/cards/batch">
-                      <Printer className="h-3.5 w-3.5 text-blue-600" />
-                      Print 4 Different Cards on A4 →
-                    </Link>
+                    <Printer className="h-4 w-4 text-blue-600" />
+                    Preview A4 Sheet (4 Cards)
                   </Button>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Google-style Color Picker Widget */}
-          <div className="rounded-xl border bg-slate-900 p-4 text-white shadow-md">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs font-semibold tracking-wide uppercase text-slate-400 flex items-center gap-1.5">
-                <Palette className="h-3.5 w-3.5 text-blue-400" />
-                Colour Picker
-              </span>
-              <button
-                type="button"
-                onClick={copyColorHex}
-                title="Copy HEX Code"
-                className="text-xs flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
-              >
-                {copiedHex ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-[10px] text-emerald-400 font-mono">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    <span className="text-[10px] font-mono">Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
+              {/* Right Column: Centered A6 Live Preview Card */}
+              <div className="lg:col-span-7 flex flex-col items-center justify-center">
+                <div className="w-full flex items-center justify-between mb-2 px-2">
+                  <span className="text-xs font-semibold text-slate-500">
+                    Live Physical Card Preview
+                  </span>
+                  <span className="text-xs font-mono text-slate-500">105 × 148 mm · A6 Size</span>
+                </div>
 
-            {/* Gradient / Visual Color Preview Box with embedded native Color Dialog */}
-            <div className="relative mt-3 h-28 w-full rounded-lg overflow-hidden shadow-inner border border-slate-700/60 group cursor-pointer">
-              <div
-                className="absolute inset-0 transition-colors"
-                style={{ backgroundColor: color }}
-              />
-              <div className="absolute inset-0 bg-linear-to-r from-white via-transparent to-black opacity-30" />
-              <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-40" />
-
-              <label
-                htmlFor="nativeColorPicker"
-                className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity cursor-pointer text-xs font-medium text-white"
-              >
-                <Pipette className="h-5 w-5 mb-1 text-white drop-shadow" />
-                Click to open spectrum
-              </label>
-
-              <input
-                id="nativeColorPicker"
-                type="color"
-                value={color.startsWith("#") && color.length === 7 ? color : "#1a73e8"}
-                onChange={(e) => setColor(e.target.value)}
-                className="absolute opacity-0 pointer-events-auto inset-0 w-full h-full cursor-pointer"
-              />
-            </div>
-
-            {/* Hue Rainbow Slider Bar */}
-            <div className="mt-3">
-              <div className="relative h-3 w-full rounded-full overflow-hidden shadow-inner border border-slate-700">
                 <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)",
+                  className="bg-white rounded-3xl shadow-xl border border-slate-300/80 p-5 flex items-center justify-center transition-all hover:shadow-2xl"
+                  style={{ width: "115mm", minHeight: "158mm" }}
+                >
+                  <div style={{ width: "105mm", height: "148mm" }}>
+                    <ReviewCardItem
+                      name={bizName}
+                      category={category}
+                      color={color}
+                      qrDotColor={qrDotColor}
+                      qrBgColor={qrBgColor}
+                      headline={headline}
+                      url={currentTargetUrl}
+                      qr={qrCodeDataUrl}
+                      logo={b.logo}
+                      initials={initials}
+                      includeStars={includeStars}
+                      includeNfc={includeNfc}
+                      cardId={b.slug.toUpperCase()}
+                      customDesign={customDesign}
+                      qrX={customQrX}
+                      qrY={customQrY}
+                      qrSize={customQrSize}
+                      qrFrame={customQrFrame}
+                      cardWidth={105}
+                      cardHeight={148}
+                      elements={elements}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownloadPdf}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export A6 Print PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Printer className="h-4 w-4 text-blue-600" />
+                    Print Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : viewMode === "canva" ? (
+          /* =========================================================================
+             VIEW 2: CUSTOM CANVA STUDIO (Interactive Drag & Drop Canvas)
+             ========================================================================= */
+          <div className="h-[calc(100vh-56px)] w-full overflow-hidden flex flex-col animate-fade-in">
+            {/* Top Canva Notice Bar */}
+            <div className="bg-purple-50/90 border-b border-purple-200/80 px-4 py-1.5 flex items-center justify-between text-xs text-purple-900 shrink-0">
+              <span className="font-semibold flex items-center gap-1.5">
+                <Move className="h-3.5 w-3.5 text-purple-600" />
+                Custom Canva Studio Active — Click any text or sticker to drag, resize, or edit.
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewMode("default")}
+                className="font-bold text-purple-700 hover:text-purple-900 underline cursor-pointer text-[11px]"
+              >
+                ← Back to Default Design
+              </button>
+            </div>
+
+            <Suspense
+              fallback={
+                <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[#f1f3f5]">
+                  <div className="h-9 w-9 animate-spin rounded-full border-3 border-purple-600 border-t-transparent" />
+                  <p className="text-xs font-semibold text-slate-600">Loading Canva Studio…</p>
+                </div>
+              }
+            >
+              {isClient && (
+                <CardCanvaEditor
+                  customDesign={customDesign}
+                  customDesignName={customDesignName}
+                  qrDataUrl={qrCodeDataUrl}
+                  logoUrl={b.logo}
+                  businessName={bizName}
+                  category={category}
+                  headline={headline}
+                  cardColor={color}
+                  onColorChange={handleColorSelect}
+                  elements={elements}
+                  onElementsChange={handleElementsChange}
+                  onUploadFile={handleFileUpload}
+                  onRemoveUpload={handleRemoveCustomDesign}
+                  onApplyPreset={(preset) => {
+                    handleColorSelect(preset.color);
+                    handleHeadlineSelect(preset.headline);
                   }}
+                  qrX={customQrX}
+                  qrY={customQrY}
+                  qrSize={customQrSize}
+                  qrFrame={customQrFrame}
+                  onChangePosition={(x, y) => {
+                    setCustomQrX(x);
+                    setCustomQrY(y);
+                  }}
+                  onChangeSize={(size) => {
+                    setCustomQrSize(size);
+                  }}
+                  onUploadClick={() => fileInputRef.current?.click()}
                 />
-              </div>
-            </div>
-
-            {/* HEX Input Field with Copy button */}
-            <div className="mt-3.5 flex items-center justify-between rounded-lg bg-slate-800/90 border border-slate-700 px-3 py-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-slate-400">HEX</span>
-                <input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  maxLength={7}
-                  className="bg-transparent font-mono text-xs font-semibold text-white focus:outline-none w-20"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={copyColorHex}
-                className="text-slate-400 hover:text-white transition-colors p-1"
-                title="Copy Hex"
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            {/* RGB, HSL, CMYK Breakdown Metrics */}
-            <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
-              <div className="rounded-md bg-slate-800/70 border border-slate-700/60 p-1.5">
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">
-                  RGB
-                </div>
-                <div className="text-[10px] font-mono font-medium text-slate-200 mt-0.5 truncate">
-                  {rgb.r}, {rgb.g}, {rgb.b}
-                </div>
-              </div>
-              <div className="rounded-md bg-slate-800/70 border border-slate-700/60 p-1.5">
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">
-                  HSL
-                </div>
-                <div className="text-[10px] font-mono font-medium text-slate-200 mt-0.5 truncate">
-                  {hsl.h}°, {hsl.s}%, {hsl.l}%
-                </div>
-              </div>
-              <div className="rounded-md bg-slate-800/70 border border-slate-700/60 p-1.5">
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">
-                  CMYK
-                </div>
-                <div className="text-[10px] font-mono font-medium text-slate-200 mt-0.5 truncate">
-                  {cmyk.c}%, {cmyk.m}%
-                </div>
-              </div>
-            </div>
-
-            {/* Palette Swatches */}
-            <div className="mt-3.5 pt-3 border-t border-slate-800">
-              <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mb-2">
-                Preset Palettes
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {THEME_PALETTES.map((p) => (
-                  <button
-                    key={p.hex}
-                    type="button"
-                    onClick={() => setColor(p.hex)}
-                    title={p.name}
-                    style={{ backgroundColor: p.hex }}
-                    className="relative h-7 w-7 rounded-full border-2 border-slate-700 shadow-xs transition-transform hover:scale-110 focus:outline-none"
-                  >
-                    {color.toLowerCase() === p.hex.toLowerCase() && (
-                      <Check className="mx-auto h-3.5 w-3.5 text-white drop-shadow-sm" />
-                    )}
-                  </button>
-                ))}
-                {b.theme?.primary && (
-                  <button
-                    type="button"
-                    onClick={() => setColor(b.theme.primary)}
-                    title="Brand Primary"
-                    style={{ backgroundColor: b.theme.primary }}
-                    className="relative h-7 w-7 rounded-full border-2 border-white shadow-xs transition-transform hover:scale-110 focus:outline-none"
-                  >
-                    {color.toLowerCase() === b.theme.primary.toLowerCase() && (
-                      <Check className="mx-auto h-3.5 w-3.5 text-white drop-shadow-sm" />
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
+              )}
+            </Suspense>
           </div>
-
-          {/* QR Code Colors Customization */}
-          <div className="space-y-4 border-t pt-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                QR Code Colors
-              </h2>
-              <span className="text-[10px] text-muted-foreground font-medium">Dots & Frame</span>
-            </div>
-
-            {/* QR Dots Color */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">QR Pattern / Dots</label>
-                <span className="font-mono text-[11px] text-slate-500">{qrDotColor}</span>
-              </div>
+        ) : (
+          /* =========================================================================
+             VIEW 3: A4 PRINT SHEET (4 Cards on standard A4 paper with cut guidelines)
+             ========================================================================= */
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start print:p-0 print:bg-white print:overflow-visible animate-fade-in">
+            {/* Zoom & Cut Guides Toolbar */}
+            <div className="w-full max-w-[794px] mb-4 flex items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs print:hidden">
               <div className="flex items-center gap-2">
-                <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shadow-xs shrink-0 cursor-pointer group">
-                  <div className="absolute inset-0" style={{ backgroundColor: qrDotColor }} />
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Printer className="h-4 w-4 text-blue-600" /> A4 Cut Sheet · 4 Cards (210 × 297
+                  mm)
+                </span>
+                <label className="flex items-center gap-1.5 ml-3 text-xs text-slate-600 cursor-pointer">
                   <input
-                    type="color"
-                    value={
-                      qrDotColor.startsWith("#") && qrDotColor.length === 7 ? qrDotColor : "#000000"
-                    }
-                    onChange={(e) => setQrDotColor(e.target.value)}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    title="Pick QR Dot Color"
+                    type="checkbox"
+                    checked={showCutGuides}
+                    onChange={(e) => setShowCutGuides(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded-sm border-gray-300 text-blue-600"
                   />
-                </div>
-                <Input
-                  value={qrDotColor}
-                  onChange={(e) => setQrDotColor(e.target.value)}
-                  className="h-8 font-mono text-xs w-24"
-                  maxLength={7}
-                />
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setQrDotColor("#000000")}
-                    title="Classic Black"
-                    style={{ backgroundColor: "#000000" }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQrDotColor(color)}
-                    title="Match Card Theme Color"
-                    style={{ backgroundColor: color }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQrDotColor("#0f172a")}
-                    title="Midnight Slate"
-                    style={{ backgroundColor: "#0f172a" }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                </div>
+                  <span>Show Cut Lines</span>
+                </label>
               </div>
-            </div>
 
-            {/* QR Background Color */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700">QR Frame Background</label>
-                <span className="font-mono text-[11px] text-slate-500">{qrBgColor}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shadow-xs shrink-0 cursor-pointer group">
-                  <div className="absolute inset-0" style={{ backgroundColor: qrBgColor }} />
-                  <input
-                    type="color"
-                    value={
-                      qrBgColor.startsWith("#") && qrBgColor.length === 7 ? qrBgColor : "#ffffff"
-                    }
-                    onChange={(e) => setQrBgColor(e.target.value)}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    title="Pick QR Background Color"
-                  />
-                </div>
-                <Input
-                  value={qrBgColor}
-                  onChange={(e) => setQrBgColor(e.target.value)}
-                  className="h-8 font-mono text-xs w-24"
-                  maxLength={7}
-                />
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setQrBgColor("#ffffff")}
-                    title="Crisp White"
-                    style={{ backgroundColor: "#ffffff" }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQrBgColor("#f8fafc")}
-                    title="Soft Slate"
-                    style={{ backgroundColor: "#f8fafc" }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQrBgColor("#fffbeb")}
-                    title="Warm Cream"
-                    style={{ backgroundColor: "#fffbeb" }}
-                    className="h-6 w-6 rounded-full border border-slate-300 transition-transform hover:scale-110"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card Content Settings */}
-          <div className="space-y-4 border-t pt-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Card Content
-              </h2>
-              <span className="text-[10px] text-muted-foreground font-medium">
-                {cardEdition === "universal" ? "No Business Name" : "Custom Brand"}
-              </span>
-            </div>
-
-            {cardEdition === "universal" ? (
-              <>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="universalTitleInput"
-                    className="text-xs font-semibold text-slate-700"
-                  >
-                    Header Title (Printed on Card)
-                  </label>
-                  <Input
-                    id="universalTitleInput"
-                    value={universalTitle}
-                    onChange={(e) => setUniversalTitle(e.target.value)}
-                    placeholder="REVIEW US ON GOOGLE"
-                    maxLength={32}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="universalSubtitleInput"
-                    className="text-xs font-semibold text-slate-700"
-                  >
-                    Header Subtitle / Tagline
-                  </label>
-                  <Input
-                    id="universalSubtitleInput"
-                    value={universalSubtitle}
-                    onChange={(e) => setUniversalSubtitle(e.target.value)}
-                    placeholder="SCAN OR TAP WITH PHONE"
-                    maxLength={36}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <label htmlFor="bizNameInput" className="text-xs font-semibold text-slate-700">
-                    Business Display Name
-                  </label>
-                  <Input
-                    id="bizNameInput"
-                    value={bizName}
-                    onChange={(e) => setBizName(e.target.value)}
-                    placeholder={b.name || "Enter business display name"}
-                    maxLength={40}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="bizCategoryInput"
-                    className="text-xs font-semibold text-slate-700"
-                  >
-                    Category or Subtitle
-                  </label>
-                  <Input
-                    id="bizCategoryInput"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder={b.category || "e.g. Specialty Coffee & Bakery"}
-                    maxLength={40}
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="space-y-1.5">
-              <label htmlFor="ctaHeadlineInput" className="text-xs font-semibold text-slate-700">
-                Review Call-to-Action
-              </label>
-              <Input
-                id="ctaHeadlineInput"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                placeholder="Review Us On Google"
-                maxLength={35}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Target URL / NFC Payload
-              </label>
-              <p className="rounded-md border bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600 break-all select-all">
-                {currentTargetUrl}
-              </p>
-            </div>
-          </div>
-
-          {/* Print & Elements Toggles */}
-          <div className="space-y-3 border-t pt-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Card Options
-            </h2>
-
-            <label className="flex items-center justify-between text-sm cursor-pointer">
-              <span className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
-                5-Star Rating Badge
-              </span>
-              <input
-                type="checkbox"
-                checked={includeStars}
-                onChange={(e) => setIncludeStars(e.target.checked)}
-                className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-
-            <label className="flex items-center justify-between text-sm cursor-pointer">
-              <span className="flex items-center gap-2">
-                <ContactlessNfcIcon size={16} className="text-blue-600" />
-                NFC "Tap Phone" Banner
-              </span>
-              <input
-                type="checkbox"
-                checked={includeNfc}
-                onChange={(e) => setIncludeNfc(e.target.checked)}
-                className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-
-            <label className="flex items-center justify-between text-sm cursor-pointer">
-              <span className="flex items-center gap-2">
-                <Scissors className="h-4 w-4 text-slate-400" />
-                Show Cut Guidelines
-              </span>
-              <input
-                type="checkbox"
-                checked={showCutGuides}
-                onChange={(e) => setShowCutGuides(e.target.checked)}
-                className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </label>
-          </div>
-        </aside>
-
-        {/* ---------------- CENTER CANVAS / PREVIEW AREA ---------------- */}
-        <main
-          className={`flex-1 bg-slate-200/70 p-3 sm:p-4 md:p-8 flex flex-col items-center justify-start overflow-x-auto print:p-0 print:bg-white print:overflow-visible pb-24 lg:pb-8 ${
-            mobileTab === "controls" ? "hidden lg:flex" : "flex"
-          }`}
-        >
-          {/* Zoom & ViewMode Control Toolbar (Print Hidden) */}
-          <div className="w-full max-w-212.5 mb-4 flex flex-wrap items-center justify-between gap-2.5 bg-white p-2.5 rounded-xl border shadow-xs print:hidden">
-            {/* ViewMode Switcher */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setViewMode("a4")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                  viewMode === "a4"
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                <Printer className="h-3.5 w-3.5" />
-                A4 Sheet (4 Cards)
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("single")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
-                  viewMode === "single"
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                <Radio className="h-3.5 w-3.5" />
-                Single Card
-              </button>
-            </div>
-
-            {/* Zoom Controls (Enabled for A4 Sheet mode) */}
-            {viewMode === "a4" && (
-              <div className="flex items-center gap-1.5 ml-auto">
+              {/* Zoom Stepper */}
+              <div className="flex items-center gap-1 ml-auto">
                 <button
                   type="button"
                   onClick={handleFitScreen}
-                  className="px-2 py-1 text-xs font-semibold rounded-md border bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center gap-1"
-                  title="Fit Sheet to Screen Width"
+                  className="px-2 py-1 text-xs font-semibold rounded-md border bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center gap-1 cursor-pointer"
+                  title="Fit to Screen Width"
                 >
-                  <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
+                  <Maximize2 className="h-3 w-3 text-blue-600" />
                   Fit
                 </button>
                 <button
                   type="button"
                   onClick={() => setZoomScale((s) => Math.max(0.35, Number((s - 0.08).toFixed(2))))}
-                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
                   title="Zoom Out"
                 >
                   <ZoomOut className="h-3.5 w-3.5" />
@@ -1079,7 +809,7 @@ function CardStudio() {
                 <button
                   type="button"
                   onClick={() => setZoomScale((s) => Math.min(1.4, Number((s + 0.08).toFixed(2))))}
-                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100"
+                  className="h-7 w-7 rounded-md border flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
                   title="Zoom In"
                 >
                   <ZoomIn className="h-3.5 w-3.5" />
@@ -1087,27 +817,24 @@ function CardStudio() {
                 <button
                   type="button"
                   onClick={() => setZoomScale(1)}
-                  className="px-2 py-1 text-xs font-semibold rounded-md border text-slate-600 hover:bg-slate-100"
-                  title="Reset Zoom to 100%"
+                  className="px-2 py-1 text-xs font-semibold rounded-md border text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  title="100% Physical Size"
                 >
                   100%
                 </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          {viewMode === "a4" ? (
-            /* Scalable Container for A4 Sheet with responsive bounding box */
+            {/* Scalable Container for A4 Sheet */}
             <div
-              className="relative flex justify-center items-start transition-all max-w-full"
+              className="relative flex justify-center items-start transition-all max-w-full pb-16"
               style={{
                 width: `${Math.round(794 * zoomScale)}px`,
                 height: `${Math.round(1123 * zoomScale)}px`,
               }}
             >
-              {/* A4 Print Sheet (4 Cards in 2x2 grid, 95x136mm each) */}
               <div
-                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl ${
+                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl rounded-sm ${
                   showCutGuides ? "show-cut-guides" : ""
                 }`}
                 style={{
@@ -1123,7 +850,7 @@ function CardStudio() {
                   boxSizing: "border-box",
                 }}
               >
-                {/* Center Cut Lines across sheet */}
+                {/* Center Cut Lines across A4 sheet */}
                 {showCutGuides && (
                   <>
                     <div
@@ -1137,12 +864,12 @@ function CardStudio() {
                   </>
                 )}
 
-                {/* 4 Cards Rendered on A4 Page */}
+                {/* 4 Cards on A4 Sheet */}
                 {[1, 2, 3, 4].map((slot) => (
                   <div key={slot} className="relative" style={{ width: "95mm", height: "136mm" }}>
                     {showCutGuides && (
-                      <span className="print:hidden absolute -top-4 right-1 text-[8px] font-mono text-slate-400 pointer-events-none">
-                        ✂ cut
+                      <span className="print:hidden absolute -top-4 right-1 text-[8px] font-mono text-slate-400 pointer-events-none flex items-center gap-0.5">
+                        <Scissors className="h-2.5 w-2.5 inline" /> cut
                       </span>
                     )}
                     <ReviewCardItem
@@ -1158,118 +885,32 @@ function CardStudio() {
                       initials={initials}
                       includeStars={includeStars}
                       includeNfc={includeNfc}
-                      isUniversal={cardEdition === "universal"}
-                      universalBadge={universalTemplate}
-                      headerTitle={universalTitle}
-                      headerSubtitle={universalSubtitle}
                       cardId={b.slug.toUpperCase()}
+                      customDesign={customDesign}
+                      qrX={customQrX}
+                      qrY={customQrY}
+                      qrSize={customQrSize}
+                      qrFrame={customQrFrame}
+                      cardWidth={95}
+                      cardHeight={136}
+                      elements={elements}
                     />
                   </div>
                 ))}
               </div>
             </div>
-          ) : (
-            /* Single Card Focused View */
-            <div className="py-4 sm:py-8 flex flex-col items-center max-w-full">
-              <div
-                className="bg-white shadow-xl rounded-2xl p-4 border max-w-full overflow-hidden"
-                style={{
-                  width: "105mm",
-                  height: "150mm",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ width: "95mm", height: "136mm" }}>
-                  <ReviewCardItem
-                    name={bizName}
-                    category={category}
-                    color={color}
-                    qrDotColor={qrDotColor}
-                    qrBgColor={qrBgColor}
-                    headline={headline}
-                    url={currentTargetUrl}
-                    qr={qrCodeDataUrl}
-                    logo={b.logo}
-                    initials={initials}
-                    includeStars={includeStars}
-                    includeNfc={includeNfc}
-                    isUniversal={cardEdition === "universal"}
-                    universalBadge={universalTemplate}
-                    headerTitle={universalTitle}
-                    headerSubtitle={universalSubtitle}
-                    cardId={b.slug.toUpperCase()}
-                  />
-                </div>
-              </div>
-              <p className="mt-4 text-xs text-muted-foreground text-center">
-                Standard 95mm × 136mm Counter Card
-              </p>
-            </div>
-          )}
-        </main>
-      </div>
-
-      {/* ---------------- MOBILE FLOATING BOTTOM ACTION BAR ---------------- */}
-      <div className="lg:hidden print:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl p-2.5 flex items-center justify-between gap-2">
-        {mobileTab === "controls" ? (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 h-10 font-bold text-xs gap-1.5"
-            >
-              <Save className="h-4 w-4" />
-              {saving ? "Saving..." : "Save Design"}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setMobileTab("preview")}
-              className="flex-1 h-10 font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm"
-            >
-              <Eye className="h-4 w-4" />
-              View Preview →
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setMobileTab("controls")}
-              className="flex-1 h-10 font-bold text-xs gap-1.5 text-slate-700"
-            >
-              <Palette className="h-4 w-4" />
-              Edit Design
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={exportingPdf}
-              onClick={handleDownloadPdf}
-              className="flex-1 h-10 font-bold text-xs bg-slate-900 hover:bg-black text-white gap-1.5 shadow-sm"
-            >
-              <Download className="h-4 w-4" />
-              {exportingPdf ? "Generating..." : "Export PDF"}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => window.print()}
-              className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
-              title="Print"
-            >
-              <Printer className="h-4 w-4" />
-            </Button>
-          </>
+          </div>
         )}
       </div>
+
+      {/* ---------------- 3. EXPORT PDF DIALOG MODAL ---------------- */}
+      <CardExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        onExport={handleRunExport}
+        exporting={exportingPdf}
+        businessName={bizName}
+      />
 
       {/* Global Print Styles to enforce exact A4 100% scale output */}
       <style>{`
@@ -1288,7 +929,7 @@ function CardStudio() {
           header, aside, .print\\:hidden {
             display: none !important;
           }
-          main {
+          main, div {
             padding: 0 !important;
             margin: 0 !important;
             background: #ffffff !important;

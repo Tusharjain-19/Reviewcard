@@ -18,7 +18,6 @@ import {
   Check,
   Building2,
   Share2,
-  Sparkles,
   Settings,
 } from "lucide-react";
 import { businessesQuery, statsQuery } from "@/lib/queries";
@@ -159,7 +158,9 @@ function Dashboard() {
                 <span>Scan / Activate Card</span>
                 <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               </div>
-              <p className="text-xs text-slate-600 mt-0.5 truncate">Scan QR with camera or enter ID</p>
+              <p className="text-xs text-slate-600 mt-0.5 truncate">
+                Scan QR with camera or enter ID
+              </p>
             </div>
           </Link>
 
@@ -174,8 +175,12 @@ function Dashboard() {
                 <Printer className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">Batch Print</div>
-                <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5 truncate">4+ Cards Sheet</p>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                  Batch Print
+                </div>
+                <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5 truncate">
+                  4+ Cards Sheet
+                </p>
               </div>
             </Link>
 
@@ -188,7 +193,9 @@ function Dashboard() {
                 <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">New Business</div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                  New Business
+                </div>
                 <p className="text-[10px] sm:text-xs text-slate-600 mt-0.5 truncate">Custom Link</p>
               </div>
             </Link>
@@ -287,7 +294,7 @@ function Dashboard() {
             return (
               <article
                 key={b.id}
-                className="flex flex-col justify-between rounded-2xl border bg-white p-4 sm:p-5 shadow-xs hover:shadow-md transition-shadow min-w-0"
+                className="flex flex-col justify-between rounded-2xl border bg-white p-4 sm:p-5 shadow-xs hover-card-lift min-w-0"
               >
                 {/* Top Info Row */}
                 <div>
@@ -302,7 +309,9 @@ function Dashboard() {
                           {b.name}
                         </h2>
                         <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 min-w-0">
-                          <span className="truncate max-w-[120px] sm:max-w-none">{b.category || "Local Business"}</span>
+                          <span className="truncate max-w-[120px] sm:max-w-none">
+                            {b.category || "Local Business"}
+                          </span>
                           <span>·</span>
                           <span className="font-mono text-blue-600 truncate">/r/{b.slug}</span>
                         </div>
@@ -350,7 +359,7 @@ function Dashboard() {
                     >
                       <Link to="/cards/$slug" params={{ slug: b.slug }}>
                         <Palette className="h-3.5 w-3.5 text-blue-600" />
-                        Print Cards
+                        Design Cards
                       </Link>
                     </Button>
                   </div>

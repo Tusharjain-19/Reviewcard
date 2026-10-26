@@ -12,7 +12,7 @@ import {
   Youtube,
   Linkedin,
 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import {
   buildLinkUrl,
@@ -48,6 +48,7 @@ const RADIUS = { rounded: "rounded-xl", pill: "rounded-full", square: "rounded-n
 
 /** Public link page. Review button is never gated: it always goes straight to Google. */
 export function LinkPage({ b, preview = false }: { b: Business; preview?: boolean }) {
+  const [logoError, setLogoError] = useState(false);
   const r = RADIUS[b.theme.buttonStyle];
   const style = {
     "--biz-primary": b.theme.primary,
@@ -67,10 +68,11 @@ export function LinkPage({ b, preview = false }: { b: Business; preview?: boolea
       <div
         className={`mx-auto flex w-full max-w-md flex-col items-center px-5 py-10 ${b.theme.font === "serif" ? "font-display" : "font-sans"}`}
       >
-        {b.logo ? (
+        {b.logo && !logoError ? (
           <img
             src={b.logo}
             alt={`${b.name} logo`}
+            onError={() => setLogoError(true)}
             className={`business-logo ${b.logoShape === "rectangle" ? "business-logo-rectangle" : ""} object-contain shadow-soft ${SHAPE[b.logoShape ?? "circle"]}`}
           />
         ) : (

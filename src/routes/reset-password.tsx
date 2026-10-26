@@ -9,7 +9,8 @@ import { Eye, EyeOff, ArrowLeft, KeyRound } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => pageMeta("Reset Password", "Choose a new secure password for your ReviewCard account."),
+  head: () =>
+    pageMeta("Reset Password", "Choose a new secure password for your ReviewCard account."),
   component: ResetPasswordPage,
 });
 
@@ -65,7 +66,10 @@ function ResetPasswordPage() {
         {valid ? (
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
-              <label htmlFor="newPassword" className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <label
+                htmlFor="newPassword"
+                className="text-xs font-bold uppercase tracking-wider text-slate-700"
+              >
                 New Password
               </label>
               <div className="relative">
@@ -95,7 +99,10 @@ function ResetPasswordPage() {
                 </button>
               </div>
             </div>
-            <Button className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs" disabled={loading}>
+            <Button
+              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
+              disabled={loading}
+            >
               {loading ? "Updating..." : "Update Password"}
             </Button>
           </form>
@@ -103,13 +110,17 @@ function ResetPasswordPage() {
           <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs sm:text-sm text-amber-800 space-y-2">
             <p className="font-semibold">Reset Link Expired or Invalid</p>
             <p>
-              Please open the reset link directly from your email inbox, or request a new one from the sign-in page.
+              Please open the reset link directly from your email inbox, or request a new one from
+              the sign-in page.
             </p>
           </div>
         )}
 
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-          <Link to="/auth" className="text-blue-600 font-semibold hover:underline flex items-center gap-1">
+          <Link
+            to="/auth"
+            className="text-blue-600 font-semibold hover:underline flex items-center gap-1"
+          >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Sign In
           </Link>
