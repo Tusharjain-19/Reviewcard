@@ -102,13 +102,13 @@ export interface CanvasElement {
 }
 
 // ---------------- OFFICIAL REAL NFC LOGOS (Standard Badge, White, Dark, and Multicolor) ----------------
-export const REAL_NFC_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff" stroke="#e2e8f0" stroke-width="6"/><g fill="none" stroke="#111827" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="24"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="26"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="28"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="30"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#111827">NFC</text></svg>`;
+export const REAL_NFC_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" /></svg>`;
 
-export const REAL_NFC_WHITE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><g fill="none" stroke="#ffffff" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#ffffff">NFC</text></svg>`;
+export const REAL_NFC_WHITE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" /></svg>`;
 
-export const REAL_NFC_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><g fill="none" stroke="#111827" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#111827">NFC</text></svg>`;
+export const REAL_NFC_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" /></svg>`;
 
-export const REAL_NFC_COLOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff" stroke="#e2e8f0" stroke-width="6"/><g fill="none" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke="#4285F4" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke="#EA4335" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke="#FBBC05" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke="#34A853" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#1e293b">NFC</text></svg>`;
+export const REAL_NFC_COLOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" stroke="#4285F4" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" stroke="#EA4335" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" stroke="#FBBC05" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" stroke="#34A853" /></svg>`;
 
 // Vector Sticker SVGs encoded as Data URLs for instant crisp rendering
 export const STICKER_SVGS: Record<StickerKey, string> = {
@@ -1303,13 +1303,13 @@ export function CardCanvaEditor({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="text-xs font-bold text-slate-900">Multicolor NFC</p>
+                      <p className="text-xs font-bold text-slate-900">Multicolor NFC Waves</p>
                       <span className="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1 py-0.2 rounded">
                         Google Colors
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      4 brand color arcs: Blue, Red, Yellow & Green.
+                      4 brand color arcs: Blue, Red, Yellow & Green (no background).
                     </p>
                     <button
                       type="button"
@@ -1321,12 +1321,12 @@ export function CardCanvaEditor({
                   </div>
                 </div>
 
-                {/* 2. Standard Real NFC Logo */}
+                {/* 2. Standard Real NFC Waves */}
                 <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200 hover:border-blue-400 transition-colors">
                   <div
                     onClick={() => handleAddSticker("nfc")}
                     className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
-                    title="Click to add Standard NFC Badge"
+                    title="Click to add Standard NFC Broadcast Wave"
                   >
                     <img
                       src={STICKER_SVGS.nfc}
@@ -1335,7 +1335,7 @@ export function CardCanvaEditor({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900">Standard NFC Badge</p>
+                    <p className="text-xs font-bold text-slate-900">Standard NFC Waves</p>
                     <button
                       type="button"
                       onClick={() => handleAddSticker("nfc")}

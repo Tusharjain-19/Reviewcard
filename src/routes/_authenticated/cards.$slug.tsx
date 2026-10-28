@@ -828,7 +828,7 @@ function CardStudio() {
                       {includeNfc && (
                         <div className="pl-6 space-y-1.5">
                           <label className="text-[11px] font-semibold text-slate-600 block">
-                            NFC Logo Style:
+                            NFC Logo Style (Transparent Waves):
                           </label>
                           <div className="grid grid-cols-2 gap-1.5">
                             <button
@@ -840,7 +840,7 @@ function CardStudio() {
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                               }`}
                             >
-                              <span>🌈</span>
+                              <ContactlessNfcIcon size={14} variant="color" />
                               <span>Multicolor</span>
                             </button>
                             <button
@@ -857,7 +857,7 @@ function CardStudio() {
                                 variant="currentColor"
                                 className="text-blue-600"
                               />
-                              <span>Standard</span>
+                              <span>Auto Wave</span>
                             </button>
                             <button
                               type="button"
@@ -868,24 +868,22 @@ function CardStudio() {
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                               }`}
                             >
-                              <span className="w-3.5 h-3.5 rounded-full bg-slate-800 flex items-center justify-center text-white text-[8px]">
-                                W
+                              <span className="p-0.5 rounded bg-slate-900 flex items-center justify-center">
+                                <ContactlessNfcIcon size={12} variant="white" />
                               </span>
-                              <span>White Badge</span>
+                              <span>White Wave</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleNfcStyleSelect("dark")}
                               className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
                                 nfcStyle === "dark"
-                                  ? "bg-slate-800 border-slate-900 text-white shadow-xs ring-1 ring-slate-900"
+                                  ? "bg-slate-100 border-slate-900 text-slate-900 shadow-xs ring-1 ring-slate-900"
                                   : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                               }`}
                             >
-                              <span className="w-3.5 h-3.5 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px]">
-                                D
-                              </span>
-                              <span>Dark Badge</span>
+                              <ContactlessNfcIcon size={14} variant="dark" />
+                              <span>Dark Wave</span>
                             </button>
                           </div>
                         </div>

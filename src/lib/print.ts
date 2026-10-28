@@ -310,13 +310,13 @@ const GOOGLE_G_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="80" he
 
 const FIVE_STARS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="56" viewBox="0 0 160 26"><g fill="#f59e0b">${[0, 1, 2, 3, 4].map((i) => `<path transform="translate(${i * 32 + 4}, 1)" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>`).join("")}</g></svg>`;
 
-const NFC_BOTTOM_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff"/><g fill="none" stroke="#111827" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="24"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="26"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="28"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="30"/></g><text x="200" y="375" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#111827">NFC</text></svg>`;
+const NFC_BOTTOM_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" /></svg>`;
 
 const STAR_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><path fill="#f59e0b" transform="translate(40, 40) scale(5)" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
 
 const HEART_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><path fill="#059669" transform="translate(40, 40) scale(5)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
 
-const NFC_BLUE_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff"/><g fill="none" stroke="#1a73e8" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="24"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="26"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="28"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="30"/></g><text x="200" y="375" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#1a73e8">NFC</text></svg>`;
+const NFC_BLUE_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 24 24" fill="none" stroke-width="2.3" stroke-linecap="round"><path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" stroke="#4285F4" /><path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" stroke="#EA4335" /><path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" stroke="#FBBC05" /><path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" stroke="#34A853" /></svg>`;
 
 const WHITE_PANEL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="680" height="680" viewBox="0 0 85 85"><rect x="0" y="0" width="85" height="85" rx="4.5" ry="4.5" fill="#ffffff"/></svg>`;
 
@@ -992,26 +992,38 @@ export async function exportA4SheetPdf(
         }
       }
 
-      // Printed Card ID
+      // Short URL under QR Code (matching templet.html)
+      const rawUrl = card.url ? card.url.replace(/^https?:\/\//i, "") : "reviewcard.link";
+      const displayUrl = rawUrl.length > 30 ? rawUrl.slice(0, 28) + "…" : rawUrl;
+      const urlW = fontBold.widthOfTextAtSize(displayUrl, 7.2);
+      page.drawText(displayUrl, {
+        x: panelX + (panelW - urlW) / 2,
+        y: panelY + pt(3.8),
+        size: 7.2,
+        font: fontBold,
+        color: rgb(0.28, 0.33, 0.41),
+      });
+
+      // Printed Card ID (if present)
       if (card.cardId) {
-        const idText = `CARD ID: ${card.cardId}`;
-        const idW = fontBold.widthOfTextAtSize(idText, 7);
+        const idText = `ID: ${card.cardId}`;
+        const idW = fontBold.widthOfTextAtSize(idText, 6);
         page.drawText(idText, {
           x: panelX + (panelW - idW) / 2,
-          y: panelY + pt(3.5),
-          size: 7,
+          y: panelY + pt(1.2),
+          size: 6,
           font: fontBold,
-          color: rgb(0.28, 0.33, 0.41),
+          color: rgb(0.45, 0.52, 0.62),
         });
       }
 
-      // 4. Bottom NFC Bar
+      // 4. Bottom NFC Bar (Centered transparent broadcast waves without background circle)
       if (card.includeNfc !== false) {
-        const nfcIconSize = pt(9.5);
+        const nfcIconSize = pt(8.5);
         const topText = "Tap Phone on Card";
-        const topTextW = fontBold.widthOfTextAtSize(topText, 8.2);
+        const topTextW = fontBold.widthOfTextAtSize(topText, 8.5);
         const subText = "Instant NFC review link";
-        const subTextW = fontRegular.widthOfTextAtSize(subText, 6.5);
+        const subTextW = fontRegular.widthOfTextAtSize(subText, 6.8);
         const textBlockW = Math.max(topTextW, subTextW);
         const totalNfcW = nfcIconSize + pt(3.5) + textBlockW;
         const nfcStartX = x + (w - totalNfcW) / 2;
@@ -1019,7 +1031,7 @@ export async function exportA4SheetPdf(
         if (nfcBottomIconImg) {
           page.drawImage(nfcBottomIconImg, {
             x: nfcStartX,
-            y: y + pt(3.2),
+            y: y + pt(3.5),
             width: nfcIconSize,
             height: nfcIconSize,
           });
@@ -1027,18 +1039,18 @@ export async function exportA4SheetPdf(
 
         page.drawText(topText, {
           x: nfcStartX + nfcIconSize + pt(3.5),
-          y: y + pt(8.2),
-          size: 8.2,
+          y: y + pt(8.5),
+          size: 8.5,
           font: fontBold,
           color: rgb(1, 1, 1),
         });
 
         page.drawText(subText, {
           x: nfcStartX + nfcIconSize + pt(3.5),
-          y: y + pt(4.8),
-          size: 6.5,
+          y: y + pt(5.0),
+          size: 6.8,
           font: fontRegular,
-          color: rgb(0.9, 0.9, 0.9),
+          color: rgb(0.92, 0.92, 0.92),
         });
       }
     }

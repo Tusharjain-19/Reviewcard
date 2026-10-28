@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 
-// Official Contactless NFC Broadcast Wave SVG Icon (Real NFC specification)
+// Official Contactless NFC Broadcast Wave SVG Icon (Real contactless wave specification, 100% transparent background)
 export function ContactlessNfcIcon({
   size = 24,
   className = "",
@@ -17,60 +17,40 @@ export function ContactlessNfcIcon({
       <svg
         width={size}
         height={size}
-        viewBox="0 0 400 400"
+        viewBox="0 0 24 24"
         fill="none"
+        strokeWidth="2.3"
         strokeLinecap="round"
         className={className}
-        style={style}
+        style={{ flexShrink: 0, ...style }}
       >
-        <path d="M 120 140 C 148 170 148 200 120 230" stroke="#4285F4" strokeWidth="26" />
-        <path d="M 160 115 C 198 155 198 215 160 255" stroke="#EA4335" strokeWidth="28" />
-        <path d="M 200 90 C 248 140 248 230 200 280" stroke="#FBBC05" strokeWidth="30" />
-        <path d="M 240 65 C 298 125 298 245 240 305" stroke="#34A853" strokeWidth="32" />
-        <text
-          x="200"
-          y="375"
-          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-          fontSize="68"
-          fontWeight="900"
-          textAnchor="middle"
-          letterSpacing="6"
-          fill="#1e293b"
-          stroke="none"
-        >
-          NFC
-        </text>
+        <path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" stroke="#4285F4" />
+        <path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" stroke="#EA4335" />
+        <path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" stroke="#FBBC05" />
+        <path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" stroke="#34A853" />
       </svg>
     );
   }
+
+  const strokeColor =
+    variant === "white" ? "#ffffff" : variant === "dark" ? "#0f172a" : "currentColor";
+
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 400 400"
+      viewBox="0 0 24 24"
       fill="none"
-      stroke={variant === "white" ? "#ffffff" : variant === "dark" ? "#0f172a" : "currentColor"}
+      stroke={strokeColor}
+      strokeWidth="2.3"
       strokeLinecap="round"
       className={className}
-      style={style}
+      style={{ flexShrink: 0, ...style }}
     >
-      <path d="M 120 140 C 148 170 148 200 120 230" strokeWidth="26" />
-      <path d="M 160 115 C 198 155 198 215 160 255" strokeWidth="28" />
-      <path d="M 200 90 C 248 140 248 230 200 280" strokeWidth="30" />
-      <path d="M 240 65 C 298 125 298 245 240 305" strokeWidth="32" />
-      <text
-        x="200"
-        y="375"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-        fontSize="68"
-        fontWeight="900"
-        textAnchor="middle"
-        letterSpacing="6"
-        fill={variant === "white" ? "#ffffff" : variant === "dark" ? "#0f172a" : "currentColor"}
-        stroke="none"
-      >
-        NFC
-      </text>
+      <path d="M5.5 9.4 A 3.2 3.2 0 0 1 5.5 14.6" />
+      <path d="M9.2 7.2 A 6.2 6.2 0 0 1 9.2 16.8" />
+      <path d="M13.0 5.0 A 9.5 9.5 0 0 1 13.0 19.0" />
+      <path d="M16.8 2.8 A 13.0 13.0 0 0 1 16.8 21.2" />
     </svg>
   );
 }
@@ -114,6 +94,7 @@ export function ReviewCardItem({
   qrDotColor = "#000000",
   qrBgColor = "#ffffff",
   headline,
+  url,
   qr,
   logo,
   initials,
@@ -365,11 +346,34 @@ export function ReviewCardItem({
     );
   }
 
+  const isDarkCard = useMemo(() => {
+    const c = (color || "#1a73e8").replace("#", "");
+    if (c.length < 6) return true;
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness < 180;
+  }, [color]);
+
+  const cleanShortUrl = useMemo(() => {
+    if (!url) return "reviewcard.link";
+    try {
+      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+      return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
+    } catch {
+      return url.replace(/^https?:\/\//i, "");
+    }
+  }, [url]);
+
+  const cardW = cardWidth ? `${cardWidth}mm` : "95mm";
+  const cardH = cardHeight ? `${cardHeight}mm` : "136mm";
+
   return (
     <div
       style={{
-        width: "95mm",
-        height: "136mm",
+        width: cardW,
+        height: cardH,
         borderRadius: "5mm",
         backgroundColor: color,
         color: "#ffffff",
@@ -383,8 +387,16 @@ export function ReviewCardItem({
       }}
       className="shadow-sm font-sans select-none"
     >
-      {/* 1. Header (Logo / Universal Badge + Title + Subtitle) */}
-      <div style={{ display: "flex", alignItems: "center", gap: "3.5mm", height: "16mm" }}>
+      {/* 1. Header (Logo / Universal Badge + Business Name + Category, matching templet.html) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "3.5mm",
+          height: "16mm",
+          width: "100%",
+        }}
+      >
         <div
           style={{
             width: "14mm",
@@ -399,7 +411,7 @@ export function ReviewCardItem({
             fontSize: "13pt",
             flexShrink: 0,
             overflow: "hidden",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
           }}
         >
           {isUniversal ? (
@@ -427,7 +439,7 @@ export function ReviewCardItem({
                 <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
               </svg>
             ) : universalBadge === "nfc" ? (
-              <ContactlessNfcIcon size="7.5mm" style={{ stroke: color }} />
+              <ContactlessNfcIcon size="7.5mm" variant="color" />
             ) : (
               <svg style={{ width: "7.5mm", height: "7.5mm", fill: "#059669" }} viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -439,25 +451,23 @@ export function ReviewCardItem({
             <span>{initials}</span>
           )}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
           <div
             style={{
               fontSize: isUniversal
                 ? (headerTitle || "").length > 24
                   ? "10pt"
                   : "11.5pt"
-                : name.length > 32
-                  ? "9.5pt"
-                  : name.length > 20
-                    ? "11pt"
+                : name.length > 28
+                  ? "10pt"
+                  : name.length > 18
+                    ? "11.5pt"
                     : "13pt",
               fontWeight: 800,
               lineHeight: 1.15,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
+              whiteSpace: "nowrap",
               overflow: "hidden",
-              wordBreak: "break-word",
+              textOverflow: "ellipsis",
               letterSpacing: "-0.01em",
             }}
             title={isUniversal ? headerTitle || "REVIEW US ON GOOGLE" : name}
@@ -466,12 +476,12 @@ export function ReviewCardItem({
           </div>
           <div
             style={{
-              fontSize: (category || "").length > 30 ? "6.2pt" : "7pt",
+              fontSize: "7pt",
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               opacity: 0.92,
-              marginTop: "0.6mm",
+              marginTop: "0.8mm",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -484,23 +494,33 @@ export function ReviewCardItem({
         </div>
       </div>
 
-      {/* 2. Review Card Panel (White card background with Google badge, stars, QR, headline, and link) */}
+      {/* 2. White Center Review Panel (matching templet.html proportions) */}
       <div
         style={{
           backgroundColor: "#ffffff",
           color: "#0f172a",
           borderRadius: "4.5mm",
-          padding: "3.5mm 3.5mm 2.5mm 3.5mm",
+          padding: "3.5mm 3.5mm 3mm 3.5mm",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
           boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         {/* Google Reviews Badge */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.8mm", marginBottom: "1.2mm" }}>
-          <svg style={{ width: "5.2mm", height: "5.2mm" }} viewBox="0 0 24 24">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "1.8mm",
+            marginBottom: "1.2mm",
+          }}
+        >
+          <svg style={{ width: "5.2mm", height: "5.2mm", flexShrink: 0 }} viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
@@ -532,7 +552,14 @@ export function ReviewCardItem({
 
         {/* 5 Golden Stars */}
         {includeStars && (
-          <div style={{ display: "flex", gap: "1.2mm", marginBottom: "1.8mm" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1.2mm",
+              marginBottom: "2mm",
+            }}
+          >
             {[1, 2, 3, 4, 5].map((i) => (
               <svg
                 key={i}
@@ -545,21 +572,26 @@ export function ReviewCardItem({
           </div>
         )}
 
-        {/* Call-to-action Headline */}
+        {/* Call-to-action Headline (Space Grotesk 11pt) */}
         <div
           style={{
-            fontSize: (headline || "").length > 26 ? "9.5pt" : "10.5pt",
-            fontWeight: 800,
+            fontFamily: "'Space Grotesk', system-ui, -apple-system, sans-serif",
+            fontSize: (headline || "").length > 28 ? "9.5pt" : "11pt",
+            fontWeight: 700,
             lineHeight: 1.2,
             color: color,
-            marginBottom: "1.8mm",
+            marginBottom: "2mm",
             letterSpacing: "-0.01em",
+            maxWidth: "92%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: (headline || "").length > 28 ? "normal" : "nowrap",
           }}
         >
           {headline}
         </div>
 
-        {/* QR Code Container */}
+        {/* QR Code Container (44 × 44 mm) */}
         <div
           style={{
             width: "44mm",
@@ -571,7 +603,9 @@ export function ReviewCardItem({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            marginBottom: "2mm",
             boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
+            boxSizing: "border-box",
           }}
         >
           {qr ? (
@@ -590,75 +624,90 @@ export function ReviewCardItem({
           )}
         </div>
 
-        {/* Printed Card ID / Code under QR code */}
+        {/* Short URL (reviewcard.link/slug) */}
+        <div
+          style={{
+            fontSize: "7.2pt",
+            fontWeight: 700,
+            color: "#475569",
+            letterSpacing: "0.02em",
+            fontFamily: "monospace",
+            maxWidth: "90%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {cleanShortUrl}
+        </div>
+
+        {/* Printed Card ID if present */}
         {cardId && (
           <div
             style={{
-              marginTop: "1.4mm",
-              fontSize: "6.8pt",
+              marginTop: "0.8mm",
+              fontSize: "6.5pt",
               fontFamily: "monospace",
               fontWeight: 700,
               letterSpacing: "0.08em",
-              color: "#475569",
+              color: "#64748b",
               textTransform: "uppercase",
             }}
           >
-            Card ID: <span style={{ color: "#0f172a", fontWeight: 800 }}>{cardId}</span>
+            CARD ID: <span style={{ color: "#0f172a", fontWeight: 800 }}>{cardId}</span>
           </div>
         )}
       </div>
 
-      {/* 3. Bottom NFC Bar with Contactless Waves (Horizontally centered & lifted slightly) */}
+      {/* 3. Bottom NFC Bar with Contactless Waves (Without background circle, centered, matching templet.html) */}
       {includeNfc ? (
         <div
           style={{
-            height: "13mm",
+            height: "14mm",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "3.5mm",
             padding: "0 2mm",
-            marginBottom: "1mm",
+            marginBottom: "1.5mm",
             width: "100%",
           }}
         >
-          <div
-            style={{
-              width: "10mm",
-              height: "10mm",
-              borderRadius: "50%",
-              backgroundColor: nfcStyle === "color" ? "#ffffff" : "transparent",
-              border:
-                nfcStyle === "color"
-                  ? "0.4mm solid #e2e8f0"
+          <ContactlessNfcIcon
+            size="8.5mm"
+            variant={
+              nfcStyle === "color"
+                ? "color"
+                : nfcStyle === "white"
+                  ? "white"
                   : nfcStyle === "dark"
-                    ? "0.5mm solid rgba(15,23,42,0.4)"
-                    : "0.5mm solid rgba(255,255,255,0.85)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              boxShadow: nfcStyle === "color" ? "0 2px 6px rgba(0,0,0,0.12)" : "none",
-            }}
-          >
-            <ContactlessNfcIcon
-              size="6mm"
-              variant={
-                nfcStyle === "color"
-                  ? "color"
-                  : nfcStyle === "white"
-                    ? "white"
-                    : nfcStyle === "dark"
-                      ? "dark"
-                      : "currentColor"
-              }
-            />
-          </div>
-          <div style={{ lineHeight: 1.2, textAlign: "left" }}>
-            <div style={{ fontSize: "8.2pt", fontWeight: 700, letterSpacing: "-0.01em" }}>
+                    ? "dark"
+                    : isDarkCard
+                      ? "white"
+                      : "dark"
+            }
+          />
+          <div style={{ lineHeight: 1.15, textAlign: "left" }}>
+            <div
+              style={{
+                fontSize: "8.5pt",
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                color: isDarkCard ? "#ffffff" : "#0f172a",
+              }}
+            >
               Tap Phone on Card
             </div>
-            <div style={{ fontSize: "6.5pt", opacity: 0.9 }}>Instant NFC review link</div>
+            <div
+              style={{
+                fontSize: "6.8pt",
+                opacity: 0.9,
+                marginTop: "0.4mm",
+                color: isDarkCard ? "#ffffff" : "#334155",
+              }}
+            >
+              Instant NFC review link
+            </div>
           </div>
         </div>
       ) : (
