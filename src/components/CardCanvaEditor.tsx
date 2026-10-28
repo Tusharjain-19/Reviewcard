@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Stage,
@@ -1255,7 +1256,7 @@ export function CardCanvaEditor({
   return (
     <div className="flex h-full w-full select-none overflow-hidden bg-[#f1f3f5] text-slate-800">
       {/* ---------------- 1. CANVA LEFT VERTICAL ICON STRIP (IMAGE 1) ---------------- */}
-      <div className="w-[68px] bg-white border-r border-slate-200/90 flex flex-col items-center py-3 gap-1.5 shrink-0 z-20 shadow-xs">
+      <div className="w-17 bg-white border-r border-slate-200/90 flex flex-col items-center py-3 gap-1.5 shrink-0 z-20 shadow-xs">
         <button
           type="button"
           onClick={() => handleTabClick("elements")}
@@ -1340,7 +1341,7 @@ export function CardCanvaEditor({
 
       {/* ---------------- 2. COLLAPSIBLE CANVA SIDE DRAWER (IMAGE 1) ---------------- */}
       {isDrawerOpen && (
-        <div className="w-[300px] bg-white border-r border-slate-200/90 overflow-y-auto flex flex-col gap-4 p-4 shrink-0 transition-all z-20 shadow-xs">
+        <div className="w-75 bg-white border-r border-slate-200/90 overflow-y-auto flex flex-col gap-4 p-4 shrink-0 transition-all z-20 shadow-xs">
           {/* Drawer Header */}
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <h3 className="font-bold text-sm text-slate-900 capitalize">
@@ -2008,7 +2009,7 @@ export function CardCanvaEditor({
                   <button
                     type="button"
                     onClick={() => setShowFontPicker(!showFontPicker)}
-                    className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer max-w-[155px]"
+                    className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer max-w-38.75"
                     title="Choose from 140+ Google Fonts"
                   >
                     <Type className="h-3.5 w-3.5 text-purple-600 shrink-0" />

@@ -517,7 +517,7 @@ function CardStudio() {
           <div className="flex items-center gap-2 min-w-0">
             <BrandLogo size="sm" showWordmark={false} to="/dashboard" />
             <div className="flex items-center gap-1.5 min-w-0">
-              <h1 className="font-display text-xs sm:text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-xs">
+              <h1 className="font-display text-xs sm:text-sm font-bold text-slate-900 truncate max-w-35 sm:max-w-xs">
                 {b.name}
               </h1>
               <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1089,7 +1089,7 @@ function CardStudio() {
              ========================================================================= */
           <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start print:p-0 print:bg-white print:overflow-visible animate-fade-in">
             {/* Zoom, Print & Cut Guides Toolbar */}
-            <div className="w-full max-w-[794px] mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs print:hidden">
+            <div className="w-full max-w-198.5 mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs print:hidden">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <Printer className="h-4 w-4 text-blue-600" /> A4 Cut Sheet · 4 Cards (210 × 297

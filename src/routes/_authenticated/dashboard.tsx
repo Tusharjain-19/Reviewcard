@@ -309,7 +309,7 @@ function Dashboard() {
                           {b.name}
                         </h2>
                         <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 min-w-0">
-                          <span className="truncate max-w-[120px] sm:max-w-none">
+                          <span className="truncate max-w-30 sm:max-w-none">
                             {b.category || "Local Business"}
                           </span>
                           <span>·</span>
