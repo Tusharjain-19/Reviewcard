@@ -253,6 +253,16 @@ function CardStudio() {
     );
   };
 
+  const handleBizNameChange = (text: string) => {
+    setBizName(text);
+    setElements((prev) => prev.map((el) => (el.id === "elem-biz-name" ? { ...el, text } : el)));
+  };
+
+  const handleCategoryChange = (text: string) => {
+    setCategory(text);
+    setElements((prev) => prev.map((el) => (el.id === "elem-biz-cat" ? { ...el, text } : el)));
+  };
+
   const handleHeadlineSelect = (text: string) => {
     setHeadline(text);
     setElements((prev) => prev.map((el) => (el.id === "elem-cta-headline" ? { ...el, text } : el)));
@@ -574,12 +584,12 @@ function CardStudio() {
             <span className="hidden sm:inline">{saving ? "Saving…" : "Save Design"}</span>
           </Button>
 
-          {/* Canva Purple Export PDF Button */}
+          {/* Clean Slate Export PDF Button */}
           <button
             type="button"
             onClick={handleDownloadPdf}
             disabled={exportingPdf}
-            className="h-8 px-3 sm:px-3.5 gap-1.5 text-xs bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-xs flex items-center cursor-pointer transition-all active:scale-98 disabled:opacity-50"
+            className="h-8 px-3.5 gap-1.5 text-xs bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs flex items-center cursor-pointer transition-all active:scale-98 disabled:opacity-50"
             title="Download print-ready PDF (A6 single or A4 sheet)"
           >
             <Download className="h-3.5 w-3.5" />
@@ -612,8 +622,38 @@ function CardStudio() {
                     </span>
                   </div>
 
+                  {/* Business Name & Subtitle / Category */}
+                  <div className="space-y-2 pt-1 border-t border-slate-100">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Business Name
+                        </label>
+                        <Input
+                          value={bizName}
+                          onChange={(e) => handleBizNameChange(e.target.value)}
+                          placeholder="Your business name"
+                          className="h-8 text-xs bg-slate-50 border-slate-200"
+                          maxLength={35}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Category / Subtitle
+                        </label>
+                        <Input
+                          value={category}
+                          onChange={(e) => handleCategoryChange(e.target.value)}
+                          placeholder="e.g. CAFE, RESTAURANT"
+                          className="h-8 text-xs bg-slate-50 border-slate-200"
+                          maxLength={25}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* 1-Click Color Themes */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-1 border-t border-slate-100">
                     <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
                       <span>Card Theme Color</span>
                       <span className="text-[10px] font-mono text-slate-400 uppercase">
@@ -869,23 +909,23 @@ function CardStudio() {
                 </div>
 
                 {/* THE PROMINENT CTA TO CUSTOM CANVA STUDIO */}
-                <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/80 p-4 shadow-sm hover:shadow-md transition-all hover-card-lift">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-all">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
                       <Move className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                        Want to Customize Everything?
+                        Customize Everything in Canva Studio
                       </h3>
                       <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        Freely move & resize elements, upload custom background artwork, change
-                        fonts, and add stickers.
+                        Freely drag, move & resize elements, change fonts, add Google & NFC
+                        stickers, or design from scratch.
                       </p>
                       <button
                         type="button"
                         onClick={() => setViewMode("canva")}
-                        className="mt-3 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer transition-transform active:scale-98"
+                        className="mt-3 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer transition-transform active:scale-98"
                       >
                         <Move className="h-3.5 w-3.5" />
                         Open Custom Canva Studio
@@ -954,7 +994,7 @@ function CardStudio() {
                   <button
                     type="button"
                     onClick={handleDownloadPdf}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="h-4 w-4" />
                     Export A6 Print PDF
@@ -975,20 +1015,29 @@ function CardStudio() {
           /* =========================================================================
              VIEW 2: CUSTOM CANVA STUDIO (Interactive Drag & Drop Canvas)
              ========================================================================= */
-          <div className="h-[calc(100vh-56px)] w-full overflow-hidden flex flex-col animate-fade-in">
-            {/* Top Canva Notice Bar */}
-            <div className="bg-purple-50/90 border-b border-purple-200/80 px-4 py-1.5 flex items-center justify-between text-xs text-purple-900 shrink-0">
-              <span className="font-semibold flex items-center gap-1.5">
-                <Move className="h-3.5 w-3.5 text-purple-600" />
-                Custom Canva Studio Active — Click any text or sticker to drag, resize, or edit.
-              </span>
-              <button
-                type="button"
-                onClick={() => setViewMode("default")}
-                className="font-bold text-purple-700 hover:text-purple-900 underline cursor-pointer text-[11px]"
-              >
-                ← Back to Default Design
-              </button>
+          <div className="h-[calc(100vh-56px)] w-full overflow-hidden flex flex-col bg-[#f8fafc]">
+            {/* Top Canva Header Navigation */}
+            <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between text-xs text-slate-800 shrink-0 shadow-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("default")}
+                  className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 cursor-pointer text-xs"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 text-slate-500" />
+                  Back to Default Card
+                </button>
+                <div className="h-4 w-px bg-slate-200 mx-1" />
+                <span className="font-bold text-slate-900">Custom Canva Studio</span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  · A6 Table Stand (105 × 148 mm)
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-500 hidden sm:inline">
+                  Click any text or badge to drag, resize, or double-click to edit text
+                </span>
+              </div>
             </div>
 
             <Suspense

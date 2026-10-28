@@ -443,8 +443,11 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
         img.onload = () => {
           try {
             const canvas = document.createElement("canvas");
-            canvas.width = Math.max(img.naturalWidth || 200, 400);
-            canvas.height = Math.max(img.naturalHeight || 200, 400);
+            const baseW = img.naturalWidth || 300;
+            const baseH = img.naturalHeight || 300;
+            const scaleFactor = Math.max(2, Math.min(4, Math.ceil(1600 / Math.max(baseW, baseH))));
+            canvas.width = Math.max(baseW * scaleFactor, 1200);
+            canvas.height = Math.max(baseH * scaleFactor, 1200);
             const ctx = canvas.getContext("2d");
             if (!ctx) return resolve(null);
             ctx.imageSmoothingEnabled = true;

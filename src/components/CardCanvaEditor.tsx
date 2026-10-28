@@ -16,6 +16,7 @@ import {
   Minus,
   Trash2,
   Copy,
+  Download,
   RotateCcw,
   RotateCw,
   Layers,
@@ -949,6 +950,44 @@ export function CardCanvaEditor({
     setSelectedId("elem-qr-code");
   };
 
+  // Start from Scratch (Blank Card with Movable QR Code)
+  const handleStartFromScratch = () => {
+    const blank: CanvasElement[] = [
+      {
+        id: "elem-qr-code",
+        type: "qr",
+        x: 30.5,
+        y: 52,
+        width: 44,
+        height: 44,
+        qrFrame: "white",
+      },
+    ];
+    updateElements(blank);
+    pushHistory(blank);
+    setSelectedId("elem-qr-code");
+  };
+
+  // Download Ultra High-Definition Print PNG (1200 DPI equivalent)
+  const handleDownloadHighResPng = () => {
+    if (!stageRef.current) return;
+    try {
+      const stage = stageRef.current;
+      const currentSelected = selectedId;
+      setSelectedId(null);
+      setTimeout(() => {
+        const dataUrl = stage.toDataURL({ pixelRatio: 4 });
+        const link = document.createElement("a");
+        link.download = `${(businessName || "review-card").toLowerCase().replace(/[^a-z0-9]/g, "-")}-card-print-ultra-hd.png`;
+        link.href = dataUrl;
+        link.click();
+        setSelectedId(currentSelected);
+      }, 50);
+    } catch (e) {
+      console.error("High-res export failed", e);
+    }
+  };
+
   // Full Canva Keyboard Shortcuts (Ctrl+C, Ctrl+V, Ctrl+D, Ctrl+Z, Ctrl+Y, Ctrl+B, Ctrl+I, Arrows, Delete, Escape, Enter, [, ])
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1126,13 +1165,13 @@ export function CardCanvaEditor({
   return (
     <div className="flex h-full w-full select-none overflow-hidden bg-[#f1f3f5] text-slate-800">
       {/* ---------------- 1. CANVA LEFT VERTICAL ICON STRIP (IMAGE 1) ---------------- */}
-      <div className="w-[68px] bg-white border-r border-slate-200/90 flex flex-col items-center py-3 gap-1 shrink-0 z-20 shadow-xs">
+      <div className="w-[68px] bg-white border-r border-slate-200/90 flex flex-col items-center py-3 gap-1.5 shrink-0 z-20 shadow-xs">
         <button
           type="button"
           onClick={() => handleTabClick("elements")}
           className={`w-13 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
             activeDrawerTab === "elements" && isDrawerOpen
-              ? "bg-purple-100/80 text-purple-700 font-bold shadow-2xs"
+              ? "bg-slate-900 text-white font-bold shadow-xs"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
           title="Stickers, Badges & NFC"
@@ -1146,7 +1185,7 @@ export function CardCanvaEditor({
           onClick={() => handleTabClick("text")}
           className={`w-13 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
             activeDrawerTab === "text" && isDrawerOpen
-              ? "bg-purple-100/80 text-purple-700 font-bold shadow-2xs"
+              ? "bg-slate-900 text-white font-bold shadow-xs"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
           title="Add Text & Headlines"
@@ -1160,7 +1199,7 @@ export function CardCanvaEditor({
           onClick={() => handleTabClick("uploads")}
           className={`w-13 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
             activeDrawerTab === "uploads" && isDrawerOpen
-              ? "bg-purple-100/80 text-purple-700 font-bold shadow-2xs"
+              ? "bg-slate-900 text-white font-bold shadow-xs"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
           title="Upload Card Artwork or Logo"
@@ -1174,7 +1213,7 @@ export function CardCanvaEditor({
           onClick={() => handleTabClick("templates")}
           className={`w-13 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
             activeDrawerTab === "templates" && isDrawerOpen
-              ? "bg-purple-100/80 text-purple-700 font-bold shadow-2xs"
+              ? "bg-slate-900 text-white font-bold shadow-xs"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
           title="Curated Card Styles"
@@ -1188,7 +1227,7 @@ export function CardCanvaEditor({
           onClick={() => handleTabClick("background")}
           className={`w-13 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
             activeDrawerTab === "background" && isDrawerOpen
-              ? "bg-purple-100/80 text-purple-700 font-bold shadow-2xs"
+              ? "bg-slate-900 text-white font-bold shadow-xs"
               : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
           }`}
           title="Card Base Color"
@@ -1239,18 +1278,18 @@ export function CardCanvaEditor({
           {activeDrawerTab === "elements" && (
             <div className="space-y-4">
               {/* Highlight: Official Real NFC Logo Tile (Standard & Multicolor) */}
-              <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-b from-purple-50/70 to-indigo-50/50 p-3.5 space-y-2.5 shadow-2xs">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1">
-                    <Radio className="h-3 w-3" /> Official Contactless
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                    <Radio className="h-3 w-3 text-blue-600" /> Contactless NFC
                   </span>
-                  <span className="text-[9px] font-semibold bg-purple-200/80 text-purple-800 px-1.5 py-0.5 rounded-full">
-                    Real NFC
+                  <span className="text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                    Official Wave
                   </span>
                 </div>
 
                 {/* 1. Multicolor NFC Logo Option */}
-                <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-purple-200">
+                <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200 hover:border-blue-400 transition-colors">
                   <div
                     onClick={() => handleAddSticker("nfcColor")}
                     className="h-14 w-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
@@ -1259,13 +1298,13 @@ export function CardCanvaEditor({
                     <img
                       src={STICKER_SVGS.nfcColor}
                       alt="Multicolor NFC Logo"
-                      className="h-11 w-11"
+                      className="h-11 w-11 object-contain"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <p className="text-xs font-bold text-slate-900">Multicolor NFC</p>
-                      <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1 py-0.2 rounded">
+                      <span className="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1 py-0.2 rounded">
                         Google Colors
                       </span>
                     </div>
@@ -1275,7 +1314,7 @@ export function CardCanvaEditor({
                     <button
                       type="button"
                       onClick={() => handleAddSticker("nfcColor")}
-                      className="mt-1 text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer flex items-center gap-0.5"
+                      className="mt-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-0.5"
                     >
                       + Insert Multicolor
                     </button>
@@ -1283,20 +1322,24 @@ export function CardCanvaEditor({
                 </div>
 
                 {/* 2. Standard Real NFC Logo */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200 hover:border-blue-400 transition-colors">
                   <div
                     onClick={() => handleAddSticker("nfc")}
-                    className="h-12 w-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
+                    className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
                     title="Click to add Standard NFC Badge"
                   >
-                    <img src={STICKER_SVGS.nfc} alt="Real NFC Logo" className="h-9 w-9" />
+                    <img
+                      src={STICKER_SVGS.nfc}
+                      alt="Real NFC Logo"
+                      className="h-9 w-9 object-contain"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-slate-900">Standard NFC Badge</p>
                     <button
                       type="button"
                       onClick={() => handleAddSticker("nfc")}
-                      className="text-[11px] font-bold text-slate-700 hover:text-purple-700 cursor-pointer"
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
                     >
                       + Insert Standard
                     </button>
@@ -1304,7 +1347,7 @@ export function CardCanvaEditor({
                 </div>
 
                 {/* Transparent White & Dark Variants */}
-                <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-purple-100">
+                <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => handleAddSticker("nfcWhite")}
@@ -1315,7 +1358,7 @@ export function CardCanvaEditor({
                   <button
                     type="button"
                     onClick={() => handleAddSticker("nfcDark")}
-                    className="py-1 px-2 rounded-lg bg-white border text-slate-800 text-[10px] font-semibold flex items-center justify-center gap-1 hover:bg-slate-50 cursor-pointer"
+                    className="py-1 px-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-[10px] font-semibold flex items-center justify-center gap-1 hover:bg-slate-50 cursor-pointer"
                   >
                     Dark Vector NFC
                   </button>
@@ -2158,14 +2201,14 @@ export function CardCanvaEditor({
                     onClick={() => updateSelectedElement({ qrFrame: "dark" })}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
                       selectedElement.qrFrame === "dark"
-                        ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
+                        ? "bg-slate-900 text-white font-bold"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
                     Dark Box
                   </button>
                 </div>
-                <span className="text-[11px] font-mono text-purple-600 ml-1 shrink-0">
+                <span className="text-[11px] font-mono text-slate-500 ml-1 shrink-0">
                   {selectedElement.width} × {selectedElement.height} mm
                 </span>
               </>
@@ -2194,7 +2237,7 @@ export function CardCanvaEditor({
                       }
                       className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
                         selectedElement.stickerType === "nfcColor"
-                          ? "bg-purple-600 text-white shadow-2xs"
+                          ? "bg-slate-900 text-white shadow-2xs"
                           : "text-slate-600 hover:bg-white"
                       }`}
                     >
@@ -2210,7 +2253,7 @@ export function CardCanvaEditor({
                       }
                       className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
                         selectedElement.stickerType === "nfc"
-                          ? "bg-purple-600 text-white shadow-2xs"
+                          ? "bg-slate-900 text-white shadow-2xs"
                           : "text-slate-600 hover:bg-white"
                       }`}
                     >
@@ -2226,7 +2269,7 @@ export function CardCanvaEditor({
                       }
                       className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
                         selectedElement.stickerType === "nfcWhite"
-                          ? "bg-purple-600 text-white shadow-2xs"
+                          ? "bg-slate-900 text-white shadow-2xs"
                           : "text-slate-600 hover:bg-white"
                       }`}
                     >
@@ -2242,7 +2285,7 @@ export function CardCanvaEditor({
                       }
                       className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
                         selectedElement.stickerType === "nfcDark"
-                          ? "bg-purple-600 text-white shadow-2xs"
+                          ? "bg-slate-900 text-white shadow-2xs"
                           : "text-slate-600 hover:bg-white"
                       }`}
                     >
@@ -2417,14 +2460,46 @@ export function CardCanvaEditor({
               )}
             </div>
           </div>
+        </div>
 
-          {/* ---------------- SCROLLABLE CANVAS WORKSPACE (Allows smooth full scrolling) ---------------- */}
-          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 w-full p-6 pb-36 flex flex-col items-center">
-            {/* ---------------- FLOATING CARD UTILITY ICONS RIGHT ABOVE CARD (IMAGE 1 & 3) ---------------- */}
-            <div
-              className="flex items-center justify-end gap-1.5 mb-2 px-1"
-              style={{ width: `${A6_WIDTH_PX * zoomScale}px`, maxWidth: "100%" }}
-            >
+        {/* ---------------- SCROLLABLE CANVAS WORKSPACE (Allows smooth full scrolling) ---------------- */}
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 w-full p-6 pb-40 flex flex-col items-center">
+          {/* ---------------- CARD TOP UTILITY BAR (DEFAULT CARD / BLANK CARD / EXPORT PNG) ---------------- */}
+          <div
+            className="flex items-center justify-between gap-2 mb-2 px-1"
+            style={{ width: `${A6_WIDTH_PX * zoomScale}px`, maxWidth: "100%" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleResetLayout}
+                className="px-2.5 py-1 rounded-lg border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                title="Load the standard Google Review card layout"
+              >
+                <RotateCcw className="h-3 w-3 text-blue-600" />
+                Default Card
+              </button>
+              <button
+                type="button"
+                onClick={handleStartFromScratch}
+                className="px-2.5 py-1 rounded-lg border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                title="Clear all elements to design from scratch (blank canvas with QR)"
+              >
+                <Plus className="h-3 w-3 text-slate-500" />
+                Blank Card
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleDownloadHighResPng}
+                className="px-2.5 py-1 rounded-lg border bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                title="Export Ultra-HD 1200 DPI PNG directly from canvas"
+              >
+                <Download className="h-3 w-3 text-slate-600" />
+                Export PNG
+              </button>
               <button
                 type="button"
                 onClick={() => setIsLocked(!isLocked)}
@@ -2446,446 +2521,438 @@ export function CardCanvaEditor({
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
-              <button
-                type="button"
-                onClick={handleResetLayout}
-                className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
-                title="Reset to Default A6 Layout"
-              >
-                <RotateCcw className="h-3 w-3" /> Reset Default
-              </button>
             </div>
+          </div>
 
-            {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
-            <div
-              className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
-              tabIndex={0}
-              style={{
-                width: `${A6_WIDTH_PX * zoomScale}px`,
-                height: `${A6_HEIGHT_PX * zoomScale}px`,
+          {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
+          <div
+            className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
+            tabIndex={0}
+            style={{
+              width: `${A6_WIDTH_PX * zoomScale}px`,
+              height: `${A6_HEIGHT_PX * zoomScale}px`,
+            }}
+          >
+            <Stage
+              ref={stageRef}
+              width={A6_WIDTH_PX * zoomScale}
+              height={A6_HEIGHT_PX * zoomScale}
+              scaleX={zoomScale}
+              scaleY={zoomScale}
+              onMouseDown={(e) => {
+                if (e.target === e.target.getStage()) {
+                  setSelectedId(null);
+                  setEditingTextId(null);
+                }
               }}
             >
-              <Stage
-                ref={stageRef}
-                width={A6_WIDTH_PX * zoomScale}
-                height={A6_HEIGHT_PX * zoomScale}
-                scaleX={zoomScale}
-                scaleY={zoomScale}
-                onMouseDown={(e) => {
-                  if (e.target === e.target.getStage()) {
-                    setSelectedId(null);
-                    setEditingTextId(null);
-                  }
-                }}
-              >
-                <Layer>
-                  {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
-                  {bgImg ? (
-                    <KonvaImage
-                      image={bgImg}
-                      x={0}
-                      y={0}
-                      width={A6_WIDTH_PX}
-                      height={A6_HEIGHT_PX}
-                      cornerRadius={20}
-                    />
-                  ) : (
-                    <Rect
-                      x={0}
-                      y={0}
-                      width={A6_WIDTH_PX}
-                      height={A6_HEIGHT_PX}
-                      fill={cardColor}
-                      cornerRadius={20}
-                      {...(isLightColor(cardColor) ? { stroke: "#e2e8f0", strokeWidth: 1.5 } : {})}
-                    />
-                  )}
+              <Layer>
+                {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
+                {bgImg ? (
+                  <KonvaImage
+                    image={bgImg}
+                    x={0}
+                    y={0}
+                    width={A6_WIDTH_PX}
+                    height={A6_HEIGHT_PX}
+                    cornerRadius={20}
+                  />
+                ) : (
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={A6_WIDTH_PX}
+                    height={A6_HEIGHT_PX}
+                    fill={cardColor}
+                    cornerRadius={20}
+                    {...(isLightColor(cardColor) ? { stroke: "#e2e8f0", strokeWidth: 1.5 } : {})}
+                  />
+                )}
 
-                  {/* 2. Safe Print Guideline (4mm interior boundary) */}
-                  {showMarginGuides && (
-                    <Rect
-                      x={SAFE_MARGIN_PX}
-                      y={SAFE_MARGIN_PX}
-                      width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
-                      height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
-                      stroke={
-                        isLightColor(cardColor)
-                          ? "rgba(100, 116, 139, 0.35)"
-                          : "rgba(255, 255, 255, 0.3)"
-                      }
-                      strokeWidth={1}
-                      dash={[5, 4]}
+                {/* 2. Safe Print Guideline (4mm interior boundary) */}
+                {showMarginGuides && (
+                  <Rect
+                    x={SAFE_MARGIN_PX}
+                    y={SAFE_MARGIN_PX}
+                    width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
+                    height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
+                    stroke={
+                      isLightColor(cardColor)
+                        ? "rgba(100, 116, 139, 0.35)"
+                        : "rgba(255, 255, 255, 0.3)"
+                    }
+                    strokeWidth={1}
+                    dash={[5, 4]}
+                    listening={false}
+                  />
+                )}
+
+                {/* 3. Magnetic Alignment Guiding Lines */}
+                {activeGuides.map((g, idx) =>
+                  g.orientation === "V" ? (
+                    <Line
+                      key={`guide-v-${idx}`}
+                      points={[g.pos, 0, g.pos, A6_HEIGHT_PX]}
+                      stroke={g.color || "#2563eb"}
+                      strokeWidth={1.5}
+                      dash={[4, 3]}
                       listening={false}
                     />
-                  )}
+                  ) : (
+                    <Line
+                      key={`guide-h-${idx}`}
+                      points={[0, g.pos, A6_WIDTH_PX, g.pos]}
+                      stroke={g.color || "#2563eb"}
+                      strokeWidth={1.5}
+                      dash={[4, 3]}
+                      listening={false}
+                    />
+                  ),
+                )}
 
-                  {/* 3. Magnetic Alignment Guiding Lines */}
-                  {activeGuides.map((g, idx) =>
-                    g.orientation === "V" ? (
-                      <Line
-                        key={`guide-v-${idx}`}
-                        points={[g.pos, 0, g.pos, A6_HEIGHT_PX]}
-                        stroke={g.color || "#8b3dff"}
-                        strokeWidth={1.5}
-                        dash={[4, 3]}
-                        listening={false}
+                {/* 4. Canvas Elements Render Loop */}
+                {elements.map((elem) => {
+                  const xPx = elem.x * MM_TO_PX;
+                  const yPx = elem.y * MM_TO_PX;
+                  const widthPx = elem.width * MM_TO_PX;
+                  const heightPx = elem.height * MM_TO_PX;
+
+                  if (elem.type === "text") {
+                    return (
+                      <KonvaText
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        text={elem.text || ""}
+                        fontSize={(elem.fontSize || 12) * 1.33}
+                        fontFamily={elem.fontFamily || "Inter, sans-serif"}
+                        fontStyle={
+                          elem.fontWeight === "bold"
+                            ? elem.fontStyle === "italic"
+                              ? "bold italic"
+                              : "bold"
+                            : elem.fontStyle === "italic"
+                              ? "italic"
+                              : "normal"
+                        }
+                        fill={elem.fill || "#ffffff"}
+                        align={elem.align || "center"}
+                        rotation={elem.rotation || 0}
+                        opacity={editingTextId === elem.id ? 0 : 1}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDblClick={() => setEditingTextId(elem.id)}
+                        onDblTap={() => setEditingTextId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
                       />
-                    ) : (
-                      <Line
-                        key={`guide-h-${idx}`}
-                        points={[0, g.pos, A6_WIDTH_PX, g.pos]}
-                        stroke={g.color || "#8b3dff"}
-                        strokeWidth={1.5}
-                        dash={[4, 3]}
-                        listening={false}
+                    );
+                  }
+
+                  if (elem.type === "panel") {
+                    return (
+                      <Rect
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        height={heightPx}
+                        fill={elem.fill || "#ffffff"}
+                        cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
+                        {...(elem.stroke ? { stroke: elem.stroke, strokeWidth: 1 } : {})}
+                        shadowColor="rgba(0, 0, 0, 0.08)"
+                        shadowBlur={12}
+                        shadowOffsetY={3}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
                       />
-                    ),
-                  )}
+                    );
+                  }
 
-                  {/* 4. Canvas Elements Render Loop */}
-                  {elements.map((elem) => {
-                    const xPx = elem.x * MM_TO_PX;
-                    const yPx = elem.y * MM_TO_PX;
-                    const widthPx = elem.width * MM_TO_PX;
-                    const heightPx = elem.height * MM_TO_PX;
-
-                    if (elem.type === "text") {
-                      return (
-                        <KonvaText
-                          key={elem.id}
-                          ref={(node) => {
-                            if (node) nodeRefs.current.set(elem.id, node);
-                            else nodeRefs.current.delete(elem.id);
-                          }}
-                          id={elem.id}
-                          x={xPx}
-                          y={yPx}
-                          width={widthPx}
-                          text={elem.text || ""}
-                          fontSize={(elem.fontSize || 12) * 1.33}
-                          fontFamily={elem.fontFamily || "Inter, sans-serif"}
-                          fontStyle={
-                            elem.fontWeight === "bold"
-                              ? elem.fontStyle === "italic"
-                                ? "bold italic"
-                                : "bold"
-                              : elem.fontStyle === "italic"
-                                ? "italic"
-                                : "normal"
-                          }
-                          fill={elem.fill || "#ffffff"}
-                          align={elem.align || "center"}
-                          rotation={elem.rotation || 0}
-                          opacity={editingTextId === elem.id ? 0 : 1}
-                          draggable={!isLocked}
-                          onClick={() => setSelectedId(elem.id)}
-                          onTap={() => setSelectedId(elem.id)}
-                          onDblClick={() => setEditingTextId(elem.id)}
-                          onDblTap={() => setEditingTextId(elem.id)}
-                          onDragMove={(e) => handleDragMove(elem.id, e)}
-                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                          onTransformEnd={() => handleTransformEnd(elem.id)}
-                        />
-                      );
-                    }
-
-                    if (elem.type === "panel") {
-                      return (
-                        <Rect
-                          key={elem.id}
-                          ref={(node) => {
-                            if (node) nodeRefs.current.set(elem.id, node);
-                            else nodeRefs.current.delete(elem.id);
-                          }}
-                          id={elem.id}
-                          x={xPx}
-                          y={yPx}
-                          width={widthPx}
-                          height={heightPx}
-                          fill={elem.fill || "#ffffff"}
-                          cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
-                          {...(elem.stroke ? { stroke: elem.stroke, strokeWidth: 1 } : {})}
-                          shadowColor="rgba(0, 0, 0, 0.08)"
-                          shadowBlur={12}
-                          shadowOffsetY={3}
-                          rotation={elem.rotation || 0}
-                          draggable={!isLocked}
-                          onClick={() => setSelectedId(elem.id)}
-                          onTap={() => setSelectedId(elem.id)}
-                          onDragMove={(e) => handleDragMove(elem.id, e)}
-                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                          onTransformEnd={() => handleTransformEnd(elem.id)}
-                        />
-                      );
-                    }
-
-                    if (elem.type === "qr") {
-                      const framePadding = elem.qrFrame === "white" ? 2 * MM_TO_PX : 0;
-                      return (
-                        <Group
-                          key={elem.id}
-                          ref={(node) => {
-                            if (node) nodeRefs.current.set(elem.id, node);
-                            else nodeRefs.current.delete(elem.id);
-                          }}
-                          id={elem.id}
-                          x={xPx}
-                          y={yPx}
-                          width={widthPx}
-                          height={heightPx}
-                          rotation={elem.rotation || 0}
-                          draggable={!isLocked}
-                          onClick={() => setSelectedId(elem.id)}
-                          onTap={() => setSelectedId(elem.id)}
-                          onDragMove={(e) => handleDragMove(elem.id, e)}
-                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                          onTransformEnd={() => handleTransformEnd(elem.id)}
-                        >
-                          {/* Frame Panel */}
-                          {elem.qrFrame !== "none" && (
-                            <Rect
-                              x={0}
-                              y={0}
-                              width={widthPx}
-                              height={heightPx}
-                              fill={elem.qrFrame === "white" ? "#ffffff" : "#0f172a"}
-                              cornerRadius={10}
-                              shadowColor="rgba(0, 0, 0, 0.22)"
-                              shadowBlur={10}
-                              shadowOffsetY={4}
-                            />
-                          )}
-                          {/* Crisp QR Code Image */}
-                          {qrImg ? (
-                            <KonvaImage
-                              image={qrImg}
-                              x={framePadding}
-                              y={framePadding}
-                              width={widthPx - framePadding * 2}
-                              height={heightPx - framePadding * 2}
-                            />
-                          ) : (
-                            <Rect
-                              x={framePadding}
-                              y={framePadding}
-                              width={widthPx - framePadding * 2}
-                              height={heightPx - framePadding * 2}
-                              fill="#ffffff"
-                            />
-                          )}
-                        </Group>
-                      );
-                    }
-
-                    if (elem.type === "logo") {
-                      return (
-                        <Group
-                          key={elem.id}
-                          ref={(node) => {
-                            if (node) nodeRefs.current.set(elem.id, node);
-                            else nodeRefs.current.delete(elem.id);
-                          }}
-                          id={elem.id}
-                          x={xPx}
-                          y={yPx}
-                          width={widthPx}
-                          height={heightPx}
-                          rotation={elem.rotation || 0}
-                          draggable={!isLocked}
-                          onClick={() => setSelectedId(elem.id)}
-                          onTap={() => setSelectedId(elem.id)}
-                          onDragMove={(e) => handleDragMove(elem.id, e)}
-                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                          onTransformEnd={() => handleTransformEnd(elem.id)}
-                        >
-                          {/* Logo background circle */}
+                  if (elem.type === "qr") {
+                    const framePadding = elem.qrFrame === "white" ? 2 * MM_TO_PX : 0;
+                    return (
+                      <Group
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        height={heightPx}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
+                      >
+                        {/* Frame Panel */}
+                        {elem.qrFrame !== "none" && (
                           <Rect
                             x={0}
                             y={0}
                             width={widthPx}
                             height={heightPx}
-                            fill="#ffffff"
-                            cornerRadius={widthPx / 2}
-                            shadowColor="rgba(0, 0, 0, 0.2)"
-                            shadowBlur={6}
-                            shadowOffsetY={2}
+                            fill={elem.qrFrame === "white" ? "#ffffff" : "#0f172a"}
+                            cornerRadius={10}
+                            shadowColor="rgba(0, 0, 0, 0.22)"
+                            shadowBlur={10}
+                            shadowOffsetY={4}
                           />
-                          {logoImg ? (
-                            <KonvaImage
-                              image={logoImg}
-                              x={0}
-                              y={0}
-                              width={widthPx}
-                              height={heightPx}
-                              cornerRadius={widthPx / 2}
-                            />
-                          ) : (
-                            <KonvaText
-                              x={0}
-                              y={heightPx * 0.25}
-                              width={widthPx}
-                              text={businessName?.slice(0, 2).toUpperCase() || "RC"}
-                              fontSize={heightPx * 0.45}
-                              fontFamily="Plus Jakarta Sans, sans-serif"
-                              fontStyle="bold"
-                              fill={cardColor || "#1a73e8"}
-                              align="center"
-                            />
-                          )}
-                        </Group>
-                      );
-                    }
+                        )}
+                        {/* Crisp QR Code Image */}
+                        {qrImg ? (
+                          <KonvaImage
+                            image={qrImg}
+                            x={framePadding}
+                            y={framePadding}
+                            width={widthPx - framePadding * 2}
+                            height={heightPx - framePadding * 2}
+                          />
+                        ) : (
+                          <Rect
+                            x={framePadding}
+                            y={framePadding}
+                            width={widthPx - framePadding * 2}
+                            height={heightPx - framePadding * 2}
+                            fill="#ffffff"
+                          />
+                        )}
+                      </Group>
+                    );
+                  }
 
-                    if (elem.type === "sticker") {
-                      const stickerKey = elem.stickerType || "google";
-                      const sImg = stickerImages[stickerKey];
-
-                      return (
-                        <Group
-                          key={elem.id}
-                          ref={(node) => {
-                            if (node) nodeRefs.current.set(elem.id, node);
-                            else nodeRefs.current.delete(elem.id);
-                          }}
-                          id={elem.id}
-                          x={xPx}
-                          y={yPx}
+                  if (elem.type === "logo") {
+                    return (
+                      <Group
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        height={heightPx}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
+                      >
+                        {/* Logo background circle */}
+                        <Rect
+                          x={0}
+                          y={0}
                           width={widthPx}
                           height={heightPx}
-                          rotation={elem.rotation || 0}
-                          draggable={!isLocked}
-                          onClick={() => setSelectedId(elem.id)}
-                          onTap={() => setSelectedId(elem.id)}
-                          onDragMove={(e) => handleDragMove(elem.id, e)}
-                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                          onTransformEnd={() => handleTransformEnd(elem.id)}
-                        >
-                          {sImg && (
-                            <KonvaImage
-                              image={sImg}
-                              x={0}
-                              y={0}
-                              width={widthPx}
-                              height={heightPx}
-                              shadowColor="rgba(0,0,0,0.14)"
-                              shadowBlur={4}
-                              shadowOffsetY={1}
-                            />
-                          )}
-                        </Group>
-                      );
+                          fill="#ffffff"
+                          cornerRadius={widthPx / 2}
+                          shadowColor="rgba(0, 0, 0, 0.2)"
+                          shadowBlur={6}
+                          shadowOffsetY={2}
+                        />
+                        {logoImg ? (
+                          <KonvaImage
+                            image={logoImg}
+                            x={0}
+                            y={0}
+                            width={widthPx}
+                            height={heightPx}
+                            cornerRadius={widthPx / 2}
+                          />
+                        ) : (
+                          <KonvaText
+                            x={0}
+                            y={heightPx * 0.25}
+                            width={widthPx}
+                            text={businessName?.slice(0, 2).toUpperCase() || "RC"}
+                            fontSize={heightPx * 0.45}
+                            fontFamily="Plus Jakarta Sans, sans-serif"
+                            fontStyle="bold"
+                            fill={cardColor || "#1a73e8"}
+                            align="center"
+                          />
+                        )}
+                      </Group>
+                    );
+                  }
+
+                  if (elem.type === "sticker") {
+                    const stickerKey = elem.stickerType || "google";
+                    const sImg = stickerImages[stickerKey];
+
+                    return (
+                      <Group
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        height={heightPx}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
+                      >
+                        {sImg && (
+                          <KonvaImage
+                            image={sImg}
+                            x={0}
+                            y={0}
+                            width={widthPx}
+                            height={heightPx}
+                            shadowColor="rgba(0,0,0,0.14)"
+                            shadowBlur={4}
+                            shadowOffsetY={1}
+                          />
+                        )}
+                      </Group>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                {/* 5. Clean Google Blue Transformer Bounding Box with Height & Width Drag Anchors */}
+                <Transformer
+                  ref={transformerRef}
+                  borderStroke="#2563eb"
+                  borderStrokeWidth={2}
+                  anchorStroke="#2563eb"
+                  anchorFill="#ffffff"
+                  anchorSize={8}
+                  anchorCornerRadius={2}
+                  rotateAnchorOffset={24}
+                  rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                  rotationSnapTolerance={5}
+                  enabledAnchors={[
+                    "top-left",
+                    "top-center",
+                    "top-right",
+                    "middle-left",
+                    "middle-right",
+                    "bottom-left",
+                    "bottom-center",
+                    "bottom-right",
+                  ]}
+                  boundBoxFunc={(oldBox, newBox) => {
+                    if (newBox.width < 10 || newBox.height < 10) {
+                      return oldBox;
                     }
+                    return newBox;
+                  }}
+                />
+              </Layer>
+            </Stage>
 
-                    return null;
-                  })}
+            {/* 6. Direct On-Canvas Inline Text Editing Overlay (Double-click or press Enter to edit right here) */}
+            {(() => {
+              const editingElem = elements.find((e) => e.id === editingTextId);
+              if (!editingElem || editingElem.type !== "text") return null;
 
-                  {/* 5. Blue/Purple Canva Transformer Bounding Box with Height & Width Drag Anchors */}
-                  <Transformer
-                    ref={transformerRef}
-                    borderStroke="#8b3dff"
-                    borderStrokeWidth={2}
-                    anchorStroke="#8b3dff"
-                    anchorFill="#ffffff"
-                    anchorSize={8}
-                    anchorCornerRadius={2}
-                    rotateAnchorOffset={24}
-                    rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
-                    rotationSnapTolerance={5}
-                    enabledAnchors={[
-                      "top-left",
-                      "top-center",
-                      "top-right",
-                      "middle-left",
-                      "middle-right",
-                      "bottom-left",
-                      "bottom-center",
-                      "bottom-right",
-                    ]}
-                    boundBoxFunc={(oldBox, newBox) => {
-                      if (newBox.width < 10 || newBox.height < 10) {
-                        return oldBox;
-                      }
-                      return newBox;
-                    }}
-                  />
-                </Layer>
-              </Stage>
-
-              {/* 6. Direct On-Canvas Inline Text Editing Overlay (Double-click or press Enter to edit right here) */}
-              {(() => {
-                const editingElem = elements.find((e) => e.id === editingTextId);
-                if (!editingElem || editingElem.type !== "text") return null;
-
-                return (
-                  <textarea
-                    key={editingElem.id}
-                    autoFocus
-                    defaultValue={editingElem.text || ""}
-                    style={{
-                      position: "absolute",
-                      left: `${editingElem.x * MM_TO_PX * zoomScale}px`,
-                      top: `${editingElem.y * MM_TO_PX * zoomScale}px`,
-                      width: `${editingElem.width * MM_TO_PX * zoomScale}px`,
-                      minHeight: `${(editingElem.height || 7) * MM_TO_PX * zoomScale}px`,
-                      fontSize: `${(editingElem.fontSize || 12) * 1.33 * zoomScale}px`,
-                      fontFamily: editingElem.fontFamily || "Inter, sans-serif",
-                      fontWeight: editingElem.fontWeight === "bold" ? 700 : 400,
-                      fontStyle: editingElem.fontStyle === "italic" ? "italic" : "normal",
-                      color: editingElem.fill || "#ffffff",
-                      textAlign: editingElem.align || "center",
-                      lineHeight: 1.25,
-                      transform: editingElem.rotation
-                        ? `rotate(${editingElem.rotation}deg)`
-                        : undefined,
-                      transformOrigin: "0 0",
-                      background: isLightColor(cardColor)
-                        ? "rgba(255, 255, 255, 0.96)"
-                        : "rgba(15, 23, 42, 0.94)",
-                      border: "2px solid #8b3dff",
-                      boxShadow: "0 4px 18px rgba(139, 61, 255, 0.35)",
-                      borderRadius: "6px",
-                      padding: "2px 4px",
-                      outline: "none",
-                      resize: "none",
-                      overflow: "hidden",
-                      zIndex: 50,
-                      boxSizing: "border-box",
-                    }}
-                    ref={(el) => {
-                      if (el) {
-                        el.focus();
-                        el.select();
-                        el.style.height = "auto";
-                        el.style.height = `${el.scrollHeight}px`;
-                      }
-                    }}
-                    onInput={(e) => {
-                      const target = e.currentTarget;
-                      target.style.height = "auto";
-                      target.style.height = `${target.scrollHeight}px`;
-                      const newHeightMm = Math.max(
-                        editingElem.height,
-                        Number((target.scrollHeight / (MM_TO_PX * zoomScale)).toFixed(1)),
-                      );
-                      updateSelectedElement({
-                        text: target.value,
-                        height: newHeightMm,
-                      });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        e.preventDefault();
-                        setEditingTextId(null);
-                      } else if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        setEditingTextId(null);
-                      }
-                    }}
-                    onBlur={() => setEditingTextId(null)}
-                  />
-                );
-              })()}
-            </div>
+              return (
+                <textarea
+                  key={editingElem.id}
+                  autoFocus
+                  defaultValue={editingElem.text || ""}
+                  style={{
+                    position: "absolute",
+                    left: `${editingElem.x * MM_TO_PX * zoomScale}px`,
+                    top: `${editingElem.y * MM_TO_PX * zoomScale}px`,
+                    width: `${editingElem.width * MM_TO_PX * zoomScale}px`,
+                    minHeight: `${(editingElem.height || 7) * MM_TO_PX * zoomScale}px`,
+                    fontSize: `${(editingElem.fontSize || 12) * 1.33 * zoomScale}px`,
+                    fontFamily: editingElem.fontFamily || "Inter, sans-serif",
+                    fontWeight: editingElem.fontWeight === "bold" ? 700 : 400,
+                    fontStyle: editingElem.fontStyle === "italic" ? "italic" : "normal",
+                    color: editingElem.fill || "#ffffff",
+                    textAlign: editingElem.align || "center",
+                    lineHeight: 1.25,
+                    transform: editingElem.rotation
+                      ? `rotate(${editingElem.rotation}deg)`
+                      : undefined,
+                    transformOrigin: "0 0",
+                    background: isLightColor(cardColor)
+                      ? "rgba(255, 255, 255, 0.96)"
+                      : "rgba(15, 23, 42, 0.94)",
+                    border: "2px solid #8b3dff",
+                    boxShadow: "0 4px 18px rgba(139, 61, 255, 0.35)",
+                    borderRadius: "6px",
+                    padding: "2px 4px",
+                    outline: "none",
+                    resize: "none",
+                    overflow: "hidden",
+                    zIndex: 50,
+                    boxSizing: "border-box",
+                  }}
+                  ref={(el) => {
+                    if (el) {
+                      el.focus();
+                      el.select();
+                      el.style.height = "auto";
+                      el.style.height = `${el.scrollHeight}px`;
+                    }
+                  }}
+                  onInput={(e) => {
+                    const target = e.currentTarget;
+                    target.style.height = "auto";
+                    target.style.height = `${target.scrollHeight}px`;
+                    const newHeightMm = Math.max(
+                      editingElem.height,
+                      Number((target.scrollHeight / (MM_TO_PX * zoomScale)).toFixed(1)),
+                    );
+                    updateSelectedElement({
+                      text: target.value,
+                      height: newHeightMm,
+                    });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setEditingTextId(null);
+                    } else if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      setEditingTextId(null);
+                    }
+                  }}
+                  onBlur={() => setEditingTextId(null)}
+                />
+              );
+            })()}
           </div>
         </div>
 

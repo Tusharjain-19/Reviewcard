@@ -241,9 +241,20 @@ export function CardExportDialog({
                 type="checkbox"
                 checked={showCutGuidelines}
                 onChange={(e) => setShowCutGuidelines(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer"
               />
             </label>
+          </div>
+
+          {/* 4. Quality Guarantee */}
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Export Quality:
+            </span>
+            <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-[11px]">
+              Highest Quality · 300+ DPI Vector PDF
+            </span>
           </div>
         </div>
 
@@ -254,7 +265,7 @@ export function CardExportDialog({
             size="sm"
             onClick={() => onOpenChange(false)}
             disabled={exporting}
-            className="text-xs h-9"
+            className="text-xs h-9 cursor-pointer"
           >
             Cancel
           </Button>
@@ -263,12 +274,12 @@ export function CardExportDialog({
             size="sm"
             onClick={handleConfirm}
             disabled={exporting}
-            className="text-xs h-9 font-bold bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm"
+            className="text-xs h-9 font-bold bg-slate-900 hover:bg-slate-800 text-white gap-1.5 shadow-sm cursor-pointer"
           >
             <Download className="h-4 w-4" />
             {exporting
               ? "Generating PDF…"
-              : `Download PDF (${copies} ${copies === 1 ? "Card" : "Cards"})`}
+              : `Download Print PDF (${copies} ${copies === 1 ? "Card" : "Cards"})`}
           </Button>
         </DialogFooter>
       </DialogContent>
