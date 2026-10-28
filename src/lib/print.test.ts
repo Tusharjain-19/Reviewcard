@@ -7,6 +7,7 @@ import {
   fitTextLines,
   fitSingleLineText,
   sanitizePdfText,
+  colour,
 } from "./print";
 
 describe("Print specifications", () => {
@@ -86,6 +87,40 @@ describe("Print specifications", () => {
       const res = fitSingleLineText(longCategory, font, maxTextWidth);
       expect(res.text).toBe(longCategory);
       expect(font.widthOfTextAtSize(res.text, res.fontSize)).toBeLessThanOrEqual(maxTextWidth);
+    });
+  });
+
+  describe("Color parsing and NaN safety", () => {
+    it("handles transparent and none without producing NaN", () => {
+      const transparentCol = colour("transparent");
+      expect(Number.isNaN(transparentCol.red)).toBe(false);
+      expect(Number.isNaN(transparentCol.green)).toBe(false);
+      expect(Number.isNaN(transparentCol.blue)).toBe(false);
+
+      const noneCol = colour("none");
+      expect(Number.isNaN(noneCol.red)).toBe(false);
+    });
+
+    it("parses 3-digit and 6-digit hex safely", () => {
+      const col3 = colour("#fff");
+      expect(col3.red).toBeCloseTo(1);
+      expect(col3.green).toBeCloseTo(1);
+      expect(col3.blue).toBeCloseTo(1);
+
+      const col6 = colour("#1a73e8");
+      expect(col6.red).toBeCloseTo(0.1, 1);
+      expect(Number.isNaN(col6.red)).toBe(false);
+    });
+
+    it("handles null, undefined, and garbage inputs with safe fallback", () => {
+      const emptyCol = colour("");
+      expect(Number.isNaN(emptyCol.red)).toBe(false);
+
+      const nullCol = colour(null);
+      expect(Number.isNaN(nullCol.red)).toBe(false);
+
+      const garbageCol = colour("invalid-color-value");
+      expect(Number.isNaN(garbageCol.red)).toBe(false);
     });
   });
 });

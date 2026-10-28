@@ -125,20 +125,6 @@ export function ReviewCardItem({
     return brightness < 180;
   }, [color]);
 
-  const cleanShortUrl = useMemo(() => {
-    if (cardId) {
-      const cleanSlug = cardId.toLowerCase().replace(/[^a-z0-9-]/g, "");
-      return `${cleanSlug}.reviewcard.link`;
-    }
-    if (!url) return "reviewcard.link";
-    try {
-      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
-      return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
-    } catch {
-      return url.replace(/^https?:\/\//i, "");
-    }
-  }, [cardId, url]);
-
   // If arbitrary canvas elements are supplied from the Canva Studio, render them directly
   if (elements && elements.length > 0) {
     return (
@@ -159,6 +145,12 @@ export function ReviewCardItem({
       >
         {elements.map((elem) => {
           if (elem.type === "text") {
+            if (
+              elem.id === "elem-footer-url" ||
+              (elem.text && elem.text.toLowerCase().includes("reviewcard.link"))
+            ) {
+              return null;
+            }
             return (
               <div
                 key={elem.id}
@@ -627,23 +619,6 @@ export function ReviewCardItem({
           ) : (
             <div style={{ fontSize: "8pt", color: "#94a3b8" }}>Generating QR…</div>
           )}
-        </div>
-
-        {/* Short URL (reviewcard.link/slug) */}
-        <div
-          style={{
-            fontSize: "7.2pt",
-            fontWeight: 700,
-            color: "#475569",
-            letterSpacing: "0.02em",
-            fontFamily: "monospace",
-            maxWidth: "90%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {cleanShortUrl}
         </div>
 
         {/* Printed Card ID if present */}

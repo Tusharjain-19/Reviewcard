@@ -250,8 +250,6 @@ export function createDefaultA6Elements(params: {
   const cat = params.category || "Local Business";
   const cta = params.headline || "Review Us On Google";
   const light = isLightColor(params.cardColor || "#ffffff");
-  const slugClean = (params.slug || "business").toLowerCase().replace(/[^a-z0-9-]/g, "");
-  const subdomainUrl = `${slugClean}.reviewcard.link`;
 
   const textColor = light ? "#0f172a" : "#ffffff";
   const subtextColor = light ? "#475569" : "rgba(255, 255, 255, 0.90)";
@@ -382,23 +380,7 @@ export function createDefaultA6Elements(params: {
     qrFrame: "white",
   });
 
-  // 10. Clean Subdomain URL under QR (e.g. business.reviewcard.link)
-  elements.push({
-    id: "elem-footer-url",
-    type: "text",
-    x: 10,
-    y: 100,
-    width: 85,
-    height: 5,
-    text: subdomainUrl,
-    fontSize: 7.2,
-    fontFamily: "monospace",
-    fontWeight: "bold",
-    fill: "#64748b",
-    align: "center",
-  });
-
-  // 11. Real Official NFC Logo (4 Contactless Wave arcs)
+  // 10. Real Official NFC Logo (4 Contactless Wave arcs)
   elements.push({
     id: "elem-sticker-nfc",
     type: "sticker",

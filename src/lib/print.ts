@@ -6,6 +6,7 @@ import {
   type PDFImage,
   type PDFPage,
   type PDFFont,
+  type RGB,
 } from "pdf-lib";
 import type { CanvasElement } from "@/components/CardCanvaEditor";
 import { STICKER_SVGS } from "@/components/CardCanvaEditor";
@@ -168,13 +169,43 @@ export function downloadBlob(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 const pt = (mm: number) => (mm * 72) / 25.4;
-const colour = (hex: string) => {
-  const h = hex.replace("#", "");
-  return rgb(
-    parseInt(h.slice(0, 2), 16) / 255,
-    parseInt(h.slice(2, 4), 16) / 255,
-    parseInt(h.slice(4, 6), 16) / 255,
-  );
+export const colour = (input?: string | null): RGB => {
+  if (!input) return rgb(0, 0, 0);
+  const clean = String(input).trim().toLowerCase();
+  if (clean === "transparent" || clean === "none") {
+    return rgb(1, 1, 1);
+  }
+  if (clean === "white") return rgb(1, 1, 1);
+  if (clean === "black") return rgb(0, 0, 0);
+
+  const hex = clean.replace("#", "");
+  if (hex.length === 3) {
+    const r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+    const g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+    const b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      return rgb(r / 255, g / 255, b / 255);
+    }
+  } else if (hex.length >= 6) {
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      return rgb(r / 255, g / 255, b / 255);
+    }
+  }
+
+  const rgbMatch = clean.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (rgbMatch) {
+    const r = parseInt(rgbMatch[1] || "0", 10);
+    const g = parseInt(rgbMatch[2] || "0", 10);
+    const b = parseInt(rgbMatch[3] || "0", 10);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      return rgb(Math.min(255, r) / 255, Math.min(255, g) / 255, Math.min(255, b) / 255);
+    }
+  }
+
+  return rgb(0, 0, 0);
 };
 export async function exportCardPdf(d: CardDesign, url: string, logo?: string) {
   const pdf = await PDFDocument.create();
@@ -1016,22 +1047,6 @@ export async function exportA4SheetPdf(
         }
       }
 
-      // Short URL under QR Code (display clean business subdomain)
-      const rawUrl = card.cardId
-        ? `${card.cardId.toLowerCase().replace(/[^a-z0-9-]/g, "")}.reviewcard.link`
-        : card.url
-          ? card.url.replace(/^https?:\/\//i, "")
-          : "reviewcard.link";
-      const displayUrl = rawUrl.length > 30 ? rawUrl.slice(0, 28) + "…" : rawUrl;
-      const urlW = fontBold.widthOfTextAtSize(displayUrl, 7.2);
-      page.drawText(displayUrl, {
-        x: panelX + (panelW - urlW) / 2,
-        y: panelY + pt(3.8),
-        size: 7.2,
-        font: fontBold,
-        color: rgb(0.28, 0.33, 0.41),
-      });
-
       // Printed Card ID (if present)
       if (card.cardId) {
         const idText = `ID: ${card.cardId}`;
@@ -1151,20 +1166,25 @@ async function renderSingleCardOnPage(
         const pY = y + h - pt((elem.y + elem.height) * scale);
         const pW = pt(elem.width * scale);
         const pH = pt(elem.height * scale);
-        const hasBorder = !!elem.stroke;
+        const hasBorder = !!elem.stroke && elem.stroke !== "transparent" && elem.stroke !== "none";
         const borderOpts = hasBorder
           ? {
               borderColor: colour(elem.stroke!),
               borderWidth: (elem.strokeWidth || 1) * scale,
             }
           : {};
+        const isTransparentFill = !elem.fill || elem.fill === "transparent" || elem.fill === "none";
+        const fillOpts = isTransparentFill ? {} : { color: colour(elem.fill) };
+
+        if (isTransparentFill && !hasBorder) continue;
+
         if (elem.shapeType === "circle") {
           page.drawEllipse({
             x: pX + pW / 2,
             y: pY + pH / 2,
             xScale: pW / 2,
             yScale: pH / 2,
-            color: elem.fill ? colour(elem.fill) : colour("#ffffff"),
+            ...fillOpts,
             ...borderOpts,
           });
         } else {
@@ -1173,7 +1193,7 @@ async function renderSingleCardOnPage(
             y: pY,
             width: pW,
             height: pH,
-            color: elem.fill ? colour(elem.fill) : colour("#ffffff"),
+            ...fillOpts,
             ...borderOpts,
           });
         }
@@ -1320,11 +1340,14 @@ async function renderSingleCardOnPage(
     // Pass 4: Texts (Drawn ON TOP of all panels and QR codes, descenders fully preserved)
     for (const elem of card.elements) {
       if (elem.type === "text") {
-        let cleanText = sanitizePdfText(elem.text || "");
-        if (!cleanText) continue;
-        if (elem.id === "elem-footer-url" && card.cardId) {
-          cleanText = `${card.cardId.toLowerCase().replace(/[^a-z0-9-]/g, "")}.reviewcard.link`;
+        if (
+          elem.id === "elem-footer-url" ||
+          (elem.text && elem.text.toLowerCase().includes("reviewcard.link"))
+        ) {
+          continue;
         }
+        const cleanText = sanitizePdfText(elem.text || "");
+        if (!cleanText) continue;
         const fontSize = Math.max(5, (elem.fontSize || 12) * scale * 0.95);
         const font = elem.fontWeight === "bold" ? fonts.bold : fonts.regular;
         const fontCol = colour(elem.fill || "#ffffff");
