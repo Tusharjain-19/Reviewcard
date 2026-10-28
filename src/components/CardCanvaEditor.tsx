@@ -665,7 +665,8 @@ export function CardCanvaEditor({
     const elemWidthPx = (elem?.width ?? 20) * MM_TO_PX;
     const elemHeightPx = (elem?.height ?? 20) * MM_TO_PX;
 
-    const guides: Array<{ orientation: "V" | "H"; pos: number; color?: string; label?: string }> = [];
+    const guides: Array<{ orientation: "V" | "H"; pos: number; color?: string; label?: string }> =
+      [];
     const SNAP_DIST = 6;
 
     // 1. Center X Alignment (Card middle: A6_WIDTH_PX / 2)
@@ -694,7 +695,12 @@ export function CardCanvaEditor({
     } else if (Math.abs(newX + elemWidthPx - (A6_WIDTH_PX - SAFE_MARGIN_PX)) < SNAP_DIST) {
       newX = A6_WIDTH_PX - SAFE_MARGIN_PX - elemWidthPx;
       node.x(newX);
-      guides.push({ orientation: "V", pos: A6_WIDTH_PX - SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+      guides.push({
+        orientation: "V",
+        pos: A6_WIDTH_PX - SAFE_MARGIN_PX,
+        color: "#06b6d4",
+        label: "Margin",
+      });
     }
 
     // 4. Safe Margin Y Snapping
@@ -705,7 +711,12 @@ export function CardCanvaEditor({
     } else if (Math.abs(newY + elemHeightPx - (A6_HEIGHT_PX - SAFE_MARGIN_PX)) < SNAP_DIST) {
       newY = A6_HEIGHT_PX - SAFE_MARGIN_PX - elemHeightPx;
       node.y(newY);
-      guides.push({ orientation: "H", pos: A6_HEIGHT_PX - SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+      guides.push({
+        orientation: "H",
+        pos: A6_HEIGHT_PX - SAFE_MARGIN_PX,
+        color: "#06b6d4",
+        label: "Margin",
+      });
     }
 
     // 5. Element-to-element alignment
@@ -1245,12 +1256,18 @@ export function CardCanvaEditor({
                     className="h-14 w-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
                     title="Click to add Multicolor Google NFC Badge"
                   >
-                    <img src={STICKER_SVGS.nfcColor} alt="Multicolor NFC Logo" className="h-11 w-11" />
+                    <img
+                      src={STICKER_SVGS.nfcColor}
+                      alt="Multicolor NFC Logo"
+                      className="h-11 w-11"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <p className="text-xs font-bold text-slate-900">Multicolor NFC</p>
-                      <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1 py-0.2 rounded">Google Colors</span>
+                      <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1 py-0.2 rounded">
+                        Google Colors
+                      </span>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5">
                       4 brand color arcs: Blue, Red, Yellow & Green.
@@ -1716,560 +1733,544 @@ export function CardCanvaEditor({
         {/* ---------------- CANVA TOP DOCKED PROPERTY BAR (IMAGE 3) ---------------- */}
         <div className="shrink-0 px-4 pt-3 pb-1 flex justify-center z-30">
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs max-w-full overflow-x-auto">
-          {selectedElement?.type === "text" ? (
-            <>
-              {/* Font Family selector pill (with 140+ Google Fonts Popover) */}
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowFontPicker(!showFontPicker)}
-                  className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer max-w-[155px]"
-                  title="Choose from 140+ Google Fonts"
-                >
-                  <Type className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                  <span className="truncate">
-                    {selectedElement.fontFamily?.split(",")[0]?.replace(/['"]/g, "") || "Open Sans"}
-                  </span>
-                  <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 ml-auto" />
-                </button>
-
-                {/* 140+ Google Fonts Dropdown Popover */}
-                {showFontPicker && (
-                  <div className="absolute top-10 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 flex flex-col gap-2.5 animate-scale-in">
-                    <div className="flex items-center justify-between pb-1 border-b">
-                      <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                        <Type className="h-3.5 w-3.5 text-purple-600" />
-                        Google Fonts ({CANVA_FONTS.length}+)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowFontPicker(false)}
-                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* Search Input */}
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        value={fontSearch}
-                        onChange={(e) => setFontSearch(e.target.value)}
-                        placeholder="Search 140+ fonts..."
-                        className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        autoFocus
-                      />
-                    </div>
-
-                    {/* Category Filter Pills */}
-                    <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-semibold">
-                      {(
-                        [
-                          { id: "all", label: "All" },
-                          { id: "sans", label: "Sans" },
-                          { id: "serif", label: "Serif" },
-                          { id: "display", label: "Display" },
-                          { id: "handwriting", label: "Script" },
-                          { id: "mono", label: "Mono" },
-                        ] as const
-                      ).map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          onClick={() => setFontCategory(tab.id)}
-                          className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                            fontCategory === tab.id
-                              ? "bg-purple-600 text-white font-bold"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Font List */}
-                    <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1">
-                      {filteredFonts.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-4">No fonts found</p>
-                      ) : (
-                        filteredFonts.map((f) => {
-                          const isSelected =
-                            selectedElement.fontFamily?.toLowerCase() === f.value.toLowerCase() ||
-                            selectedElement.fontFamily
-                              ?.split(",")[0]
-                              ?.trim()
-                              ?.replace(/['"]/g, "")
-                              ?.toLowerCase() === f.name.toLowerCase();
-                          return (
-                            <button
-                              key={f.name}
-                              type="button"
-                              onMouseEnter={() => loadGoogleFont(f.value)}
-                              onClick={() => {
-                                loadGoogleFont(f.value);
-                                updateSelectedElement({ fontFamily: f.value });
-                                setShowFontPicker(false);
-                              }}
-                              className={`w-full px-2.5 py-1.5 rounded-xl text-left flex items-center justify-between text-xs transition-colors cursor-pointer ${
-                                isSelected
-                                  ? "bg-purple-50 text-purple-700 font-bold border border-purple-200"
-                                  : "hover:bg-slate-50 text-slate-800"
-                              }`}
-                            >
-                              <span style={{ fontFamily: f.value }} className="text-sm truncate">
-                                {f.name}
-                              </span>
-                              <div className="flex items-center gap-1 shrink-0 ml-2">
-                                <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-mono">
-                                  {f.category}
-                                </span>
-                                {isSelected && <Check className="h-3.5 w-3.5 text-purple-600" />}
-                              </div>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="h-5 w-px bg-slate-200 shrink-0" />
-
-              {/* Font Size Stepper (like Image 3 "- 12 +") */}
-              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-8 px-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateSelectedElement({
-                      fontSize: Math.max(7, (selectedElement.fontSize || 12) - 1),
-                    })
-                  }
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
-                  title="Decrease font size"
-                >
-                  <Minus className="h-3 w-3" />
-                </button>
-                <span className="w-7 text-center font-mono text-xs font-bold text-slate-800">
-                  {selectedElement.fontSize || 12}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateSelectedElement({
-                      fontSize: Math.min(48, (selectedElement.fontSize || 12) + 1),
-                    })
-                  }
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
-                  title="Increase font size"
-                >
-                  <Plus className="h-3 w-3" />
-                </button>
-              </div>
-
-              <div className="h-5 w-px bg-slate-200 shrink-0" />
-
-              {/* Text Color button 'A' with color indicator bar & click-to-open popover */}
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowTextColorPicker(!showTextColorPicker)}
-                  className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  title="Change Text Color"
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="font-serif font-black text-xs text-slate-800 leading-none">
-                      A
+            {selectedElement?.type === "text" ? (
+              <>
+                {/* Font Family selector pill (with 140+ Google Fonts Popover) */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowFontPicker(!showFontPicker)}
+                    className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer max-w-[155px]"
+                    title="Choose from 140+ Google Fonts"
+                  >
+                    <Type className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                    <span className="truncate">
+                      {selectedElement.fontFamily?.split(",")[0]?.replace(/['"]/g, "") ||
+                        "Open Sans"}
                     </span>
-                    <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
-                  </div>
-                  <span
-                    className="h-1 w-6 rounded-full border border-black/10"
-                    style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
-                  />
-                </button>
+                    <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 ml-auto" />
+                  </button>
 
-                {/* Color Palette Popover */}
-                {showTextColorPicker && (
-                  <div className="absolute top-10 left-0 p-3 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col gap-2.5 w-56 animate-scale-in">
-                    <div className="flex items-center justify-between pb-1 border-b">
-                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                        <Palette className="h-3.5 w-3.5 text-purple-600" /> Text Color
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowTextColorPicker(false)}
-                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {[
-                        "#000000",
-                        "#ffffff",
-                        "#1a73e8",
-                        "#1e293b",
-                        "#065f46",
-                        "#d97706",
-                        "#dc2626",
-                        "#4338ca",
-                        "#7c3aed",
-                        "#64748b",
-                      ].map((c) => (
+                  {/* 140+ Google Fonts Dropdown Popover */}
+                  {showFontPicker && (
+                    <div className="absolute top-10 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 flex flex-col gap-2.5 animate-scale-in">
+                      <div className="flex items-center justify-between pb-1 border-b">
+                        <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Type className="h-3.5 w-3.5 text-purple-600" />
+                          Google Fonts ({CANVA_FONTS.length}+)
+                        </span>
                         <button
-                          key={c}
                           type="button"
-                          onClick={() => {
-                            updateSelectedElement({ fill: c });
-                            setShowTextColorPicker(false);
-                          }}
-                          style={{ backgroundColor: c }}
-                          className={`h-7 w-7 rounded-lg border border-slate-300 transition-all hover:scale-110 cursor-pointer ${
-                            selectedElement.fill?.toLowerCase() === c.toLowerCase()
-                              ? "ring-2 ring-purple-600 scale-105"
-                              : ""
-                          }`}
-                          title={c}
-                        />
-                      ))}
-                    </div>
+                          onClick={() => setShowFontPicker(false)}
+                          className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
+                        >
+                          ✕
+                        </button>
+                      </div>
 
-                    <div className="pt-2 border-t flex flex-col gap-1.5">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        Custom Hex Color
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shrink-0">
-                          <div
-                            className="absolute inset-0"
-                            style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
-                          />
-                          <input
-                            type="color"
-                            value={
-                              selectedElement.fill?.startsWith("#") && selectedElement.fill.length === 7
-                                ? selectedElement.fill
-                                : "#0f172a"
-                            }
-                            onChange={(e) => updateSelectedElement({ fill: e.target.value })}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                          />
-                        </div>
+                      {/* Search Input */}
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
                         <input
                           type="text"
-                          value={selectedElement.fill || ""}
-                          onChange={(e) => updateSelectedElement({ fill: e.target.value })}
-                          placeholder="#000000"
-                          className="flex-1 h-8 px-2.5 font-mono text-xs border border-slate-200 rounded-lg bg-slate-50 uppercase font-semibold"
-                          maxLength={7}
+                          value={fontSearch}
+                          onChange={(e) => setFontSearch(e.target.value)}
+                          placeholder="Search 140+ fonts..."
+                          className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          autoFocus
                         />
                       </div>
+
+                      {/* Category Filter Pills */}
+                      <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-semibold">
+                        {(
+                          [
+                            { id: "all", label: "All" },
+                            { id: "sans", label: "Sans" },
+                            { id: "serif", label: "Serif" },
+                            { id: "display", label: "Display" },
+                            { id: "handwriting", label: "Script" },
+                            { id: "mono", label: "Mono" },
+                          ] as const
+                        ).map((tab) => (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setFontCategory(tab.id)}
+                            className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                              fontCategory === tab.id
+                                ? "bg-purple-600 text-white font-bold"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Font List */}
+                      <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1">
+                        {filteredFonts.length === 0 ? (
+                          <p className="text-xs text-slate-400 text-center py-4">No fonts found</p>
+                        ) : (
+                          filteredFonts.map((f) => {
+                            const isSelected =
+                              selectedElement.fontFamily?.toLowerCase() === f.value.toLowerCase() ||
+                              selectedElement.fontFamily
+                                ?.split(",")[0]
+                                ?.trim()
+                                ?.replace(/['"]/g, "")
+                                ?.toLowerCase() === f.name.toLowerCase();
+                            return (
+                              <button
+                                key={f.name}
+                                type="button"
+                                onMouseEnter={() => loadGoogleFont(f.value)}
+                                onClick={() => {
+                                  loadGoogleFont(f.value);
+                                  updateSelectedElement({ fontFamily: f.value });
+                                  setShowFontPicker(false);
+                                }}
+                                className={`w-full px-2.5 py-1.5 rounded-xl text-left flex items-center justify-between text-xs transition-colors cursor-pointer ${
+                                  isSelected
+                                    ? "bg-purple-50 text-purple-700 font-bold border border-purple-200"
+                                    : "hover:bg-slate-50 text-slate-800"
+                                }`}
+                              >
+                                <span style={{ fontFamily: f.value }} className="text-sm truncate">
+                                  {f.name}
+                                </span>
+                                <div className="flex items-center gap-1 shrink-0 ml-2">
+                                  <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-mono">
+                                    {f.category}
+                                  </span>
+                                  {isSelected && <Check className="h-3.5 w-3.5 text-purple-600" />}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Bold 'B' Toggle */}
-              <button
-                type="button"
-                onClick={() =>
-                  updateSelectedElement({
-                    fontWeight: selectedElement.fontWeight === "bold" ? "normal" : "bold",
-                  })
-                }
-                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
-                  selectedElement.fontWeight === "bold"
-                    ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
-                    : "text-slate-600 hover:bg-slate-100 border border-transparent"
-                }`}
-                title="Bold (Ctrl+B)"
-              >
-                <Bold className="h-3.5 w-3.5" />
-              </button>
+                <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-              {/* Italic 'I' Toggle */}
-              <button
-                type="button"
-                onClick={() =>
-                  updateSelectedElement({
-                    fontStyle: selectedElement.fontStyle === "italic" ? "normal" : "italic",
-                  })
-                }
-                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
-                  selectedElement.fontStyle === "italic"
-                    ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
-                    : "text-slate-600 hover:bg-slate-100 border border-transparent"
-                }`}
-                title="Italic (Ctrl+I)"
-              >
-                <Italic className="h-3.5 w-3.5" />
-              </button>
-
-              {/* Alignment Toggle */}
-              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-8 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ align: "left" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
-                    selectedElement.align === "left"
-                      ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                  title="Align Left"
-                >
-                  <AlignLeft className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ align: "center" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
-                    selectedElement.align === "center" || !selectedElement.align
-                      ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                  title="Align Center"
-                >
-                  <AlignCenter className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ align: "right" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
-                    selectedElement.align === "right"
-                      ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                  title="Align Right"
-                >
-                  <AlignRight className="h-3 w-3" />
-                </button>
-              </div>
-
-              {/* Direct Inline Edit Button */}
-              <button
-                type="button"
-                onClick={() => setEditingTextId(selectedElement.id)}
-                className="h-8 px-2.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
-                title="Click to edit text directly on card (or double-click text)"
-              >
-                <Edit3 className="h-3 w-3" />
-                <span>Edit on Card</span>
-              </button>
-
-              {/* Layer Ordering Buttons */}
-              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-8 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => moveLayer("down")}
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
-                  title="Send Backward ([)"
-                >
-                  <ArrowDown className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveLayer("up")}
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
-                  title="Bring Forward (])"
-                >
-                  <ArrowUp className="h-3 w-3" />
-                </button>
-              </div>
-            </>
-          ) : selectedElement?.type === "panel" ? (
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="font-semibold text-slate-700 text-xs">Center Review Card Panel</span>
-              <span className="text-[11px] font-mono text-purple-600">
-                {selectedElement.width} × {selectedElement.height} mm
-              </span>
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ fill: "#ffffff" })}
-                  className="px-2 py-0.5 rounded-lg border text-[11px] bg-white font-semibold cursor-pointer"
-                >
-                  White
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ fill: "#f8fafc" })}
-                  className="px-2 py-0.5 rounded-lg border text-[11px] bg-slate-50 font-semibold cursor-pointer"
-                >
-                  Light Gray
-                </button>
-              </div>
-            </div>
-          ) : selectedElement?.type === "qr" ? (
-            <>
-              <span className="font-semibold text-slate-700 text-xs flex items-center gap-1.5 shrink-0">
-                <QrCode className="h-4 w-4 text-purple-600" /> QR Code Frame:
-              </span>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ qrFrame: "white" })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    selectedElement.qrFrame === "white"
-                      ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  White Box
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ qrFrame: "none" })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    selectedElement.qrFrame === "none"
-                      ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  Transparent
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSelectedElement({ qrFrame: "dark" })}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    selectedElement.qrFrame === "dark"
-                      ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  Dark Box
-                </button>
-              </div>
-              <span className="text-[11px] font-mono text-purple-600 ml-1 shrink-0">
-                {selectedElement.width} × {selectedElement.height} mm
-              </span>
-            </>
-          ) : selectedElement?.type === "sticker" ? (
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="font-semibold text-slate-700 text-xs">
-                {selectedElement.stickerType?.startsWith("nfc")
-                  ? "Contactless NFC Logo"
-                  : selectedElement.stickerType === "google"
-                    ? "Official Google 'G' Logo"
-                    : selectedElement.stickerType === "googleBadge"
-                      ? "Google Reviews Badge"
-                      : selectedElement.stickerType === "star5"
-                        ? "5-Star Rating Badge"
-                        : "Sticker Badge"}
-              </span>
-              {selectedElement.stickerType?.startsWith("nfc") && (
-                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                {/* Font Size Stepper (like Image 3 "- 12 +") */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-8 px-1 shrink-0">
                   <button
                     type="button"
                     onClick={() =>
                       updateSelectedElement({
-                        stickerType: "nfcColor",
-                        src: STICKER_SVGS.nfcColor,
+                        fontSize: Math.max(7, (selectedElement.fontSize || 12) - 1),
                       })
                     }
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
-                      selectedElement.stickerType === "nfcColor"
-                        ? "bg-purple-600 text-white shadow-2xs"
-                        : "text-slate-600 hover:bg-white"
-                    }`}
+                    className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
+                    title="Decrease font size"
                   >
-                    🌈 Multicolor
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="w-7 text-center font-mono text-xs font-bold text-slate-800">
+                    {selectedElement.fontSize || 12}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        fontSize: Math.min(48, (selectedElement.fontSize || 12) + 1),
+                      })
+                    }
+                    className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
+                    title="Increase font size"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+
+                <div className="h-5 w-px bg-slate-200 shrink-0" />
+
+                {/* Text Color button 'A' with color indicator bar & click-to-open popover */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowTextColorPicker(!showTextColorPicker)}
+                    className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    title="Change Text Color"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="font-serif font-black text-xs text-slate-800 leading-none">
+                        A
+                      </span>
+                      <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
+                    </div>
+                    <span
+                      className="h-1 w-6 rounded-full border border-black/10"
+                      style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                    />
+                  </button>
+
+                  {/* Color Palette Popover */}
+                  {showTextColorPicker && (
+                    <div className="absolute top-10 left-0 p-3 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col gap-2.5 w-56 animate-scale-in">
+                      <div className="flex items-center justify-between pb-1 border-b">
+                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Palette className="h-3.5 w-3.5 text-purple-600" /> Text Color
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowTextColorPicker(false)}
+                          className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {[
+                          "#000000",
+                          "#ffffff",
+                          "#1a73e8",
+                          "#1e293b",
+                          "#065f46",
+                          "#d97706",
+                          "#dc2626",
+                          "#4338ca",
+                          "#7c3aed",
+                          "#64748b",
+                        ].map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              updateSelectedElement({ fill: c });
+                              setShowTextColorPicker(false);
+                            }}
+                            style={{ backgroundColor: c }}
+                            className={`h-7 w-7 rounded-lg border border-slate-300 transition-all hover:scale-110 cursor-pointer ${
+                              selectedElement.fill?.toLowerCase() === c.toLowerCase()
+                                ? "ring-2 ring-purple-600 scale-105"
+                                : ""
+                            }`}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="pt-2 border-t flex flex-col gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Custom Hex Color
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shrink-0">
+                            <div
+                              className="absolute inset-0"
+                              style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                            />
+                            <input
+                              type="color"
+                              value={
+                                selectedElement.fill?.startsWith("#") &&
+                                selectedElement.fill.length === 7
+                                  ? selectedElement.fill
+                                  : "#0f172a"
+                              }
+                              onChange={(e) => updateSelectedElement({ fill: e.target.value })}
+                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={selectedElement.fill || ""}
+                            onChange={(e) => updateSelectedElement({ fill: e.target.value })}
+                            placeholder="#000000"
+                            className="flex-1 h-8 px-2.5 font-mono text-xs border border-slate-200 rounded-lg bg-slate-50 uppercase font-semibold"
+                            maxLength={7}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bold 'B' Toggle */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSelectedElement({
+                      fontWeight: selectedElement.fontWeight === "bold" ? "normal" : "bold",
+                    })
+                  }
+                  className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                    selectedElement.fontWeight === "bold"
+                      ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
+                      : "text-slate-600 hover:bg-slate-100 border border-transparent"
+                  }`}
+                  title="Bold (Ctrl+B)"
+                >
+                  <Bold className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Italic 'I' Toggle */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSelectedElement({
+                      fontStyle: selectedElement.fontStyle === "italic" ? "normal" : "italic",
+                    })
+                  }
+                  className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                    selectedElement.fontStyle === "italic"
+                      ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
+                      : "text-slate-600 hover:bg-slate-100 border border-transparent"
+                  }`}
+                  title="Italic (Ctrl+I)"
+                >
+                  <Italic className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Alignment Toggle */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-8 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => updateSelectedElement({ align: "left" })}
+                    className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
+                      selectedElement.align === "left"
+                        ? "bg-white text-purple-700 shadow-2xs font-bold"
+                        : "text-slate-500 hover:text-slate-800"
+                    }`}
+                    title="Align Left"
+                  >
+                    <AlignLeft className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      updateSelectedElement({
-                        stickerType: "nfc",
-                        src: STICKER_SVGS.nfc,
-                      })
-                    }
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
-                      selectedElement.stickerType === "nfc"
-                        ? "bg-purple-600 text-white shadow-2xs"
-                        : "text-slate-600 hover:bg-white"
+                    onClick={() => updateSelectedElement({ align: "center" })}
+                    className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
+                      selectedElement.align === "center" || !selectedElement.align
+                        ? "bg-white text-purple-700 shadow-2xs font-bold"
+                        : "text-slate-500 hover:text-slate-800"
                     }`}
+                    title="Align Center"
                   >
-                    Badge
+                    <AlignCenter className="h-3 w-3" />
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      updateSelectedElement({
-                        stickerType: "nfcWhite",
-                        src: STICKER_SVGS.nfcWhite,
-                      })
-                    }
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
-                      selectedElement.stickerType === "nfcWhite"
-                        ? "bg-purple-600 text-white shadow-2xs"
-                        : "text-slate-600 hover:bg-white"
+                    onClick={() => updateSelectedElement({ align: "right" })}
+                    className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
+                      selectedElement.align === "right"
+                        ? "bg-white text-purple-700 shadow-2xs font-bold"
+                        : "text-slate-500 hover:text-slate-800"
                     }`}
+                    title="Align Right"
+                  >
+                    <AlignRight className="h-3 w-3" />
+                  </button>
+                </div>
+
+                {/* Direct Inline Edit Button */}
+                <button
+                  type="button"
+                  onClick={() => setEditingTextId(selectedElement.id)}
+                  className="h-8 px-2.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                  title="Click to edit text directly on card (or double-click text)"
+                >
+                  <Edit3 className="h-3 w-3" />
+                  <span>Edit on Card</span>
+                </button>
+
+                {/* Layer Ordering Buttons */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-8 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => moveLayer("down")}
+                    className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Send Backward ([)"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLayer("up")}
+                    className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Bring Forward (])"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                </div>
+              </>
+            ) : selectedElement?.type === "panel" ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-semibold text-slate-700 text-xs">
+                  Center Review Card Panel
+                </span>
+                <span className="text-[11px] font-mono text-purple-600">
+                  {selectedElement.width} × {selectedElement.height} mm
+                </span>
+                <div className="flex items-center gap-1 ml-2">
+                  <button
+                    type="button"
+                    onClick={() => updateSelectedElement({ fill: "#ffffff" })}
+                    className="px-2 py-0.5 rounded-lg border text-[11px] bg-white font-semibold cursor-pointer"
                   >
                     White
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      updateSelectedElement({
-                        stickerType: "nfcDark",
-                        src: STICKER_SVGS.nfcDark,
-                      })
-                    }
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
-                      selectedElement.stickerType === "nfcDark"
-                        ? "bg-purple-600 text-white shadow-2xs"
-                        : "text-slate-600 hover:bg-white"
-                    }`}
+                    onClick={() => updateSelectedElement({ fill: "#f8fafc" })}
+                    className="px-2 py-0.5 rounded-lg border text-[11px] bg-slate-50 font-semibold cursor-pointer"
                   >
-                    Dark
+                    Light Gray
                   </button>
                 </div>
-              )}
-              <span className="text-[11px] font-mono text-slate-400">
-                {selectedElement.width} × {selectedElement.height} mm
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 shrink-0">
-              <Layers className="h-3.5 w-3.5 text-purple-600" />
-              <span className="font-semibold text-slate-700 text-xs">
-                Canva A6 Card Studio · 105 × 148 mm
-              </span>
-            </div>
-          )}
+              </div>
+            ) : selectedElement?.type === "qr" ? (
+              <>
+                <span className="font-semibold text-slate-700 text-xs flex items-center gap-1.5 shrink-0">
+                  <QrCode className="h-4 w-4 text-purple-600" /> QR Code Frame:
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => updateSelectedElement({ qrFrame: "white" })}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                      selectedElement.qrFrame === "white"
+                        ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    White Box
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSelectedElement({ qrFrame: "none" })}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                      selectedElement.qrFrame === "none"
+                        ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    Transparent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSelectedElement({ qrFrame: "dark" })}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                      selectedElement.qrFrame === "dark"
+                        ? "bg-purple-100 text-purple-700 border border-purple-300 font-bold"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    Dark Box
+                  </button>
+                </div>
+                <span className="text-[11px] font-mono text-purple-600 ml-1 shrink-0">
+                  {selectedElement.width} × {selectedElement.height} mm
+                </span>
+              </>
+            ) : selectedElement?.type === "sticker" ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-semibold text-slate-700 text-xs">
+                  {selectedElement.stickerType?.startsWith("nfc")
+                    ? "Contactless NFC Logo"
+                    : selectedElement.stickerType === "google"
+                      ? "Official Google 'G' Logo"
+                      : selectedElement.stickerType === "googleBadge"
+                        ? "Google Reviews Badge"
+                        : selectedElement.stickerType === "star5"
+                          ? "5-Star Rating Badge"
+                          : "Sticker Badge"}
+                </span>
+                {selectedElement.stickerType?.startsWith("nfc") && (
+                  <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSelectedElement({
+                          stickerType: "nfcColor",
+                          src: STICKER_SVGS.nfcColor,
+                        })
+                      }
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                        selectedElement.stickerType === "nfcColor"
+                          ? "bg-purple-600 text-white shadow-2xs"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      🌈 Multicolor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSelectedElement({
+                          stickerType: "nfc",
+                          src: STICKER_SVGS.nfc,
+                        })
+                      }
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                        selectedElement.stickerType === "nfc"
+                          ? "bg-purple-600 text-white shadow-2xs"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      Badge
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSelectedElement({
+                          stickerType: "nfcWhite",
+                          src: STICKER_SVGS.nfcWhite,
+                        })
+                      }
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                        selectedElement.stickerType === "nfcWhite"
+                          ? "bg-purple-600 text-white shadow-2xs"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      White
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSelectedElement({
+                          stickerType: "nfcDark",
+                          src: STICKER_SVGS.nfcDark,
+                        })
+                      }
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                        selectedElement.stickerType === "nfcDark"
+                          ? "bg-purple-600 text-white shadow-2xs"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      Dark
+                    </button>
+                  </div>
+                )}
+                <span className="text-[11px] font-mono text-slate-400">
+                  {selectedElement.width} × {selectedElement.height} mm
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 shrink-0">
+                <Layers className="h-3.5 w-3.5 text-purple-600" />
+                <span className="font-semibold text-slate-700 text-xs">
+                  Canva A6 Card Studio · 105 × 148 mm
+                </span>
+              </div>
+            )}
 
-          {/* Angle Rotation Controller for any selected element */}
-          {selectedElement && (
-            <div className="flex items-center gap-1 shrink-0 bg-slate-50 border border-slate-200 rounded-xl px-1.5 py-0.5 ml-1">
-              <button
-                type="button"
-                onClick={() => {
-                  const cur = selectedElement.rotation || 0;
-                  const nextRot = (cur - 15 + 360) % 360;
-                  updateSelectedElement({ rotation: nextRot });
-                  const node = nodeRefs.current.get(selectedElement.id);
-                  if (node) {
-                    node.rotation(nextRot);
-                    transformerRef.current?.getLayer()?.batchDraw();
-                  }
-                }}
-                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
-                title="Rotate -15°"
-              >
-                <RotateCcw className="h-3 w-3" />
-              </button>
-
-              <div className="flex items-center gap-0.5">
-                <input
-                  type="number"
-                  value={selectedElement.rotation || 0}
-                  onChange={(e) => {
-                    const val = Number(e.target.value) || 0;
-                    const nextRot = ((val % 360) + 360) % 360;
+            {/* Angle Rotation Controller for any selected element */}
+            {selectedElement && (
+              <div className="flex items-center gap-1 shrink-0 bg-slate-50 border border-slate-200 rounded-xl px-1.5 py-0.5 ml-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cur = selectedElement.rotation || 0;
+                    const nextRot = (cur - 15 + 360) % 360;
                     updateSelectedElement({ rotation: nextRot });
                     const node = nodeRefs.current.get(selectedElement.id);
                     if (node) {
@@ -2277,653 +2278,674 @@ export function CardCanvaEditor({
                       transformerRef.current?.getLayer()?.batchDraw();
                     }
                   }}
-                  className="w-8 text-center font-mono text-xs font-bold text-slate-800 bg-transparent focus:outline-none"
-                  title="Angle in degrees (0 - 360°)"
-                />
-                <span className="text-[10px] font-bold text-slate-400">°</span>
-              </div>
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
+                  title="Rotate -15°"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                </button>
 
+                <div className="flex items-center gap-0.5">
+                  <input
+                    type="number"
+                    value={selectedElement.rotation || 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      const nextRot = ((val % 360) + 360) % 360;
+                      updateSelectedElement({ rotation: nextRot });
+                      const node = nodeRefs.current.get(selectedElement.id);
+                      if (node) {
+                        node.rotation(nextRot);
+                        transformerRef.current?.getLayer()?.batchDraw();
+                      }
+                    }}
+                    className="w-8 text-center font-mono text-xs font-bold text-slate-800 bg-transparent focus:outline-none"
+                    title="Angle in degrees (0 - 360°)"
+                  />
+                  <span className="text-[10px] font-bold text-slate-400">°</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cur = selectedElement.rotation || 0;
+                    const nextRot = (cur + 15) % 360;
+                    updateSelectedElement({ rotation: nextRot });
+                    const node = nodeRefs.current.get(selectedElement.id);
+                    if (node) {
+                      node.rotation(nextRot);
+                      transformerRef.current?.getLayer()?.batchDraw();
+                    }
+                  }}
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
+                  title="Rotate +15°"
+                >
+                  <RotateCw className="h-3 w-3" />
+                </button>
+
+                {/* Quick rotation presets */}
+                <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateSelectedElement({ rotation: 0 });
+                      const node = nodeRefs.current.get(selectedElement.id);
+                      if (node) {
+                        node.rotation(0);
+                        transformerRef.current?.getLayer()?.batchDraw();
+                      }
+                    }}
+                    className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Reset rotation to 0°"
+                  >
+                    0°
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateSelectedElement({ rotation: 90 });
+                      const node = nodeRefs.current.get(selectedElement.id);
+                      if (node) {
+                        node.rotation(90);
+                        transformerRef.current?.getLayer()?.batchDraw();
+                      }
+                    }}
+                    className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Rotate to 90°"
+                  >
+                    90°
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateSelectedElement({ rotation: 180 });
+                      const node = nodeRefs.current.get(selectedElement.id);
+                      if (node) {
+                        node.rotation(180);
+                        transformerRef.current?.getLayer()?.batchDraw();
+                      }
+                    }}
+                    className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Rotate to 180°"
+                  >
+                    180°
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="h-5 w-px bg-slate-200 ml-auto shrink-0" />
+
+            {/* Action Icons: Undo, Redo, Duplicate, Delete */}
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
-                onClick={() => {
-                  const cur = selectedElement.rotation || 0;
-                  const nextRot = (cur + 15) % 360;
-                  updateSelectedElement({ rotation: nextRot });
-                  const node = nodeRefs.current.get(selectedElement.id);
-                  if (node) {
-                    node.rotation(nextRot);
-                    transformerRef.current?.getLayer()?.batchDraw();
-                  }
-                }}
-                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
-                title="Rotate +15°"
+                onClick={handleUndo}
+                disabled={historyIndex <= 0}
+                className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                title="Undo (Ctrl+Z)"
               >
-                <RotateCw className="h-3 w-3" />
+                <Undo2 className="h-3.5 w-3.5" />
               </button>
-
-              {/* Quick rotation presets */}
-              <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateSelectedElement({ rotation: 0 });
-                    const node = nodeRefs.current.get(selectedElement.id);
-                    if (node) {
-                      node.rotation(0);
-                      transformerRef.current?.getLayer()?.batchDraw();
-                    }
-                  }}
-                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
-                  title="Reset rotation to 0°"
-                >
-                  0°
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateSelectedElement({ rotation: 90 });
-                    const node = nodeRefs.current.get(selectedElement.id);
-                    if (node) {
-                      node.rotation(90);
-                      transformerRef.current?.getLayer()?.batchDraw();
-                    }
-                  }}
-                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
-                  title="Rotate to 90°"
-                >
-                  90°
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateSelectedElement({ rotation: 180 });
-                    const node = nodeRefs.current.get(selectedElement.id);
-                    if (node) {
-                      node.rotation(180);
-                      transformerRef.current?.getLayer()?.batchDraw();
-                    }
-                  }}
-                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
-                  title="Rotate to 180°"
-                >
-                  180°
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={historyIndex >= history.length - 1}
+                className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                title="Redo (Ctrl+Y)"
+              >
+                <Redo2 className="h-3.5 w-3.5" />
+              </button>
+              {selectedElement && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleDuplicateSelected}
+                    className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
+                    title="Duplicate (Ctrl+D)"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    className="h-8 w-8 rounded-xl flex items-center justify-center text-rose-600 hover:bg-rose-50 cursor-pointer"
+                    title="Delete (Delete / Backspace)"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
             </div>
-          )}
-
-          <div className="h-5 w-px bg-slate-200 ml-auto shrink-0" />
-
-          {/* Action Icons: Undo, Redo, Duplicate, Delete */}
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={handleUndo}
-              disabled={historyIndex <= 0}
-              className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleRedo}
-              disabled={historyIndex >= history.length - 1}
-              className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo2 className="h-3.5 w-3.5" />
-            </button>
-            {selectedElement && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleDuplicateSelected}
-                  className="h-8 w-8 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
-                  title="Duplicate (Ctrl+D)"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteSelected}
-                  className="h-8 w-8 rounded-xl flex items-center justify-center text-rose-600 hover:bg-rose-50 cursor-pointer"
-                  title="Delete (Delete / Backspace)"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* ---------------- SCROLLABLE CANVAS WORKSPACE (Allows smooth full scrolling) ---------------- */}
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 w-full p-6 pb-36 flex flex-col items-center">
-          {/* ---------------- FLOATING CARD UTILITY ICONS RIGHT ABOVE CARD (IMAGE 1 & 3) ---------------- */}
-          <div
-            className="flex items-center justify-end gap-1.5 mb-2 px-1"
-            style={{ width: `${A6_WIDTH_PX * zoomScale}px`, maxWidth: "100%" }}
-          >
-            <button
-              type="button"
-              onClick={() => setIsLocked(!isLocked)}
-              className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                isLocked
-                  ? "bg-amber-100 text-amber-800 border-amber-300"
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-              }`}
-              title={isLocked ? "Unlock Card" : "Lock Card Canvas"}
-            >
-              {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              type="button"
-              onClick={handleDuplicateSelected}
-              disabled={!selectedElement}
-              className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
-              title="Duplicate Selected"
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={handleResetLayout}
-              className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
-              title="Reset to Default A6 Layout"
-            >
-              <RotateCcw className="h-3 w-3" /> Reset Default
-            </button>
           </div>
 
-          {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
-          <div
-            className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
-            tabIndex={0}
-            style={{
-              width: `${A6_WIDTH_PX * zoomScale}px`,
-              height: `${A6_HEIGHT_PX * zoomScale}px`,
-            }}
-          >
-            <Stage
-              ref={stageRef}
-              width={A6_WIDTH_PX * zoomScale}
-              height={A6_HEIGHT_PX * zoomScale}
-              scaleX={zoomScale}
-              scaleY={zoomScale}
-              onMouseDown={(e) => {
-                if (e.target === e.target.getStage()) {
-                  setSelectedId(null);
-                  setEditingTextId(null);
-                }
+          {/* ---------------- SCROLLABLE CANVAS WORKSPACE (Allows smooth full scrolling) ---------------- */}
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 w-full p-6 pb-36 flex flex-col items-center">
+            {/* ---------------- FLOATING CARD UTILITY ICONS RIGHT ABOVE CARD (IMAGE 1 & 3) ---------------- */}
+            <div
+              className="flex items-center justify-end gap-1.5 mb-2 px-1"
+              style={{ width: `${A6_WIDTH_PX * zoomScale}px`, maxWidth: "100%" }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsLocked(!isLocked)}
+                className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                  isLocked
+                    ? "bg-amber-100 text-amber-800 border-amber-300"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+                title={isLocked ? "Unlock Card" : "Lock Card Canvas"}
+              >
+                {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={handleDuplicateSelected}
+                disabled={!selectedElement}
+                className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+                title="Duplicate Selected"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleResetLayout}
+                className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+                title="Reset to Default A6 Layout"
+              >
+                <RotateCcw className="h-3 w-3" /> Reset Default
+              </button>
+            </div>
+
+            {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
+            <div
+              className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
+              tabIndex={0}
+              style={{
+                width: `${A6_WIDTH_PX * zoomScale}px`,
+                height: `${A6_HEIGHT_PX * zoomScale}px`,
               }}
             >
-              <Layer>
-                {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
-                {bgImg ? (
-                  <KonvaImage
-                    image={bgImg}
-                    x={0}
-                    y={0}
-                    width={A6_WIDTH_PX}
-                    height={A6_HEIGHT_PX}
-                    cornerRadius={20}
-                  />
-                ) : (
-                  <Rect
-                    x={0}
-                    y={0}
-                    width={A6_WIDTH_PX}
-                    height={A6_HEIGHT_PX}
-                    fill={cardColor}
-                    cornerRadius={20}
-                    {...(isLightColor(cardColor) ? { stroke: "#e2e8f0", strokeWidth: 1.5 } : {})}
-                  />
-                )}
-
-                {/* 2. Safe Print Guideline (4mm interior boundary) */}
-                {showMarginGuides && (
-                  <Rect
-                    x={SAFE_MARGIN_PX}
-                    y={SAFE_MARGIN_PX}
-                    width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
-                    height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
-                    stroke={
-                      isLightColor(cardColor)
-                        ? "rgba(100, 116, 139, 0.35)"
-                        : "rgba(255, 255, 255, 0.3)"
-                    }
-                    strokeWidth={1}
-                    dash={[5, 4]}
-                    listening={false}
-                  />
-                )}
-
-                {/* 3. Magnetic Alignment Guiding Lines */}
-                {activeGuides.map((g, idx) =>
-                  g.orientation === "V" ? (
-                    <Line
-                      key={`guide-v-${idx}`}
-                      points={[g.pos, 0, g.pos, A6_HEIGHT_PX]}
-                      stroke={g.color || "#8b3dff"}
-                      strokeWidth={1.5}
-                      dash={[4, 3]}
-                      listening={false}
+              <Stage
+                ref={stageRef}
+                width={A6_WIDTH_PX * zoomScale}
+                height={A6_HEIGHT_PX * zoomScale}
+                scaleX={zoomScale}
+                scaleY={zoomScale}
+                onMouseDown={(e) => {
+                  if (e.target === e.target.getStage()) {
+                    setSelectedId(null);
+                    setEditingTextId(null);
+                  }
+                }}
+              >
+                <Layer>
+                  {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
+                  {bgImg ? (
+                    <KonvaImage
+                      image={bgImg}
+                      x={0}
+                      y={0}
+                      width={A6_WIDTH_PX}
+                      height={A6_HEIGHT_PX}
+                      cornerRadius={20}
                     />
                   ) : (
-                    <Line
-                      key={`guide-h-${idx}`}
-                      points={[0, g.pos, A6_WIDTH_PX, g.pos]}
-                      stroke={g.color || "#8b3dff"}
-                      strokeWidth={1.5}
-                      dash={[4, 3]}
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={A6_WIDTH_PX}
+                      height={A6_HEIGHT_PX}
+                      fill={cardColor}
+                      cornerRadius={20}
+                      {...(isLightColor(cardColor) ? { stroke: "#e2e8f0", strokeWidth: 1.5 } : {})}
+                    />
+                  )}
+
+                  {/* 2. Safe Print Guideline (4mm interior boundary) */}
+                  {showMarginGuides && (
+                    <Rect
+                      x={SAFE_MARGIN_PX}
+                      y={SAFE_MARGIN_PX}
+                      width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
+                      height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
+                      stroke={
+                        isLightColor(cardColor)
+                          ? "rgba(100, 116, 139, 0.35)"
+                          : "rgba(255, 255, 255, 0.3)"
+                      }
+                      strokeWidth={1}
+                      dash={[5, 4]}
                       listening={false}
                     />
-                  ),
-                )}
+                  )}
 
-              {/* 4. Canvas Elements Render Loop */}
-              {elements.map((elem) => {
-                const xPx = elem.x * MM_TO_PX;
-                const yPx = elem.y * MM_TO_PX;
-                const widthPx = elem.width * MM_TO_PX;
-                const heightPx = elem.height * MM_TO_PX;
-
-                if (elem.type === "text") {
-                  return (
-                    <KonvaText
-                      key={elem.id}
-                      ref={(node) => {
-                        if (node) nodeRefs.current.set(elem.id, node);
-                        else nodeRefs.current.delete(elem.id);
-                      }}
-                      id={elem.id}
-                      x={xPx}
-                      y={yPx}
-                      width={widthPx}
-                      text={elem.text || ""}
-                      fontSize={(elem.fontSize || 12) * 1.33}
-                      fontFamily={elem.fontFamily || "Inter, sans-serif"}
-                      fontStyle={
-                        elem.fontWeight === "bold"
-                          ? elem.fontStyle === "italic"
-                            ? "bold italic"
-                            : "bold"
-                          : elem.fontStyle === "italic"
-                            ? "italic"
-                            : "normal"
-                      }
-                      fill={elem.fill || "#ffffff"}
-                      align={elem.align || "center"}
-                      rotation={elem.rotation || 0}
-                      opacity={editingTextId === elem.id ? 0 : 1}
-                      draggable={!isLocked}
-                      onClick={() => setSelectedId(elem.id)}
-                      onTap={() => setSelectedId(elem.id)}
-                      onDblClick={() => setEditingTextId(elem.id)}
-                      onDblTap={() => setEditingTextId(elem.id)}
-                      onDragMove={(e) => handleDragMove(elem.id, e)}
-                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                      onTransformEnd={() => handleTransformEnd(elem.id)}
-                    />
-                  );
-                }
-
-                if (elem.type === "panel") {
-                  return (
-                    <Rect
-                      key={elem.id}
-                      ref={(node) => {
-                        if (node) nodeRefs.current.set(elem.id, node);
-                        else nodeRefs.current.delete(elem.id);
-                      }}
-                      id={elem.id}
-                      x={xPx}
-                      y={yPx}
-                      width={widthPx}
-                      height={heightPx}
-                      fill={elem.fill || "#ffffff"}
-                      cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
-                      {...(elem.stroke ? { stroke: elem.stroke, strokeWidth: 1 } : {})}
-                      shadowColor="rgba(0, 0, 0, 0.08)"
-                      shadowBlur={12}
-                      shadowOffsetY={3}
-                      rotation={elem.rotation || 0}
-                      draggable={!isLocked}
-                      onClick={() => setSelectedId(elem.id)}
-                      onTap={() => setSelectedId(elem.id)}
-                      onDragMove={(e) => handleDragMove(elem.id, e)}
-                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                      onTransformEnd={() => handleTransformEnd(elem.id)}
-                    />
-                  );
-                }
-
-                if (elem.type === "qr") {
-                  const framePadding = elem.qrFrame === "white" ? 2 * MM_TO_PX : 0;
-                  return (
-                    <Group
-                      key={elem.id}
-                      ref={(node) => {
-                        if (node) nodeRefs.current.set(elem.id, node);
-                        else nodeRefs.current.delete(elem.id);
-                      }}
-                      id={elem.id}
-                      x={xPx}
-                      y={yPx}
-                      width={widthPx}
-                      height={heightPx}
-                      rotation={elem.rotation || 0}
-                      draggable={!isLocked}
-                      onClick={() => setSelectedId(elem.id)}
-                      onTap={() => setSelectedId(elem.id)}
-                      onDragMove={(e) => handleDragMove(elem.id, e)}
-                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                      onTransformEnd={() => handleTransformEnd(elem.id)}
-                    >
-                      {/* Frame Panel */}
-                      {elem.qrFrame !== "none" && (
-                        <Rect
-                          x={0}
-                          y={0}
-                          width={widthPx}
-                          height={heightPx}
-                          fill={elem.qrFrame === "white" ? "#ffffff" : "#0f172a"}
-                          cornerRadius={10}
-                          shadowColor="rgba(0, 0, 0, 0.22)"
-                          shadowBlur={10}
-                          shadowOffsetY={4}
-                        />
-                      )}
-                      {/* Crisp QR Code Image */}
-                      {qrImg ? (
-                        <KonvaImage
-                          image={qrImg}
-                          x={framePadding}
-                          y={framePadding}
-                          width={widthPx - framePadding * 2}
-                          height={heightPx - framePadding * 2}
-                        />
-                      ) : (
-                        <Rect
-                          x={framePadding}
-                          y={framePadding}
-                          width={widthPx - framePadding * 2}
-                          height={heightPx - framePadding * 2}
-                          fill="#ffffff"
-                        />
-                      )}
-                    </Group>
-                  );
-                }
-
-                if (elem.type === "logo") {
-                  return (
-                    <Group
-                      key={elem.id}
-                      ref={(node) => {
-                        if (node) nodeRefs.current.set(elem.id, node);
-                        else nodeRefs.current.delete(elem.id);
-                      }}
-                      id={elem.id}
-                      x={xPx}
-                      y={yPx}
-                      width={widthPx}
-                      height={heightPx}
-                      rotation={elem.rotation || 0}
-                      draggable={!isLocked}
-                      onClick={() => setSelectedId(elem.id)}
-                      onTap={() => setSelectedId(elem.id)}
-                      onDragMove={(e) => handleDragMove(elem.id, e)}
-                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                      onTransformEnd={() => handleTransformEnd(elem.id)}
-                    >
-                      {/* Logo background circle */}
-                      <Rect
-                        x={0}
-                        y={0}
-                        width={widthPx}
-                        height={heightPx}
-                        fill="#ffffff"
-                        cornerRadius={widthPx / 2}
-                        shadowColor="rgba(0, 0, 0, 0.2)"
-                        shadowBlur={6}
-                        shadowOffsetY={2}
+                  {/* 3. Magnetic Alignment Guiding Lines */}
+                  {activeGuides.map((g, idx) =>
+                    g.orientation === "V" ? (
+                      <Line
+                        key={`guide-v-${idx}`}
+                        points={[g.pos, 0, g.pos, A6_HEIGHT_PX]}
+                        stroke={g.color || "#8b3dff"}
+                        strokeWidth={1.5}
+                        dash={[4, 3]}
+                        listening={false}
                       />
-                      {logoImg ? (
-                        <KonvaImage
-                          image={logoImg}
-                          x={0}
-                          y={0}
-                          width={widthPx}
-                          height={heightPx}
-                          cornerRadius={widthPx / 2}
-                        />
-                      ) : (
+                    ) : (
+                      <Line
+                        key={`guide-h-${idx}`}
+                        points={[0, g.pos, A6_WIDTH_PX, g.pos]}
+                        stroke={g.color || "#8b3dff"}
+                        strokeWidth={1.5}
+                        dash={[4, 3]}
+                        listening={false}
+                      />
+                    ),
+                  )}
+
+                  {/* 4. Canvas Elements Render Loop */}
+                  {elements.map((elem) => {
+                    const xPx = elem.x * MM_TO_PX;
+                    const yPx = elem.y * MM_TO_PX;
+                    const widthPx = elem.width * MM_TO_PX;
+                    const heightPx = elem.height * MM_TO_PX;
+
+                    if (elem.type === "text") {
+                      return (
                         <KonvaText
-                          x={0}
-                          y={heightPx * 0.25}
+                          key={elem.id}
+                          ref={(node) => {
+                            if (node) nodeRefs.current.set(elem.id, node);
+                            else nodeRefs.current.delete(elem.id);
+                          }}
+                          id={elem.id}
+                          x={xPx}
+                          y={yPx}
                           width={widthPx}
-                          text={businessName?.slice(0, 2).toUpperCase() || "RC"}
-                          fontSize={heightPx * 0.45}
-                          fontFamily="Plus Jakarta Sans, sans-serif"
-                          fontStyle="bold"
-                          fill={cardColor || "#1a73e8"}
-                          align="center"
+                          text={elem.text || ""}
+                          fontSize={(elem.fontSize || 12) * 1.33}
+                          fontFamily={elem.fontFamily || "Inter, sans-serif"}
+                          fontStyle={
+                            elem.fontWeight === "bold"
+                              ? elem.fontStyle === "italic"
+                                ? "bold italic"
+                                : "bold"
+                              : elem.fontStyle === "italic"
+                                ? "italic"
+                                : "normal"
+                          }
+                          fill={elem.fill || "#ffffff"}
+                          align={elem.align || "center"}
+                          rotation={elem.rotation || 0}
+                          opacity={editingTextId === elem.id ? 0 : 1}
+                          draggable={!isLocked}
+                          onClick={() => setSelectedId(elem.id)}
+                          onTap={() => setSelectedId(elem.id)}
+                          onDblClick={() => setEditingTextId(elem.id)}
+                          onDblTap={() => setEditingTextId(elem.id)}
+                          onDragMove={(e) => handleDragMove(elem.id, e)}
+                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                          onTransformEnd={() => handleTransformEnd(elem.id)}
                         />
-                      )}
-                    </Group>
-                  );
-                }
+                      );
+                    }
 
-                if (elem.type === "sticker") {
-                  const stickerKey = elem.stickerType || "google";
-                  const sImg = stickerImages[stickerKey];
-
-                  return (
-                    <Group
-                      key={elem.id}
-                      ref={(node) => {
-                        if (node) nodeRefs.current.set(elem.id, node);
-                        else nodeRefs.current.delete(elem.id);
-                      }}
-                      id={elem.id}
-                      x={xPx}
-                      y={yPx}
-                      width={widthPx}
-                      height={heightPx}
-                      rotation={elem.rotation || 0}
-                      draggable={!isLocked}
-                      onClick={() => setSelectedId(elem.id)}
-                      onTap={() => setSelectedId(elem.id)}
-                      onDragMove={(e) => handleDragMove(elem.id, e)}
-                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
-                      onTransformEnd={() => handleTransformEnd(elem.id)}
-                    >
-                      {sImg && (
-                        <KonvaImage
-                          image={sImg}
-                          x={0}
-                          y={0}
+                    if (elem.type === "panel") {
+                      return (
+                        <Rect
+                          key={elem.id}
+                          ref={(node) => {
+                            if (node) nodeRefs.current.set(elem.id, node);
+                            else nodeRefs.current.delete(elem.id);
+                          }}
+                          id={elem.id}
+                          x={xPx}
+                          y={yPx}
                           width={widthPx}
                           height={heightPx}
-                          shadowColor="rgba(0,0,0,0.14)"
-                          shadowBlur={4}
-                          shadowOffsetY={1}
+                          fill={elem.fill || "#ffffff"}
+                          cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
+                          {...(elem.stroke ? { stroke: elem.stroke, strokeWidth: 1 } : {})}
+                          shadowColor="rgba(0, 0, 0, 0.08)"
+                          shadowBlur={12}
+                          shadowOffsetY={3}
+                          rotation={elem.rotation || 0}
+                          draggable={!isLocked}
+                          onClick={() => setSelectedId(elem.id)}
+                          onTap={() => setSelectedId(elem.id)}
+                          onDragMove={(e) => handleDragMove(elem.id, e)}
+                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                          onTransformEnd={() => handleTransformEnd(elem.id)}
                         />
-                      )}
-                    </Group>
-                  );
-                }
+                      );
+                    }
 
-                return null;
-              })}
+                    if (elem.type === "qr") {
+                      const framePadding = elem.qrFrame === "white" ? 2 * MM_TO_PX : 0;
+                      return (
+                        <Group
+                          key={elem.id}
+                          ref={(node) => {
+                            if (node) nodeRefs.current.set(elem.id, node);
+                            else nodeRefs.current.delete(elem.id);
+                          }}
+                          id={elem.id}
+                          x={xPx}
+                          y={yPx}
+                          width={widthPx}
+                          height={heightPx}
+                          rotation={elem.rotation || 0}
+                          draggable={!isLocked}
+                          onClick={() => setSelectedId(elem.id)}
+                          onTap={() => setSelectedId(elem.id)}
+                          onDragMove={(e) => handleDragMove(elem.id, e)}
+                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                          onTransformEnd={() => handleTransformEnd(elem.id)}
+                        >
+                          {/* Frame Panel */}
+                          {elem.qrFrame !== "none" && (
+                            <Rect
+                              x={0}
+                              y={0}
+                              width={widthPx}
+                              height={heightPx}
+                              fill={elem.qrFrame === "white" ? "#ffffff" : "#0f172a"}
+                              cornerRadius={10}
+                              shadowColor="rgba(0, 0, 0, 0.22)"
+                              shadowBlur={10}
+                              shadowOffsetY={4}
+                            />
+                          )}
+                          {/* Crisp QR Code Image */}
+                          {qrImg ? (
+                            <KonvaImage
+                              image={qrImg}
+                              x={framePadding}
+                              y={framePadding}
+                              width={widthPx - framePadding * 2}
+                              height={heightPx - framePadding * 2}
+                            />
+                          ) : (
+                            <Rect
+                              x={framePadding}
+                              y={framePadding}
+                              width={widthPx - framePadding * 2}
+                              height={heightPx - framePadding * 2}
+                              fill="#ffffff"
+                            />
+                          )}
+                        </Group>
+                      );
+                    }
 
-              {/* 5. Blue/Purple Canva Transformer Bounding Box with Height & Width Drag Anchors */}
-              <Transformer
-                ref={transformerRef}
-                borderStroke="#8b3dff"
-                borderStrokeWidth={2}
-                anchorStroke="#8b3dff"
-                anchorFill="#ffffff"
-                anchorSize={8}
-                anchorCornerRadius={2}
-                rotateAnchorOffset={24}
-                rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
-                rotationSnapTolerance={5}
-                enabledAnchors={[
-                  "top-left",
-                  "top-center",
-                  "top-right",
-                  "middle-left",
-                  "middle-right",
-                  "bottom-left",
-                  "bottom-center",
-                  "bottom-right",
-                ]}
-                boundBoxFunc={(oldBox, newBox) => {
-                  if (newBox.width < 10 || newBox.height < 10) {
-                    return oldBox;
-                  }
-                  return newBox;
-                }}
-              />
-            </Layer>
-          </Stage>
+                    if (elem.type === "logo") {
+                      return (
+                        <Group
+                          key={elem.id}
+                          ref={(node) => {
+                            if (node) nodeRefs.current.set(elem.id, node);
+                            else nodeRefs.current.delete(elem.id);
+                          }}
+                          id={elem.id}
+                          x={xPx}
+                          y={yPx}
+                          width={widthPx}
+                          height={heightPx}
+                          rotation={elem.rotation || 0}
+                          draggable={!isLocked}
+                          onClick={() => setSelectedId(elem.id)}
+                          onTap={() => setSelectedId(elem.id)}
+                          onDragMove={(e) => handleDragMove(elem.id, e)}
+                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                          onTransformEnd={() => handleTransformEnd(elem.id)}
+                        >
+                          {/* Logo background circle */}
+                          <Rect
+                            x={0}
+                            y={0}
+                            width={widthPx}
+                            height={heightPx}
+                            fill="#ffffff"
+                            cornerRadius={widthPx / 2}
+                            shadowColor="rgba(0, 0, 0, 0.2)"
+                            shadowBlur={6}
+                            shadowOffsetY={2}
+                          />
+                          {logoImg ? (
+                            <KonvaImage
+                              image={logoImg}
+                              x={0}
+                              y={0}
+                              width={widthPx}
+                              height={heightPx}
+                              cornerRadius={widthPx / 2}
+                            />
+                          ) : (
+                            <KonvaText
+                              x={0}
+                              y={heightPx * 0.25}
+                              width={widthPx}
+                              text={businessName?.slice(0, 2).toUpperCase() || "RC"}
+                              fontSize={heightPx * 0.45}
+                              fontFamily="Plus Jakarta Sans, sans-serif"
+                              fontStyle="bold"
+                              fill={cardColor || "#1a73e8"}
+                              align="center"
+                            />
+                          )}
+                        </Group>
+                      );
+                    }
 
-          {/* 6. Direct On-Canvas Inline Text Editing Overlay (Double-click or press Enter to edit right here) */}
-          {(() => {
-            const editingElem = elements.find((e) => e.id === editingTextId);
-            if (!editingElem || editingElem.type !== "text") return null;
+                    if (elem.type === "sticker") {
+                      const stickerKey = elem.stickerType || "google";
+                      const sImg = stickerImages[stickerKey];
 
-            return (
-              <textarea
-                key={editingElem.id}
-                autoFocus
-                defaultValue={editingElem.text || ""}
-                style={{
-                  position: "absolute",
-                  left: `${editingElem.x * MM_TO_PX * zoomScale}px`,
-                  top: `${editingElem.y * MM_TO_PX * zoomScale}px`,
-                  width: `${editingElem.width * MM_TO_PX * zoomScale}px`,
-                  minHeight: `${(editingElem.height || 7) * MM_TO_PX * zoomScale}px`,
-                  fontSize: `${(editingElem.fontSize || 12) * 1.33 * zoomScale}px`,
-                  fontFamily: editingElem.fontFamily || "Inter, sans-serif",
-                  fontWeight: editingElem.fontWeight === "bold" ? 700 : 400,
-                  fontStyle: editingElem.fontStyle === "italic" ? "italic" : "normal",
-                  color: editingElem.fill || "#ffffff",
-                  textAlign: editingElem.align || "center",
-                  lineHeight: 1.25,
-                  transform: editingElem.rotation
-                    ? `rotate(${editingElem.rotation}deg)`
-                    : undefined,
-                  transformOrigin: "0 0",
-                  background: isLightColor(cardColor)
-                    ? "rgba(255, 255, 255, 0.96)"
-                    : "rgba(15, 23, 42, 0.94)",
-                  border: "2px solid #8b3dff",
-                  boxShadow: "0 4px 18px rgba(139, 61, 255, 0.35)",
-                  borderRadius: "6px",
-                  padding: "2px 4px",
-                  outline: "none",
-                  resize: "none",
-                  overflow: "hidden",
-                  zIndex: 50,
-                  boxSizing: "border-box",
-                }}
-                ref={(el) => {
-                  if (el) {
-                    el.focus();
-                    el.select();
-                    el.style.height = "auto";
-                    el.style.height = `${el.scrollHeight}px`;
-                  }
-                }}
-                onInput={(e) => {
-                  const target = e.currentTarget;
-                  target.style.height = "auto";
-                  target.style.height = `${target.scrollHeight}px`;
-                  const newHeightMm = Math.max(
-                    editingElem.height,
-                    Number((target.scrollHeight / (MM_TO_PX * zoomScale)).toFixed(1)),
-                  );
-                  updateSelectedElement({
-                    text: target.value,
-                    height: newHeightMm,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    e.preventDefault();
-                    setEditingTextId(null);
-                  } else if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    setEditingTextId(null);
-                  }
-                }}
-                onBlur={() => setEditingTextId(null)}
-              />
-            );
-          })()}
+                      return (
+                        <Group
+                          key={elem.id}
+                          ref={(node) => {
+                            if (node) nodeRefs.current.set(elem.id, node);
+                            else nodeRefs.current.delete(elem.id);
+                          }}
+                          id={elem.id}
+                          x={xPx}
+                          y={yPx}
+                          width={widthPx}
+                          height={heightPx}
+                          rotation={elem.rotation || 0}
+                          draggable={!isLocked}
+                          onClick={() => setSelectedId(elem.id)}
+                          onTap={() => setSelectedId(elem.id)}
+                          onDragMove={(e) => handleDragMove(elem.id, e)}
+                          onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                          onTransformEnd={() => handleTransformEnd(elem.id)}
+                        >
+                          {sImg && (
+                            <KonvaImage
+                              image={sImg}
+                              x={0}
+                              y={0}
+                              width={widthPx}
+                              height={heightPx}
+                              shadowColor="rgba(0,0,0,0.14)"
+                              shadowBlur={4}
+                              shadowOffsetY={1}
+                            />
+                          )}
+                        </Group>
+                      );
+                    }
+
+                    return null;
+                  })}
+
+                  {/* 5. Blue/Purple Canva Transformer Bounding Box with Height & Width Drag Anchors */}
+                  <Transformer
+                    ref={transformerRef}
+                    borderStroke="#8b3dff"
+                    borderStrokeWidth={2}
+                    anchorStroke="#8b3dff"
+                    anchorFill="#ffffff"
+                    anchorSize={8}
+                    anchorCornerRadius={2}
+                    rotateAnchorOffset={24}
+                    rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                    rotationSnapTolerance={5}
+                    enabledAnchors={[
+                      "top-left",
+                      "top-center",
+                      "top-right",
+                      "middle-left",
+                      "middle-right",
+                      "bottom-left",
+                      "bottom-center",
+                      "bottom-right",
+                    ]}
+                    boundBoxFunc={(oldBox, newBox) => {
+                      if (newBox.width < 10 || newBox.height < 10) {
+                        return oldBox;
+                      }
+                      return newBox;
+                    }}
+                  />
+                </Layer>
+              </Stage>
+
+              {/* 6. Direct On-Canvas Inline Text Editing Overlay (Double-click or press Enter to edit right here) */}
+              {(() => {
+                const editingElem = elements.find((e) => e.id === editingTextId);
+                if (!editingElem || editingElem.type !== "text") return null;
+
+                return (
+                  <textarea
+                    key={editingElem.id}
+                    autoFocus
+                    defaultValue={editingElem.text || ""}
+                    style={{
+                      position: "absolute",
+                      left: `${editingElem.x * MM_TO_PX * zoomScale}px`,
+                      top: `${editingElem.y * MM_TO_PX * zoomScale}px`,
+                      width: `${editingElem.width * MM_TO_PX * zoomScale}px`,
+                      minHeight: `${(editingElem.height || 7) * MM_TO_PX * zoomScale}px`,
+                      fontSize: `${(editingElem.fontSize || 12) * 1.33 * zoomScale}px`,
+                      fontFamily: editingElem.fontFamily || "Inter, sans-serif",
+                      fontWeight: editingElem.fontWeight === "bold" ? 700 : 400,
+                      fontStyle: editingElem.fontStyle === "italic" ? "italic" : "normal",
+                      color: editingElem.fill || "#ffffff",
+                      textAlign: editingElem.align || "center",
+                      lineHeight: 1.25,
+                      transform: editingElem.rotation
+                        ? `rotate(${editingElem.rotation}deg)`
+                        : undefined,
+                      transformOrigin: "0 0",
+                      background: isLightColor(cardColor)
+                        ? "rgba(255, 255, 255, 0.96)"
+                        : "rgba(15, 23, 42, 0.94)",
+                      border: "2px solid #8b3dff",
+                      boxShadow: "0 4px 18px rgba(139, 61, 255, 0.35)",
+                      borderRadius: "6px",
+                      padding: "2px 4px",
+                      outline: "none",
+                      resize: "none",
+                      overflow: "hidden",
+                      zIndex: 50,
+                      boxSizing: "border-box",
+                    }}
+                    ref={(el) => {
+                      if (el) {
+                        el.focus();
+                        el.select();
+                        el.style.height = "auto";
+                        el.style.height = `${el.scrollHeight}px`;
+                      }
+                    }}
+                    onInput={(e) => {
+                      const target = e.currentTarget;
+                      target.style.height = "auto";
+                      target.style.height = `${target.scrollHeight}px`;
+                      const newHeightMm = Math.max(
+                        editingElem.height,
+                        Number((target.scrollHeight / (MM_TO_PX * zoomScale)).toFixed(1)),
+                      );
+                      updateSelectedElement({
+                        text: target.value,
+                        height: newHeightMm,
+                      });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setEditingTextId(null);
+                      } else if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        setEditingTextId(null);
+                      }
+                    }}
+                    onBlur={() => setEditingTextId(null)}
+                  />
+                );
+              })()}
+            </div>
+          </div>
         </div>
 
+        {/* ---------------- 4. BOTTOM DOCKED CANVA STATUS BAR ---------------- */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="pointer-events-auto py-1 px-3 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-lg flex items-center gap-3 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 font-medium">
+              <span>A6 Card · 105 × 148 mm</span>
+            </div>
+
+            <div className="h-4 w-px bg-slate-200" />
+
+            {/* Toggle Margin Guides */}
+            <button
+              type="button"
+              onClick={() => setShowMarginGuides(!showMarginGuides)}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer ${
+                showMarginGuides
+                  ? "bg-purple-100 text-purple-700"
+                  : "text-slate-500 hover:bg-slate-100"
+              }`}
+              title="Toggle print safe margins and guiding lines"
+            >
+              Guides: {showMarginGuides ? "ON" : "OFF"}
+            </button>
+
+            <div className="h-4 w-px bg-slate-200" />
+
+            {/* Zoom controls */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setZoomScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
+                title="Zoom out"
+              >
+                <ZoomOut className="h-3 w-3" />
+              </button>
+              <span className="text-xs font-mono font-semibold text-slate-700 w-10 text-center">
+                {Math.round(zoomScale * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomScale((s) => Math.min(1.5, Number((s + 0.1).toFixed(2))))}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
+                title="Zoom in"
+              >
+                <ZoomIn className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomScale(1)}
+                className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer ml-1"
+              >
+                100%
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* ---------------- 4. BOTTOM DOCKED CANVA STATUS BAR ---------------- */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="pointer-events-auto py-1 px-3 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-lg flex items-center gap-3 text-xs text-slate-600">
-          <div className="flex items-center gap-1.5 font-medium">
-            <span>A6 Card · 105 × 148 mm</span>
-          </div>
-
-          <div className="h-4 w-px bg-slate-200" />
-
-          {/* Toggle Margin Guides */}
-          <button
-            type="button"
-            onClick={() => setShowMarginGuides(!showMarginGuides)}
-            className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer ${
-              showMarginGuides ? "bg-purple-100 text-purple-700" : "text-slate-500 hover:bg-slate-100"
-            }`}
-            title="Toggle print safe margins and guiding lines"
-          >
-            Guides: {showMarginGuides ? "ON" : "OFF"}
-          </button>
-
-          <div className="h-4 w-px bg-slate-200" />
-
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setZoomScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
-              className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
-              title="Zoom out"
-            >
-              <ZoomOut className="h-3 w-3" />
-            </button>
-            <span className="text-xs font-mono font-semibold text-slate-700 w-10 text-center">
-              {Math.round(zoomScale * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() => setZoomScale((s) => Math.min(1.5, Number((s + 0.1).toFixed(2))))}
-              className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
-              title="Zoom in"
-            >
-              <ZoomIn className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoomScale(1)}
-              className="text-[10px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer ml-1"
-            >
-              100%
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
       {/* Shortcuts Helper Modal */}
       {showShortcutsModal && (
