@@ -155,11 +155,21 @@ function CardStudio() {
     const newSubFill = light ? "#475569" : "rgba(255, 255, 255, 0.90)";
     setElements((prev) =>
       prev.map((el) => {
-        if (el.id === "elem-biz-name" || el.id === "elem-cta-headline") {
+        if (el.id === "elem-biz-name" || el.id === "elem-nfc-title") {
           return { ...el, fill: newTextFill };
         }
-        if (el.id === "elem-biz-cat" || el.id === "elem-footer-note") {
+        if (el.id === "elem-cta-headline") {
+          return { ...el, fill: light ? "#1a73e8" : newColor };
+        }
+        if (el.id === "elem-biz-cat" || el.id === "elem-nfc-sub" || el.id === "elem-footer-url") {
           return { ...el, fill: newSubFill };
+        }
+        if (el.id === "elem-review-panel") {
+          return {
+            ...el,
+            fill: light ? "#f8fafc" : "#ffffff",
+            stroke: light ? "#e2e8f0" : undefined,
+          };
         }
         if (el.id === "elem-sticker-nfc") {
           return {
@@ -190,15 +200,31 @@ function CardStudio() {
             id: "elem-sticker-nfc",
             type: "sticker" as const,
             stickerType: light ? ("nfc" as const) : ("nfcWhite" as const),
-            x: 45.5,
-            y: 119,
-            width: 14,
-            height: 14,
+            x: 23,
+            y: 118,
+            width: 11,
+            height: 11,
             src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
+          },
+          {
+            id: "elem-nfc-title",
+            type: "text" as const,
+            x: 36.5,
+            y: 118,
+            width: 55,
+            height: 6,
+            text: "Tap Phone on Card",
+            fontSize: 8.5,
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            fontWeight: "bold" as const,
+            fill: light ? "#0f172a" : "#ffffff",
+            align: "left" as const,
           },
         ];
       }
-      return prev.filter((e) => e.id !== "elem-sticker-nfc");
+      return prev.filter(
+        (e) => e.id !== "elem-sticker-nfc" && e.id !== "elem-nfc-title" && e.id !== "elem-nfc-sub",
+      );
     });
   };
 
@@ -213,10 +239,10 @@ function CardStudio() {
             id: "elem-sticker-stars",
             type: "sticker" as const,
             stickerType: "star5" as const,
-            x: 27.5,
-            y: 62,
-            width: 50,
-            height: 8.5,
+            x: 36,
+            y: 39,
+            width: 33,
+            height: 5.5,
             src: STICKER_SVGS.star5,
           },
         ];

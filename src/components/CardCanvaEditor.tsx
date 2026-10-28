@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   Stage,
   Layer,
@@ -25,7 +25,6 @@ import {
   Italic,
   Undo2,
   Redo2,
-  Star,
   MapPin,
   Heart,
   QrCode,
@@ -45,7 +44,12 @@ import {
   Check,
   Image as ImageIcon,
   HelpCircle,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  Edit3,
 } from "lucide-react";
+import { CANVA_FONTS, loadGoogleFont } from "@/lib/fonts";
 
 // Standard A6 Dimensions: 105 mm x 148 mm (Ratio 1:1.414)
 export const MM_TO_PX = 4;
@@ -55,7 +59,7 @@ export const A6_WIDTH_PX = A6_WIDTH_MM * MM_TO_PX; // 420 px
 export const A6_HEIGHT_PX = A6_HEIGHT_MM * MM_TO_PX; // 592 px
 export const SAFE_MARGIN_PX = 4 * MM_TO_PX; // 16 px (4 mm safe print area)
 
-export type CanvasElementType = "text" | "qr" | "logo" | "sticker";
+export type CanvasElementType = "text" | "qr" | "logo" | "sticker" | "panel";
 
 export interface CanvasElement {
   id: string;
@@ -65,6 +69,8 @@ export interface CanvasElement {
   width: number; // in mm
   height: number; // in mm
   rotation?: number; // in degrees
+  cornerRadius?: number; // in mm
+  stroke?: string;
   // Text Properties
   text?: string;
   fontSize?: number; // in pt
@@ -76,7 +82,15 @@ export interface CanvasElement {
   // Sticker / Image Properties
   src?: string;
   stickerType?:
-    "google" | "nfc" | "nfcWhite" | "nfcDark" | "star5" | "star1" | "location" | "heart";
+    | "google"
+    | "googleBadge"
+    | "nfc"
+    | "nfcWhite"
+    | "nfcDark"
+    | "star5"
+    | "star1"
+    | "location"
+    | "heart";
   // QR Specific Properties
   qrFrame?: "white" | "none" | "dark";
 }
@@ -94,6 +108,11 @@ export const STICKER_SVGS: Record<string, string> = {
     "data:image/svg+xml;charset=utf-8," +
     encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><g transform="translate(46, 46)"><path fill="#4285F4" d="M106.85 55.21c0-3.15-.27-6.3-8.55-9.31H54v20.29h29.7c-1.3 6.84-5.13 12.6-10.8 16.56v13.72h17.46c10.21-9.4 16.49-23.26 16.49-41.26z"/><path fill="#34A853" d="M54 108c14.58 0 26.77-4.86 35.68-13.09l-17.46-13.72c-4.86 3.24-11.02 5.22-18.22 5.22-14.04 0-25.96-9.45-30.24-22.18H5.62v14.17C14.67 96.12 33.12 108 54 108z"/><path fill="#FBBC05" d="M23.76 64.23c-1.12-3.24-1.71-6.7-1.71-10.23s.59-6.99 1.71-10.23V29.6H5.62C1.98 36.81 0 45.09 0 54s1.98 17.19 5.62 24.4l18.14-14.17z"/><path fill="#EA4335" d="M54 21.37c7.96 0 15.07 2.74 20.7 8.1l15.39-15.39C80.73 5.35 68.54 0 54 0 33.12 0 14.67 11.88 5.62 29.6l18.14 14.17c4.28-12.73 16.2-22.4 30.24-22.4z"/></g></svg>`,
+    ),
+  googleBadge:
+    "data:image/svg+xml;charset=utf-8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="60" viewBox="0 0 300 60"><g transform="translate(10, 10)"><path fill="#4285F4" d="M38.85 20.21c0-1.15-.1-2.3-.31-3.39H20v7.38h10.8c-.47 2.49-1.87 4.58-3.93 6.02v4.99h6.35c3.71-3.42 5.63-8.46 5.63-15z"/><path fill="#34A853" d="M20 39.42c5.3 0 9.73-1.77 12.98-4.76l-6.35-4.99c-1.77 1.18-4.01 1.9-6.63 1.9-5.11 0-9.44-3.44-11-8.07H2.04v5.15C5.33 35.08 12.04 39.42 20 39.42z"/><path fill="#FBBC05" d="M9 23.5c-.41-1.18-.62-2.44-.62-3.72s.21-2.54.62-3.72V10.91H2.04C.72 13.53 0 16.54 0 19.78s.72 6.25 2.04 8.87L9 23.5z"/><path fill="#EA4335" d="M20 7.78c2.9 0 5.48 1 7.53 2.95l5.6-5.6C29.73 1.95 25.3 0 20 0 12.04 0 5.33 4.34 2.04 10.91l6.96 5.15C10.56 11.22 14.89 7.78 20 7.78z"/></g><text x="65" y="38" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="24" font-weight="700" fill="#1e293b">Google Reviews</text></svg>`,
     ),
   nfc: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_BADGE_SVG),
   nfcWhite: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_WHITE_SVG),
@@ -126,16 +145,6 @@ export const STICKER_SVGS: Record<string, string> = {
       `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="100" fill="#ffffff"/><path fill="#059669" transform="translate(40, 40) scale(5)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
     ),
 };
-
-export const POPULAR_FONTS = [
-  { name: "Open Sans", value: "Open Sans, sans-serif" },
-  { name: "Inter (Modern)", value: "Inter, sans-serif" },
-  { name: "Roboto (Clean)", value: "Roboto, sans-serif" },
-  { name: "Outfit (Geometric)", value: "Outfit, sans-serif" },
-  { name: "Playfair Display", value: "Playfair Display, serif" },
-  { name: "Montserrat", value: "Montserrat, sans-serif" },
-  { name: "System Sans", value: "Arial, sans-serif" },
-];
 
 export const CANVA_PALETTE = [
   "#ffffff",
@@ -213,7 +222,7 @@ export const TEMPLATE_PRESETS = [
   },
 ];
 
-// Helper to create initial default A6 Elements (adaptive to Light Mode / Dark Mode)
+// Helper to create initial default A6 Elements exactly matching templet.html
 export function createDefaultA6Elements(params: {
   businessName?: string | undefined;
   category?: string | undefined;
@@ -232,127 +241,187 @@ export function createDefaultA6Elements(params: {
 
   const elements: CanvasElement[] = [];
 
-  // 1. Business Logo (Top Left badge)
-  if (params.logoUrl) {
-    elements.push({
-      id: "elem-logo",
-      type: "logo",
-      x: 10,
-      y: 9,
-      width: 16,
-      height: 16,
-      src: params.logoUrl,
-    });
-  }
+  // 1. Business Logo (Top Left Avatar circle 14mm - always present matching templet.html)
+  elements.push({
+    id: "elem-logo",
+    type: "logo",
+    x: 8,
+    y: 7,
+    width: 14,
+    height: 14,
+    src: params.logoUrl || undefined,
+  });
 
-  // 2. Business Display Name
+  // 2. Business Display Name (13pt Plus Jakarta Sans bold)
   elements.push({
     id: "elem-biz-name",
     type: "text",
-    x: params.logoUrl ? 28 : 10,
-    y: 10,
-    width: params.logoUrl ? 67 : 85,
-    height: 9,
+    x: 26,
+    y: 7.5,
+    width: 71,
+    height: 7.5,
     text: bName,
-    fontSize: 14.5,
-    fontFamily: "Outfit, sans-serif",
+    fontSize: 13,
+    fontFamily: "Plus Jakarta Sans, sans-serif",
     fontWeight: "bold",
     fill: textColor,
-    align: params.logoUrl ? "left" : "center",
+    align: "left",
   });
 
-  // 3. Category / Subtitle
+  // 3. Category / Subtitle (7pt uppercase Plus Jakarta Sans bold)
   elements.push({
     id: "elem-biz-cat",
     type: "text",
-    x: params.logoUrl ? 28 : 10,
-    y: 19,
-    width: params.logoUrl ? 67 : 85,
-    height: 6,
-    text: cat,
-    fontSize: 8.5,
-    fontFamily: "Inter, sans-serif",
+    x: 26,
+    y: 15.5,
+    width: 71,
+    height: 5.5,
+    text: cat.toUpperCase(),
+    fontSize: 7,
+    fontFamily: "Plus Jakarta Sans, sans-serif",
+    fontWeight: "bold",
     fill: subtextColor,
-    align: params.logoUrl ? "left" : "center",
+    align: "left",
   });
 
-  // 4. Official Google G Badge
+  // 4. White Center Review Panel (89 × 86 mm with 4.5mm rounded corners, like templet.html)
+  elements.push({
+    id: "elem-review-panel",
+    type: "panel",
+    x: 8,
+    y: 23,
+    width: 89,
+    height: 86,
+    cornerRadius: 4.5,
+    fill: light ? "#f8fafc" : "#ffffff",
+    stroke: light ? "#e2e8f0" : undefined,
+  });
+
+  // 5. Official Google G Badge (Centered at top of review panel)
   elements.push({
     id: "elem-sticker-google",
     type: "sticker",
     stickerType: "google",
-    x: 43.5,
-    y: 29,
-    width: 18,
-    height: 18,
+    x: 49.5,
+    y: 26.5,
+    width: 6,
+    height: 6,
     src: STICKER_SVGS.google,
   });
 
-  // 5. Review Call to Action Headline
+  // 6. "Google Reviews" Badge Text (Clickable & Editable)
   elements.push({
-    id: "elem-cta-headline",
+    id: "elem-google-text",
     type: "text",
-    x: 8,
-    y: 50,
-    width: 89,
-    height: 10,
-    text: cta,
-    fontSize: 13.5,
-    fontFamily: "Outfit, sans-serif",
+    x: 10,
+    y: 33.5,
+    width: 85,
+    height: 5,
+    text: "Google Reviews",
+    fontSize: 8.5,
+    fontFamily: "Plus Jakarta Sans, sans-serif",
     fontWeight: "bold",
-    fill: textColor,
+    fill: "#1e293b",
     align: "center",
   });
 
-  // 6. 5-Star Rating Row
+  // 7. 5-Star Rating Row (Gold stars)
   elements.push({
     id: "elem-sticker-stars",
     type: "sticker",
     stickerType: "star5",
-    x: 27.5,
-    y: 62,
-    width: 50,
-    height: 8.5,
+    x: 36,
+    y: 39,
+    width: 33,
+    height: 5.5,
     src: STICKER_SVGS.star5,
   });
 
-  // 7. QR Code Element (Center Bottom)
+  // 8. Review Call to Action Headline (Space Grotesk 11pt bold)
+  elements.push({
+    id: "elem-cta-headline",
+    type: "text",
+    x: 10,
+    y: 46,
+    width: 85,
+    height: 7,
+    text: cta,
+    fontSize: 11,
+    fontFamily: "Space Grotesk, sans-serif",
+    fontWeight: "bold",
+    fill: light ? "#1a73e8" : params.cardColor || "#1a73e8",
+    align: "center",
+  });
+
+  // 9. QR Code Element (44 × 44 mm in White Frame)
   elements.push({
     id: "elem-qr-code",
     type: "qr",
-    x: 32.5,
-    y: 74,
-    width: 40,
-    height: 40,
+    x: 30.5,
+    y: 54.5,
+    width: 44,
+    height: 44,
     qrFrame: "white",
   });
 
-  // 8. Real Official NFC Logo (4 Wave arcs + bold NFC text from Image 2)
+  // 10. Short URL text under QR
+  elements.push({
+    id: "elem-footer-url",
+    type: "text",
+    x: 10,
+    y: 100,
+    width: 85,
+    height: 5,
+    text: "reviewcard.link",
+    fontSize: 7,
+    fontFamily: "monospace",
+    fontWeight: "bold",
+    fill: "#64748b",
+    align: "center",
+  });
+
+  // 11. Real Official NFC Logo (4 Contactless Wave arcs)
   elements.push({
     id: "elem-sticker-nfc",
     type: "sticker",
     stickerType: nfcStickerType,
-    x: 45.5,
-    y: 119,
-    width: 14,
-    height: 14,
+    x: 23,
+    y: 118,
+    width: 11,
+    height: 11,
     src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
   });
 
-  // 9. Scan or Tap Footer Instruction Note
+  // 12. NFC Action Title (8.5pt bold)
   elements.push({
-    id: "elem-footer-note",
+    id: "elem-nfc-title",
     type: "text",
-    x: 8,
-    y: 136,
-    width: 89,
+    x: 36.5,
+    y: 118,
+    width: 55,
     height: 6,
-    text: "POINT CAMERA OR TAP PHONE HERE",
-    fontSize: 7.2,
-    fontFamily: "Inter, sans-serif",
+    text: "Tap Phone on Card",
+    fontSize: 8.5,
+    fontFamily: "Plus Jakarta Sans, sans-serif",
     fontWeight: "bold",
+    fill: textColor,
+    align: "left",
+  });
+
+  // 13. NFC Subtitle Note (6.8pt)
+  elements.push({
+    id: "elem-nfc-sub",
+    type: "text",
+    x: 36.5,
+    y: 124,
+    width: 55,
+    height: 5,
+    text: "Instant NFC review link",
+    fontSize: 6.8,
+    fontFamily: "Plus Jakarta Sans, sans-serif",
+    fontWeight: "normal",
     fill: subtextColor,
-    align: "center",
+    align: "left",
   });
 
   return elements;
@@ -495,6 +564,25 @@ export function CardCanvaEditor({
   // Inline editing state for text
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
+  // Clipboard element for Ctrl+C / Ctrl+V
+  const [clipboardElement, setClipboardElement] = useState<CanvasElement | null>(null);
+
+  // Font Picker Modal / Popover State (140+ Google Fonts)
+  const [showFontPicker, setShowFontPicker] = useState(false);
+  const [fontSearch, setFontSearch] = useState("");
+  const [fontCategory, setFontCategory] = useState<
+    "all" | "sans" | "serif" | "display" | "handwriting" | "mono"
+  >("all");
+
+  const filteredFonts = useMemo(() => {
+    return CANVA_FONTS.filter((f) => {
+      const matchesCategory = fontCategory === "all" || f.category === fontCategory;
+      const matchesSearch =
+        !fontSearch.trim() || f.name.toLowerCase().includes(fontSearch.toLowerCase().trim());
+      return matchesCategory && matchesSearch;
+    });
+  }, [fontCategory, fontSearch]);
+
   // File input ref for uploads drawer
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -511,6 +599,7 @@ export function CardCanvaEditor({
   // Preload sticker images including real NFC logo
   const stickerImages: Record<string, HTMLImageElement | null> = {
     google: useLoadedImage(STICKER_SVGS.google),
+    googleBadge: useLoadedImage(STICKER_SVGS.googleBadge),
     nfc: useLoadedImage(STICKER_SVGS.nfc),
     nfcWhite: useLoadedImage(STICKER_SVGS.nfcWhite),
     nfcDark: useLoadedImage(STICKER_SVGS.nfcDark),
@@ -597,7 +686,7 @@ export function CardCanvaEditor({
     }
   };
 
-  // Transform end handler (Resize / Rotate)
+  // Transform end handler (Resize / Rotate with width & height update)
   const handleTransformEnd = (id: string) => {
     const node = nodeRefs.current.get(id);
     if (!node) return;
@@ -624,7 +713,7 @@ export function CardCanvaEditor({
             x: newX,
             y: newY,
             width: Math.max(5, newWidthMm),
-            height: Math.max(5, newHeightMm),
+            height: Math.max(4, newHeightMm),
             rotation,
           }
         : item,
@@ -638,7 +727,7 @@ export function CardCanvaEditor({
     }
   };
 
-  // Duplicate Selected Element
+  // Duplicate Selected Element (Ctrl+D)
   const handleDuplicateSelected = useCallback(() => {
     if (!selectedElement) return;
     const newId = `elem-${Date.now().toString(36)}`;
@@ -654,6 +743,52 @@ export function CardCanvaEditor({
     setSelectedId(newId);
   }, [selectedElement, elements, updateElements, pushHistory]);
 
+  // Copy Selected Element (Ctrl+C)
+  const handleCopySelected = useCallback(() => {
+    if (!selectedElement) return;
+    setClipboardElement({ ...selectedElement });
+  }, [selectedElement]);
+
+  // Paste Element from Clipboard (Ctrl+V)
+  const handlePaste = useCallback(() => {
+    if (!clipboardElement) return;
+    const newId = `elem-${Date.now().toString(36)}`;
+    const pasted: CanvasElement = {
+      ...clipboardElement,
+      id: newId,
+      x: Math.min(A6_WIDTH_MM - clipboardElement.width, clipboardElement.x + 4),
+      y: Math.min(A6_HEIGHT_MM - clipboardElement.height, clipboardElement.y + 4),
+    };
+    const next = [...elements, pasted];
+    updateElements(next);
+    pushHistory(next);
+    setSelectedId(newId);
+  }, [clipboardElement, elements, updateElements, pushHistory]);
+
+  // Layer Reordering ([ and ])
+  const moveLayer = useCallback(
+    (direction: "up" | "down") => {
+      if (!selectedId) return;
+      const index = elements.findIndex((e) => e.id === selectedId);
+      if (index === -1) return;
+      const newElements = [...elements];
+      if (direction === "up" && index < newElements.length - 1) {
+        const temp = newElements[index]!;
+        newElements[index] = newElements[index + 1]!;
+        newElements[index + 1] = temp;
+        updateElements(newElements);
+        pushHistory(newElements);
+      } else if (direction === "down" && index > 0) {
+        const temp = newElements[index]!;
+        newElements[index] = newElements[index - 1]!;
+        newElements[index - 1] = temp;
+        updateElements(newElements);
+        pushHistory(newElements);
+      }
+    },
+    [selectedId, elements, updateElements, pushHistory],
+  );
+
   // Delete Selected Element
   const handleDeleteSelected = useCallback(() => {
     if (!selectedId) return;
@@ -668,6 +803,12 @@ export function CardCanvaEditor({
     const newId = `elem-text-${Date.now().toString(36)}`;
     const isHeadline = type === "headline";
     const isSub = type === "subheading";
+    const font = isHeadline
+      ? "Space Grotesk, sans-serif"
+      : isSub
+        ? "Plus Jakarta Sans, sans-serif"
+        : "Inter, sans-serif";
+    loadGoogleFont(font);
     const newElem: CanvasElement = {
       id: newId,
       type: "text",
@@ -678,10 +819,10 @@ export function CardCanvaEditor({
       text:
         customText ||
         (isHeadline ? "Add a Heading" : isSub ? "Add a Subheading" : "Add body text here"),
-      fontSize: isHeadline ? 16 : isSub ? 11 : 8.5,
-      fontFamily: isHeadline ? "Outfit, sans-serif" : "Inter, sans-serif",
+      fontSize: isHeadline ? 15 : isSub ? 10.5 : 8,
+      fontFamily: font,
       fontWeight: isHeadline ? "bold" : "normal",
-      fill: "#ffffff",
+      fill: isLightColor(cardColor) ? "#0f172a" : "#ffffff",
       align: "center",
     };
     const next = [...elements, newElem];
@@ -693,11 +834,33 @@ export function CardCanvaEditor({
   // Add Sticker Element
   const handleAddSticker = (
     stickerType:
-      "google" | "nfc" | "nfcWhite" | "nfcDark" | "star5" | "star1" | "location" | "heart",
+      | "google"
+      | "googleBadge"
+      | "nfc"
+      | "nfcWhite"
+      | "nfcDark"
+      | "star5"
+      | "star1"
+      | "location"
+      | "heart",
   ) => {
     const newId = `elem-${stickerType}-${Date.now().toString(36)}`;
-    const width = stickerType === "star5" ? 50 : stickerType.startsWith("nfc") ? 14 : 18;
-    const height = stickerType === "star5" ? 8.5 : stickerType.startsWith("nfc") ? 14 : 18;
+    const width =
+      stickerType === "googleBadge"
+        ? 45
+        : stickerType === "star5"
+          ? 38
+          : stickerType.startsWith("nfc")
+            ? 12
+            : 16;
+    const height =
+      stickerType === "googleBadge"
+        ? 9
+        : stickerType === "star5"
+          ? 6.5
+          : stickerType.startsWith("nfc")
+            ? 12
+            : 16;
     const newElem: CanvasElement = {
       id: newId,
       type: "sticker",
@@ -714,29 +877,132 @@ export function CardCanvaEditor({
     setSelectedId(newId);
   };
 
-  // Reset to Clean Default A6 Card Layout
+  // Reset to Clean Default A6 Card Layout matching templet.html
   const handleResetLayout = () => {
-    const fresh = createDefaultA6Elements({ businessName, category, headline, logoUrl });
+    const fresh = createDefaultA6Elements({
+      businessName,
+      category,
+      headline,
+      logoUrl,
+      cardColor,
+    });
     updateElements(fresh);
     pushHistory(fresh);
     setSelectedId("elem-qr-code");
   };
 
-  // Keyboard Shortcuts (Arrow nudge, Delete, Duplicate, Undo/Redo, Escape)
+  // Full Canva Keyboard Shortcuts (Ctrl+C, Ctrl+V, Ctrl+D, Ctrl+Z, Ctrl+Y, Ctrl+B, Ctrl+I, Arrows, Delete, Escape, Enter, [, ])
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable
-      )
+      const isInput =
+        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+
+      if (isInput) {
+        if (e.key === "Escape") {
+          setEditingTextId(null);
+        }
         return;
+      }
+
+      // Undo / Redo
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) handleRedo();
+        else handleUndo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
+      // Paste
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        handlePaste();
+        return;
+      }
+
+      // Zoom Shortcuts
+      if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        setZoomScale((s) => Math.min(1.5, Number((s + 0.1).toFixed(2))));
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        setZoomScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))));
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "0") {
+        e.preventDefault();
+        setZoomScale(1);
+        return;
+      }
 
       if (!selectedId) return;
 
-      const step = e.shiftKey ? 5 : 1; // 5mm or 1mm nudge
+      // Copy
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        handleCopySelected();
+        return;
+      }
 
+      // Duplicate
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        handleDuplicateSelected();
+        return;
+      }
+
+      // Bold Toggle
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        if (selectedElement?.type === "text") {
+          updateSelectedElement({
+            fontWeight: selectedElement.fontWeight === "bold" ? "normal" : "bold",
+          });
+        }
+        return;
+      }
+
+      // Italic Toggle
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        if (selectedElement?.type === "text") {
+          updateSelectedElement({
+            fontStyle: selectedElement.fontStyle === "italic" ? "normal" : "italic",
+          });
+        }
+        return;
+      }
+
+      // Enter to Inline Edit text
+      if (e.key === "Enter" && !e.shiftKey) {
+        if (selectedElement?.type === "text" && !editingTextId) {
+          e.preventDefault();
+          setEditingTextId(selectedElement.id);
+          return;
+        }
+      }
+
+      // Layer ordering ([ and ])
+      if (e.key === "[") {
+        e.preventDefault();
+        moveLayer("down");
+        return;
+      }
+      if (e.key === "]") {
+        e.preventDefault();
+        moveLayer("up");
+        return;
+      }
+
+      // Nudge with Arrow Keys (1mm regular, 5mm with Shift)
+      const step = e.shiftKey ? 5 : 1;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         updateSelectedElement({
@@ -768,16 +1034,8 @@ export function CardCanvaEditor({
         handleDeleteSelected();
       } else if (e.key === "Escape") {
         e.preventDefault();
+        setEditingTextId(null);
         setSelectedId(null);
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
-        e.preventDefault();
-        handleDuplicateSelected();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        handleUndo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
-        e.preventDefault();
-        handleRedo();
       }
     };
 
@@ -786,11 +1044,15 @@ export function CardCanvaEditor({
   }, [
     selectedId,
     selectedElement,
+    editingTextId,
     updateSelectedElement,
     handleDeleteSelected,
     handleDuplicateSelected,
+    handleCopySelected,
+    handlePaste,
     handleUndo,
     handleRedo,
+    moveLayer,
   ]);
 
   // Tab switch handler for left drawer
@@ -1381,20 +1643,123 @@ export function CardCanvaEditor({
         <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs mb-3 z-30 max-w-full overflow-x-auto">
           {selectedElement?.type === "text" ? (
             <>
-              {/* Font Family selector pill (styled like Image 3 "Open Sans") */}
+              {/* Font Family selector pill (with 140+ Google Fonts Popover) */}
               <div className="relative shrink-0">
-                <select
-                  value={selectedElement.fontFamily || "Open Sans, sans-serif"}
-                  onChange={(e) => updateSelectedElement({ fontFamily: e.target.value })}
-                  className="h-8 pl-3 pr-7 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none"
+                <button
+                  type="button"
+                  onClick={() => setShowFontPicker(!showFontPicker)}
+                  className="h-8 px-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer max-w-[155px]"
+                  title="Choose from 140+ Google Fonts"
                 >
-                  {POPULAR_FONTS.map((f) => (
-                    <option key={f.value} value={f.value}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                  <Type className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                  <span className="truncate">
+                    {selectedElement.fontFamily?.split(",")[0]?.replace(/['"]/g, "") || "Open Sans"}
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-slate-400 shrink-0 ml-auto" />
+                </button>
+
+                {/* 140+ Google Fonts Dropdown Popover */}
+                {showFontPicker && (
+                  <div className="absolute top-10 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 flex flex-col gap-2.5 animate-scale-in">
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <Type className="h-3.5 w-3.5 text-purple-600" />
+                        Google Fonts ({CANVA_FONTS.length}+)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowFontPicker(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        value={fontSearch}
+                        onChange={(e) => setFontSearch(e.target.value)}
+                        placeholder="Search 140+ fonts..."
+                        className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-semibold">
+                      {(
+                        [
+                          { id: "all", label: "All" },
+                          { id: "sans", label: "Sans" },
+                          { id: "serif", label: "Serif" },
+                          { id: "display", label: "Display" },
+                          { id: "handwriting", label: "Script" },
+                          { id: "mono", label: "Mono" },
+                        ] as const
+                      ).map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setFontCategory(tab.id)}
+                          className={`px-2 py-0.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                            fontCategory === tab.id
+                              ? "bg-purple-600 text-white font-bold"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Font List */}
+                    <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1">
+                      {filteredFonts.length === 0 ? (
+                        <p className="text-xs text-slate-400 text-center py-4">No fonts found</p>
+                      ) : (
+                        filteredFonts.map((f) => {
+                          const isSelected =
+                            selectedElement.fontFamily?.toLowerCase() === f.value.toLowerCase() ||
+                            selectedElement.fontFamily
+                              ?.split(",")[0]
+                              ?.trim()
+                              ?.replace(/['"]/g, "")
+                              ?.toLowerCase() === f.name.toLowerCase();
+                          return (
+                            <button
+                              key={f.name}
+                              type="button"
+                              onMouseEnter={() => loadGoogleFont(f.value)}
+                              onClick={() => {
+                                loadGoogleFont(f.value);
+                                updateSelectedElement({ fontFamily: f.value });
+                                setShowFontPicker(false);
+                              }}
+                              className={`w-full px-2.5 py-1.5 rounded-xl text-left flex items-center justify-between text-xs transition-colors cursor-pointer ${
+                                isSelected
+                                  ? "bg-purple-50 text-purple-700 font-bold border border-purple-200"
+                                  : "hover:bg-slate-50 text-slate-800"
+                              }`}
+                            >
+                              <span style={{ fontFamily: f.value }} className="text-sm truncate">
+                                {f.name}
+                              </span>
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-slate-100 text-slate-500 font-mono">
+                                  {f.category}
+                                </span>
+                                {isSelected && <Check className="h-3.5 w-3.5 text-purple-600" />}
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="h-5 w-px bg-slate-200 shrink-0" />
@@ -1408,7 +1773,7 @@ export function CardCanvaEditor({
                       fontSize: Math.max(7, (selectedElement.fontSize || 12) - 1),
                     })
                   }
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
                   title="Decrease font size"
                 >
                   <Minus className="h-3 w-3" />
@@ -1423,7 +1788,7 @@ export function CardCanvaEditor({
                       fontSize: Math.min(48, (selectedElement.fontSize || 12) + 1),
                     })
                   }
-                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
                   title="Increase font size"
                 >
                   <Plus className="h-3 w-3" />
@@ -1459,7 +1824,7 @@ export function CardCanvaEditor({
                         type="button"
                         onClick={() => updateSelectedElement({ fill: c })}
                         style={{ backgroundColor: c }}
-                        className={`h-5 w-5 rounded-md border border-slate-300 transition-transform hover:scale-115 ${
+                        className={`h-5 w-5 rounded-md border border-slate-300 transition-transform hover:scale-115 cursor-pointer ${
                           selectedElement.fill?.toLowerCase() === c.toLowerCase()
                             ? "ring-2 ring-purple-600"
                             : ""
@@ -1481,7 +1846,7 @@ export function CardCanvaEditor({
                 </div>
               </div>
 
-              {/* Bold 'B' Toggle (like Image 3, purple active background #ede9fe / #7d2ae8) */}
+              {/* Bold 'B' Toggle */}
               <button
                 type="button"
                 onClick={() =>
@@ -1489,7 +1854,7 @@ export function CardCanvaEditor({
                     fontWeight: selectedElement.fontWeight === "bold" ? "normal" : "bold",
                   })
                 }
-                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
                   selectedElement.fontWeight === "bold"
                     ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
                     : "text-slate-600 hover:bg-slate-100 border border-transparent"
@@ -1507,7 +1872,7 @@ export function CardCanvaEditor({
                     fontStyle: selectedElement.fontStyle === "italic" ? "normal" : "italic",
                   })
                 }
-                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+                className={`h-8 w-8 rounded-xl flex items-center justify-center transition-all shrink-0 cursor-pointer ${
                   selectedElement.fontStyle === "italic"
                     ? "bg-purple-100 text-purple-700 font-bold border border-purple-300"
                     : "text-slate-600 hover:bg-slate-100 border border-transparent"
@@ -1522,10 +1887,10 @@ export function CardCanvaEditor({
                 <button
                   type="button"
                   onClick={() => updateSelectedElement({ align: "left" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center ${
+                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
                     selectedElement.align === "left"
                       ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   title="Align Left"
                 >
@@ -1534,10 +1899,10 @@ export function CardCanvaEditor({
                 <button
                   type="button"
                   onClick={() => updateSelectedElement({ align: "center" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center ${
+                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
                     selectedElement.align === "center" || !selectedElement.align
                       ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   title="Align Center"
                 >
@@ -1546,10 +1911,10 @@ export function CardCanvaEditor({
                 <button
                   type="button"
                   onClick={() => updateSelectedElement({ align: "right" })}
-                  className={`h-6 w-6 rounded flex items-center justify-center ${
+                  className={`h-6 w-6 rounded flex items-center justify-center cursor-pointer ${
                     selectedElement.align === "right"
                       ? "bg-white text-purple-700 shadow-2xs font-bold"
-                      : "text-slate-500"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                   title="Align Right"
                 >
@@ -1557,15 +1922,60 @@ export function CardCanvaEditor({
                 </button>
               </div>
 
-              {/* Text Content Input Field */}
-              <input
-                type="text"
-                value={selectedElement.text || ""}
-                onChange={(e) => updateSelectedElement({ text: e.target.value })}
-                className="h-8 px-2.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[120px] max-w-[200px]"
-                placeholder="Edit text..."
-              />
+              {/* Direct Inline Edit Button */}
+              <button
+                type="button"
+                onClick={() => setEditingTextId(selectedElement.id)}
+                className="h-8 px-2.5 rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                title="Click to edit text directly on card (or double-click text)"
+              >
+                <Edit3 className="h-3 w-3" />
+                <span>Edit on Card</span>
+              </button>
+
+              {/* Layer Ordering Buttons */}
+              <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-8 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => moveLayer("down")}
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title="Send Backward ([)"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveLayer("up")}
+                  className="h-6 w-6 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title="Bring Forward (])"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+              </div>
             </>
+          ) : selectedElement?.type === "panel" ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-semibold text-slate-700 text-xs">Center Review Card Panel</span>
+              <span className="text-[11px] font-mono text-purple-600">
+                {selectedElement.width} × {selectedElement.height} mm
+              </span>
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  type="button"
+                  onClick={() => updateSelectedElement({ fill: "#ffffff" })}
+                  className="px-2 py-0.5 rounded-lg border text-[11px] bg-white font-semibold cursor-pointer"
+                >
+                  White
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateSelectedElement({ fill: "#f8fafc" })}
+                  className="px-2 py-0.5 rounded-lg border text-[11px] bg-slate-50 font-semibold cursor-pointer"
+                >
+                  Light Gray
+                </button>
+              </div>
+            </div>
           ) : selectedElement?.type === "qr" ? (
             <>
               <span className="font-semibold text-slate-700 text-xs flex items-center gap-1.5 shrink-0">
@@ -1824,11 +2234,43 @@ export function CardCanvaEditor({
                       fill={elem.fill || "#ffffff"}
                       align={elem.align || "center"}
                       rotation={elem.rotation || 0}
+                      opacity={editingTextId === elem.id ? 0 : 1}
                       draggable={!isLocked}
                       onClick={() => setSelectedId(elem.id)}
                       onTap={() => setSelectedId(elem.id)}
                       onDblClick={() => setEditingTextId(elem.id)}
                       onDblTap={() => setEditingTextId(elem.id)}
+                      onDragMove={(e) => handleDragMove(elem.id, e)}
+                      onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                      onTransformEnd={() => handleTransformEnd(elem.id)}
+                    />
+                  );
+                }
+
+                if (elem.type === "panel") {
+                  return (
+                    <Rect
+                      key={elem.id}
+                      ref={(node) => {
+                        if (node) nodeRefs.current.set(elem.id, node);
+                        else nodeRefs.current.delete(elem.id);
+                      }}
+                      id={elem.id}
+                      x={xPx}
+                      y={yPx}
+                      width={widthPx}
+                      height={heightPx}
+                      fill={elem.fill || "#ffffff"}
+                      cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
+                      stroke={elem.stroke || undefined}
+                      strokeWidth={elem.stroke ? 1 : 0}
+                      shadowColor="rgba(0, 0, 0, 0.08)"
+                      shadowBlur={12}
+                      shadowOffsetY={3}
+                      rotation={elem.rotation || 0}
+                      draggable={!isLocked}
+                      onClick={() => setSelectedId(elem.id)}
+                      onTap={() => setSelectedId(elem.id)}
                       onDragMove={(e) => handleDragMove(elem.id, e)}
                       onDragEnd={(e) => handleDragEnd(elem.id, e)}
                       onTransformEnd={() => handleTransformEnd(elem.id)}
@@ -1943,9 +2385,9 @@ export function CardCanvaEditor({
                           width={widthPx}
                           text={businessName?.slice(0, 2).toUpperCase() || "RC"}
                           fontSize={heightPx * 0.45}
-                          fontFamily="Outfit, sans-serif"
+                          fontFamily="Plus Jakarta Sans, sans-serif"
                           fontStyle="bold"
-                          fill="#1a73e8"
+                          fill={cardColor || "#1a73e8"}
                           align="center"
                         />
                       )}
@@ -1996,7 +2438,7 @@ export function CardCanvaEditor({
                 return null;
               })}
 
-              {/* 5. Blue Canva Transformer Bounding Box */}
+              {/* 5. Blue/Purple Canva Transformer Bounding Box with Height & Width Drag Anchors */}
               <Transformer
                 ref={transformerRef}
                 borderStroke="#8b3dff"
@@ -2008,14 +2450,16 @@ export function CardCanvaEditor({
                 rotateAnchorOffset={18}
                 enabledAnchors={[
                   "top-left",
+                  "top-center",
                   "top-right",
-                  "bottom-left",
-                  "bottom-right",
                   "middle-left",
                   "middle-right",
+                  "bottom-left",
+                  "bottom-center",
+                  "bottom-right",
                 ]}
                 boundBoxFunc={(oldBox, newBox) => {
-                  if (newBox.width < 12 || newBox.height < 12) {
+                  if (newBox.width < 10 || newBox.height < 10) {
                     return oldBox;
                   }
                   return newBox;
@@ -2023,6 +2467,81 @@ export function CardCanvaEditor({
               />
             </Layer>
           </Stage>
+
+          {/* 6. Direct On-Canvas Inline Text Editing Overlay (Double-click or press Enter to edit right here) */}
+          {(() => {
+            const editingElem = elements.find((e) => e.id === editingTextId);
+            if (!editingElem || editingElem.type !== "text") return null;
+
+            return (
+              <textarea
+                key={editingElem.id}
+                autoFocus
+                defaultValue={editingElem.text || ""}
+                style={{
+                  position: "absolute",
+                  left: `${editingElem.x * MM_TO_PX * zoomScale}px`,
+                  top: `${editingElem.y * MM_TO_PX * zoomScale}px`,
+                  width: `${editingElem.width * MM_TO_PX * zoomScale}px`,
+                  minHeight: `${(editingElem.height || 7) * MM_TO_PX * zoomScale}px`,
+                  fontSize: `${(editingElem.fontSize || 12) * 1.33 * zoomScale}px`,
+                  fontFamily: editingElem.fontFamily || "Inter, sans-serif",
+                  fontWeight: editingElem.fontWeight === "bold" ? 700 : 400,
+                  fontStyle: editingElem.fontStyle === "italic" ? "italic" : "normal",
+                  color: editingElem.fill || "#ffffff",
+                  textAlign: editingElem.align || "center",
+                  lineHeight: 1.25,
+                  transform: editingElem.rotation
+                    ? `rotate(${editingElem.rotation}deg)`
+                    : undefined,
+                  transformOrigin: "0 0",
+                  background: isLightColor(cardColor)
+                    ? "rgba(255, 255, 255, 0.96)"
+                    : "rgba(15, 23, 42, 0.94)",
+                  border: "2px solid #8b3dff",
+                  boxShadow: "0 4px 18px rgba(139, 61, 255, 0.35)",
+                  borderRadius: "6px",
+                  padding: "2px 4px",
+                  outline: "none",
+                  resize: "none",
+                  overflow: "hidden",
+                  zIndex: 50,
+                  boxSizing: "border-box",
+                }}
+                ref={(el) => {
+                  if (el) {
+                    el.focus();
+                    el.select();
+                    el.style.height = "auto";
+                    el.style.height = `${el.scrollHeight}px`;
+                  }
+                }}
+                onInput={(e) => {
+                  const target = e.currentTarget;
+                  target.style.height = "auto";
+                  target.style.height = `${target.scrollHeight}px`;
+                  const newHeightMm = Math.max(
+                    editingElem.height,
+                    Number((target.scrollHeight / (MM_TO_PX * zoomScale)).toFixed(1)),
+                  );
+                  updateSelectedElement({
+                    text: target.value,
+                    height: newHeightMm,
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setEditingTextId(null);
+                  } else if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    setEditingTextId(null);
+                  }
+                }}
+                onBlur={() => setEditingTextId(null)}
+              />
+            );
+          })()}
         </div>
 
         {/* ---------------- 4. BOTTOM CANVA STATUS BAR (IMAGE 1) ---------------- */}
@@ -2077,38 +2596,78 @@ export function CardCanvaEditor({
                 ✕
               </button>
             </div>
-            <div className="space-y-2 text-xs text-slate-600">
+            <div className="space-y-1.5 text-xs text-slate-600 max-h-[60vh] overflow-y-auto pr-1">
               <div className="flex justify-between py-1 border-b">
-                <span>Nudge element:</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">
+                <span>Copy element:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Ctrl + C
+                </kbd>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Paste element:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Ctrl + V
+                </kbd>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Duplicate element:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Ctrl + D
+                </kbd>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Edit text on card:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Dbl Click / Enter
+                </kbd>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Bold / Italic:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Ctrl + B / Ctrl + I
+                </kbd>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Nudge (1 mm):</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
                   Arrow keys
                 </kbd>
               </div>
               <div className="flex justify-between py-1 border-b">
                 <span>Fast nudge (5 mm):</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
                   Shift + Arrows
                 </kbd>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span>Duplicate element:</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">Ctrl + D</kbd>
+                <span>Send back / Bring forward:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  [ / ]
+                </kbd>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span>Delete element:</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">
-                  Delete / Backspace
+                <span>Zoom in / out / reset:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Ctrl + / - / 0
                 </kbd>
               </div>
               <div className="flex justify-between py-1 border-b">
                 <span>Undo / Redo:</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
                   Ctrl + Z / Ctrl + Y
                 </kbd>
               </div>
+              <div className="flex justify-between py-1 border-b">
+                <span>Delete element:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Delete / Backspace
+                </kbd>
+              </div>
               <div className="flex justify-between py-1">
-                <span>Deselect:</span>
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border">Escape</kbd>
+                <span>Exit edit / Deselect:</span>
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
+                  Escape
+                </kbd>
               </div>
             </div>
             <button

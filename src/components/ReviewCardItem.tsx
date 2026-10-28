@@ -214,9 +214,37 @@ export function ReviewCardItem({
                     style={{ width: "90%", height: "90%", objectFit: "contain" }}
                   />
                 ) : (
-                  <span style={{ fontSize: "10pt", fontWeight: 800, color }}>LOGO</span>
+                  <span
+                    style={{
+                      fontSize: "9pt",
+                      fontWeight: 800,
+                      color: color || "#1a73e8",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {initials || "RC"}
+                  </span>
                 )}
               </div>
+            );
+          }
+          if (elem.type === "panel") {
+            return (
+              <div
+                key={elem.id}
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  height: `${elem.height}mm`,
+                  backgroundColor: elem.fill || "#ffffff",
+                  borderRadius: `${elem.cornerRadius || 4.5}mm`,
+                  boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
+                  border: elem.stroke ? `0.4mm solid ${elem.stroke}` : undefined,
+                  boxSizing: "border-box",
+                }}
+              />
             );
           }
           if (elem.type === "sticker") {
