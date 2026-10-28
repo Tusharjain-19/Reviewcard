@@ -33,9 +33,9 @@ import {
 export const Route = createFileRoute("/_authenticated/new")({
   validateSearch: (s: Record<string, unknown>): { edit?: string } =>
     typeof s["edit"] === "string" ? { edit: s["edit"] } : {},
-  head: ({ search }) =>
+  head: () =>
     pageMeta(
-      search.edit ? "Edit Business Details" : "Create Business Page",
+      "Business Details",
       "Set up your contactless Google Review page, custom links and print card destinations.",
     ),
   component: Builder,

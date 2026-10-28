@@ -17,6 +17,7 @@ import {
   Trash2,
   Copy,
   RotateCcw,
+  RotateCw,
   Layers,
   AlignLeft,
   AlignCenter,
@@ -61,6 +62,18 @@ export const SAFE_MARGIN_PX = 4 * MM_TO_PX; // 16 px (4 mm safe print area)
 
 export type CanvasElementType = "text" | "qr" | "logo" | "sticker" | "panel";
 
+export type StickerKey =
+  | "google"
+  | "googleBadge"
+  | "nfc"
+  | "nfcWhite"
+  | "nfcDark"
+  | "nfcColor"
+  | "star5"
+  | "star1"
+  | "location"
+  | "heart";
+
 export interface CanvasElement {
   id: string;
   type: CanvasElementType;
@@ -68,42 +81,36 @@ export interface CanvasElement {
   y: number; // in mm
   width: number; // in mm
   height: number; // in mm
-  rotation?: number; // in degrees
-  cornerRadius?: number; // in mm
-  stroke?: string;
+  rotation?: number | undefined; // in degrees
+  cornerRadius?: number | undefined; // in mm
+  stroke?: string | undefined;
   // Text Properties
-  text?: string;
-  fontSize?: number; // in pt
-  fontFamily?: string;
-  fill?: string;
-  fontWeight?: "normal" | "bold" | "800";
-  fontStyle?: "normal" | "italic";
-  align?: "left" | "center" | "right";
+  text?: string | undefined;
+  fontSize?: number | undefined; // in pt
+  fontFamily?: string | undefined;
+  fill?: string | undefined;
+  fontWeight?: ("normal" | "bold" | "800") | undefined;
+  fontStyle?: ("normal" | "italic") | undefined;
+  align?: ("left" | "center" | "right") | undefined;
   // Sticker / Image Properties
-  src?: string;
-  stickerType?:
-    | "google"
-    | "googleBadge"
-    | "nfc"
-    | "nfcWhite"
-    | "nfcDark"
-    | "star5"
-    | "star1"
-    | "location"
-    | "heart";
+  src?: string | undefined;
+  stickerType?: StickerKey | undefined;
   // QR Specific Properties
-  qrFrame?: "white" | "none" | "dark";
+  qrFrame?: ("white" | "none" | "dark") | undefined;
+  [key: string]: unknown;
 }
 
-// ---------------- OFFICIAL REAL NFC LOGO (Matching Reference Image 2) ----------------
+// ---------------- OFFICIAL REAL NFC LOGOS (Standard Badge, White, Dark, and Multicolor) ----------------
 export const REAL_NFC_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff" stroke="#e2e8f0" stroke-width="6"/><g fill="none" stroke="#111827" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="24"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="26"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="28"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="30"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#111827">NFC</text></svg>`;
 
 export const REAL_NFC_WHITE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><g fill="none" stroke="#ffffff" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#ffffff">NFC</text></svg>`;
 
 export const REAL_NFC_DARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><g fill="none" stroke="#111827" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#111827">NFC</text></svg>`;
 
+export const REAL_NFC_COLOR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 400 400"><circle cx="200" cy="200" r="195" fill="#ffffff" stroke="#e2e8f0" stroke-width="6"/><g fill="none" stroke-linecap="round"><path d="M 120 140 C 148 170 148 200 120 230" stroke="#4285F4" stroke-width="26"/><path d="M 160 115 C 198 155 198 215 160 255" stroke="#EA4335" stroke-width="28"/><path d="M 200 90 C 248 140 248 230 200 280" stroke="#FBBC05" stroke-width="30"/><path d="M 240 65 C 298 125 298 245 240 305" stroke="#34A853" stroke-width="32"/></g><text x="200" y="375" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="62" font-weight="900" text-anchor="middle" letter-spacing="6" fill="#1e293b">NFC</text></svg>`;
+
 // Vector Sticker SVGs encoded as Data URLs for instant crisp rendering
-export const STICKER_SVGS: Record<string, string> = {
+export const STICKER_SVGS: Record<StickerKey, string> = {
   google:
     "data:image/svg+xml;charset=utf-8," +
     encodeURIComponent(
@@ -117,6 +124,7 @@ export const STICKER_SVGS: Record<string, string> = {
   nfc: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_BADGE_SVG),
   nfcWhite: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_WHITE_SVG),
   nfcDark: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_DARK_SVG),
+  nfcColor: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(REAL_NFC_COLOR_SVG),
   star5:
     "data:image/svg+xml;charset=utf-8," +
     encodeURIComponent(
@@ -163,12 +171,15 @@ export function isLightColor(colorHex?: string): boolean {
   if (!colorHex || !colorHex.startsWith("#")) return true;
   const hex = colorHex.replace("#", "");
   if (hex.length === 3) {
-    const r = parseInt(hex[0] + hex[0], 16);
-    const g = parseInt(hex[1] + hex[1], 16);
-    const b = parseInt(hex[2] + hex[2], 16);
+    const c0 = hex[0] || "f";
+    const c1 = hex[1] || "f";
+    const c2 = hex[2] || "f";
+    const r = parseInt(c0 + c0, 16);
+    const g = parseInt(c1 + c1, 16);
+    const b = parseInt(c2 + c2, 16);
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
   }
-  if (hex.length === 6) {
+  if (hex.length >= 6) {
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
@@ -550,10 +561,13 @@ export function CardCanvaEditor({
   // Selection & drag states
   const [selectedId, setSelectedId] = useState<string | null>("elem-qr-code");
   const [isLocked, setIsLocked] = useState(false);
-  const [showCenterGuideX, setShowCenterGuideX] = useState(false);
-  const [showCenterGuideY, setShowCenterGuideY] = useState(false);
+  const [activeGuides, setActiveGuides] = useState<
+    Array<{ orientation: "V" | "H"; pos: number; color?: string; label?: string }>
+  >([]);
+  const [showMarginGuides, setShowMarginGuides] = useState(true);
   const [zoomScale, setZoomScale] = useState(1);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showTextColorPicker, setShowTextColorPicker] = useState(false);
 
   // Canva Left Drawer State (like Image 1)
   const [activeDrawerTab, setActiveDrawerTab] = useState<
@@ -597,12 +611,13 @@ export function CardCanvaEditor({
   const logoImg = useLoadedImage(logoUrl);
 
   // Preload sticker images including real NFC logo
-  const stickerImages: Record<string, HTMLImageElement | null> = {
+  const stickerImages: Record<StickerKey, HTMLImageElement | null> = {
     google: useLoadedImage(STICKER_SVGS.google),
     googleBadge: useLoadedImage(STICKER_SVGS.googleBadge),
     nfc: useLoadedImage(STICKER_SVGS.nfc),
     nfcWhite: useLoadedImage(STICKER_SVGS.nfcWhite),
     nfcDark: useLoadedImage(STICKER_SVGS.nfcDark),
+    nfcColor: useLoadedImage(STICKER_SVGS.nfcColor),
     star5: useLoadedImage(STICKER_SVGS.star5),
     star1: useLoadedImage(STICKER_SVGS.star1),
     location: useLoadedImage(STICKER_SVGS.location),
@@ -639,7 +654,7 @@ export function CardCanvaEditor({
     [selectedId, elements, updateElements, pushHistory],
   );
 
-  // Drag handlers with magnetic center snapping
+  // Drag handlers with magnetic smart guiding lines snapping
   const handleDragMove = (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
     if (isLocked) return;
     const node = e.target;
@@ -650,29 +665,72 @@ export function CardCanvaEditor({
     const elemWidthPx = (elem?.width ?? 20) * MM_TO_PX;
     const elemHeightPx = (elem?.height ?? 20) * MM_TO_PX;
 
-    const centerX = (A6_WIDTH_PX - elemWidthPx) / 2;
-    const centerY = (A6_HEIGHT_PX - elemHeightPx) / 2;
+    const guides: Array<{ orientation: "V" | "H"; pos: number; color?: string; label?: string }> = [];
+    const SNAP_DIST = 6;
 
-    if (Math.abs(newX - centerX) < 6) {
-      newX = centerX;
-      node.x(centerX);
-      setShowCenterGuideX(true);
-    } else {
-      setShowCenterGuideX(false);
+    // 1. Center X Alignment (Card middle: A6_WIDTH_PX / 2)
+    const cardCenterX = A6_WIDTH_PX / 2;
+    const elemCenterX = newX + elemWidthPx / 2;
+    if (Math.abs(elemCenterX - cardCenterX) < SNAP_DIST) {
+      newX = cardCenterX - elemWidthPx / 2;
+      node.x(newX);
+      guides.push({ orientation: "V", pos: cardCenterX, color: "#8b3dff", label: "Center" });
     }
 
-    if (Math.abs(newY - centerY) < 6) {
-      newY = centerY;
-      node.y(centerY);
-      setShowCenterGuideY(true);
-    } else {
-      setShowCenterGuideY(false);
+    // 2. Center Y Alignment (Card middle: A6_HEIGHT_PX / 2)
+    const cardCenterY = A6_HEIGHT_PX / 2;
+    const elemCenterY = newY + elemHeightPx / 2;
+    if (Math.abs(elemCenterY - cardCenterY) < SNAP_DIST) {
+      newY = cardCenterY - elemHeightPx / 2;
+      node.y(newY);
+      guides.push({ orientation: "H", pos: cardCenterY, color: "#8b3dff", label: "Center" });
     }
+
+    // 3. Safe Margin X Snapping (4mm print safe margin)
+    if (Math.abs(newX - SAFE_MARGIN_PX) < SNAP_DIST) {
+      newX = SAFE_MARGIN_PX;
+      node.x(newX);
+      guides.push({ orientation: "V", pos: SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+    } else if (Math.abs(newX + elemWidthPx - (A6_WIDTH_PX - SAFE_MARGIN_PX)) < SNAP_DIST) {
+      newX = A6_WIDTH_PX - SAFE_MARGIN_PX - elemWidthPx;
+      node.x(newX);
+      guides.push({ orientation: "V", pos: A6_WIDTH_PX - SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+    }
+
+    // 4. Safe Margin Y Snapping
+    if (Math.abs(newY - SAFE_MARGIN_PX) < SNAP_DIST) {
+      newY = SAFE_MARGIN_PX;
+      node.y(newY);
+      guides.push({ orientation: "H", pos: SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+    } else if (Math.abs(newY + elemHeightPx - (A6_HEIGHT_PX - SAFE_MARGIN_PX)) < SNAP_DIST) {
+      newY = A6_HEIGHT_PX - SAFE_MARGIN_PX - elemHeightPx;
+      node.y(newY);
+      guides.push({ orientation: "H", pos: A6_HEIGHT_PX - SAFE_MARGIN_PX, color: "#06b6d4", label: "Margin" });
+    }
+
+    // 5. Element-to-element alignment
+    for (const other of elements) {
+      if (other.id === id) continue;
+      const otherXPx = other.x * MM_TO_PX;
+      const otherWPx = other.width * MM_TO_PX;
+      const otherCenterXPx = otherXPx + otherWPx / 2;
+
+      // Vertical Center alignment with another element
+      if (
+        Math.abs(elemCenterX - otherCenterXPx) < SNAP_DIST &&
+        !guides.some((g) => g.orientation === "V" && Math.abs(g.pos - otherCenterXPx) < 2)
+      ) {
+        newX = otherCenterXPx - elemWidthPx / 2;
+        node.x(newX);
+        guides.push({ orientation: "V", pos: otherCenterXPx, color: "#3b82f6", label: "Align" });
+      }
+    }
+
+    setActiveGuides(guides);
   };
 
   const handleDragEnd = (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
-    setShowCenterGuideX(false);
-    setShowCenterGuideY(false);
+    setActiveGuides([]);
     const node = e.target;
     const mmX = Number((node.x() / MM_TO_PX).toFixed(1));
     const mmY = Number((node.y() / MM_TO_PX).toFixed(1));
@@ -832,18 +890,7 @@ export function CardCanvaEditor({
   };
 
   // Add Sticker Element
-  const handleAddSticker = (
-    stickerType:
-      | "google"
-      | "googleBadge"
-      | "nfc"
-      | "nfcWhite"
-      | "nfcDark"
-      | "star5"
-      | "star1"
-      | "location"
-      | "heart",
-  ) => {
+  const handleAddSticker = (stickerType: StickerKey) => {
     const newId = `elem-${stickerType}-${Date.now().toString(36)}`;
     const width =
       stickerType === "googleBadge"
@@ -1180,7 +1227,7 @@ export function CardCanvaEditor({
           {/* TAB 1: ELEMENTS & REAL NFC LOGO */}
           {activeDrawerTab === "elements" && (
             <div className="space-y-4">
-              {/* Highlight: Official Real NFC Logo Tile (Image 2) */}
+              {/* Highlight: Official Real NFC Logo Tile (Standard & Multicolor) */}
               <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-b from-purple-50/70 to-indigo-50/50 p-3.5 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1">
@@ -1190,28 +1237,55 @@ export function CardCanvaEditor({
                     Real NFC
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+
+                {/* 1. Multicolor NFC Logo Option */}
+                <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-purple-200">
                   <div
-                    onClick={() => handleAddSticker("nfc")}
-                    className="h-16 w-16 rounded-2xl bg-white border border-purple-200 flex flex-col items-center justify-center p-2 cursor-pointer shadow-sm hover:scale-105 transition-transform"
-                    title="Click to add Real NFC Badge"
+                    onClick={() => handleAddSticker("nfcColor")}
+                    className="h-14 w-14 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
+                    title="Click to add Multicolor Google NFC Badge"
                   >
-                    <img src={STICKER_SVGS.nfc} alt="Real NFC Logo" className="h-12 w-12" />
+                    <img src={STICKER_SVGS.nfcColor} alt="Multicolor NFC Logo" className="h-11 w-11" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900">Real NFC Logo</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      4 curved wave arcs with bold NFC text below.
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-bold text-slate-900">Multicolor NFC</p>
+                      <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1 py-0.2 rounded">Google Colors</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      4 brand color arcs: Blue, Red, Yellow & Green.
                     </p>
                     <button
                       type="button"
-                      onClick={() => handleAddSticker("nfc")}
-                      className="mt-1.5 text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer flex items-center gap-1"
+                      onClick={() => handleAddSticker("nfcColor")}
+                      className="mt-1 text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer flex items-center gap-0.5"
                     >
-                      + Insert on Card
+                      + Insert Multicolor
                     </button>
                   </div>
                 </div>
+
+                {/* 2. Standard Real NFC Logo */}
+                <div className="flex items-center gap-3">
+                  <div
+                    onClick={() => handleAddSticker("nfc")}
+                    className="h-12 w-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center p-1.5 cursor-pointer shadow-xs hover:scale-105 transition-transform shrink-0"
+                    title="Click to add Standard NFC Badge"
+                  >
+                    <img src={STICKER_SVGS.nfc} alt="Real NFC Logo" className="h-9 w-9" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900">Standard NFC Badge</p>
+                    <button
+                      type="button"
+                      onClick={() => handleAddSticker("nfc")}
+                      className="text-[11px] font-bold text-slate-700 hover:text-purple-700 cursor-pointer"
+                    >
+                      + Insert Standard
+                    </button>
+                  </div>
+                </div>
+
                 {/* Transparent White & Dark Variants */}
                 <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-purple-100">
                   <button
@@ -1626,7 +1700,7 @@ export function CardCanvaEditor({
       )}
 
       {/* ---------------- 3. CENTER WORKSPACE (LIGHT MODE CANVA CANVAS) ---------------- */}
-      <div className="flex-1 flex flex-col items-center justify-between overflow-y-auto p-4 relative z-10">
+      <div className="flex-1 flex flex-col h-full min-w-0 bg-[#f1f3f5] relative overflow-hidden">
         {/* Floating Collapse Drawer Re-open Tab (if drawer collapsed) */}
         {!isDrawerOpen && (
           <button
@@ -1640,7 +1714,8 @@ export function CardCanvaEditor({
         )}
 
         {/* ---------------- CANVA TOP DOCKED PROPERTY BAR (IMAGE 3) ---------------- */}
-        <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs mb-3 z-30 max-w-full overflow-x-auto">
+        <div className="shrink-0 px-4 pt-3 pb-1 flex justify-center z-30">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs max-w-full overflow-x-auto">
           {selectedElement?.type === "text" ? (
             <>
               {/* Font Family selector pill (with 140+ Google Fonts Popover) */}
@@ -1797,53 +1872,106 @@ export function CardCanvaEditor({
 
               <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-              {/* Text Color button 'A' with color indicator bar (like Image 3) */}
-              <div className="relative group shrink-0">
+              {/* Text Color button 'A' with color indicator bar & click-to-open popover */}
+              <div className="relative shrink-0">
                 <button
                   type="button"
-                  className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
-                  title="Text Color"
+                  onClick={() => setShowTextColorPicker(!showTextColorPicker)}
+                  className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  title="Change Text Color"
                 >
-                  <span className="font-serif font-black text-xs text-slate-800 leading-none">
-                    A
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-serif font-black text-xs text-slate-800 leading-none">
+                      A
+                    </span>
+                    <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
+                  </div>
                   <span
-                    className="h-1 w-4 rounded-full border border-black/10"
-                    style={{ backgroundColor: selectedElement.fill || "#ffffff" }}
+                    className="h-1 w-6 rounded-full border border-black/10"
+                    style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
                   />
                 </button>
+
                 {/* Color Palette Popover */}
-                <div className="hidden group-hover:flex absolute top-9 left-0 p-2.5 bg-white rounded-xl shadow-xl border border-slate-200 z-50 flex-col gap-2 w-48">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Text Colors
-                  </span>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {CANVA_PALETTE.map((c) => (
+                {showTextColorPicker && (
+                  <div className="absolute top-10 left-0 p-3 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col gap-2.5 w-56 animate-scale-in">
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5 text-purple-600" /> Text Color
+                      </span>
                       <button
-                        key={c}
                         type="button"
-                        onClick={() => updateSelectedElement({ fill: c })}
-                        style={{ backgroundColor: c }}
-                        className={`h-5 w-5 rounded-md border border-slate-300 transition-transform hover:scale-115 cursor-pointer ${
-                          selectedElement.fill?.toLowerCase() === c.toLowerCase()
-                            ? "ring-2 ring-purple-600"
-                            : ""
-                        }`}
-                      />
-                    ))}
+                        onClick={() => setShowTextColorPicker(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {[
+                        "#000000",
+                        "#ffffff",
+                        "#1a73e8",
+                        "#1e293b",
+                        "#065f46",
+                        "#d97706",
+                        "#dc2626",
+                        "#4338ca",
+                        "#7c3aed",
+                        "#64748b",
+                      ].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            updateSelectedElement({ fill: c });
+                            setShowTextColorPicker(false);
+                          }}
+                          style={{ backgroundColor: c }}
+                          className={`h-7 w-7 rounded-lg border border-slate-300 transition-all hover:scale-110 cursor-pointer ${
+                            selectedElement.fill?.toLowerCase() === c.toLowerCase()
+                              ? "ring-2 ring-purple-600 scale-105"
+                              : ""
+                          }`}
+                          title={c}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="pt-2 border-t flex flex-col gap-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Custom Hex Color
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shrink-0">
+                          <div
+                            className="absolute inset-0"
+                            style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                          />
+                          <input
+                            type="color"
+                            value={
+                              selectedElement.fill?.startsWith("#") && selectedElement.fill.length === 7
+                                ? selectedElement.fill
+                                : "#0f172a"
+                            }
+                            onChange={(e) => updateSelectedElement({ fill: e.target.value })}
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={selectedElement.fill || ""}
+                          onChange={(e) => updateSelectedElement({ fill: e.target.value })}
+                          placeholder="#000000"
+                          className="flex-1 h-8 px-2.5 font-mono text-xs border border-slate-200 rounded-lg bg-slate-50 uppercase font-semibold"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="pt-1.5 border-t flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500">Custom:</span>
-                    <input
-                      type="color"
-                      value={
-                        selectedElement.fill?.startsWith("#") ? selectedElement.fill : "#ffffff"
-                      }
-                      onChange={(e) => updateSelectedElement({ fill: e.target.value })}
-                      className="h-6 w-full cursor-pointer rounded border border-slate-200"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Bold 'B' Toggle */}
@@ -2023,12 +2151,84 @@ export function CardCanvaEditor({
           ) : selectedElement?.type === "sticker" ? (
             <div className="flex items-center gap-2 shrink-0">
               <span className="font-semibold text-slate-700 text-xs">
-                {selectedElement.stickerType === "nfc"
-                  ? "Real NFC Contactless Logo"
+                {selectedElement.stickerType?.startsWith("nfc")
+                  ? "Contactless NFC Logo"
                   : selectedElement.stickerType === "google"
                     ? "Official Google 'G' Logo"
-                    : "Sticker Badge"}
+                    : selectedElement.stickerType === "googleBadge"
+                      ? "Google Reviews Badge"
+                      : selectedElement.stickerType === "star5"
+                        ? "5-Star Rating Badge"
+                        : "Sticker Badge"}
               </span>
+              {selectedElement.stickerType?.startsWith("nfc") && (
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        stickerType: "nfcColor",
+                        src: STICKER_SVGS.nfcColor,
+                      })
+                    }
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                      selectedElement.stickerType === "nfcColor"
+                        ? "bg-purple-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    🌈 Multicolor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        stickerType: "nfc",
+                        src: STICKER_SVGS.nfc,
+                      })
+                    }
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                      selectedElement.stickerType === "nfc"
+                        ? "bg-purple-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    Badge
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        stickerType: "nfcWhite",
+                        src: STICKER_SVGS.nfcWhite,
+                      })
+                    }
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                      selectedElement.stickerType === "nfcWhite"
+                        ? "bg-purple-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    White
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        stickerType: "nfcDark",
+                        src: STICKER_SVGS.nfcDark,
+                      })
+                    }
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                      selectedElement.stickerType === "nfcDark"
+                        ? "bg-purple-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    Dark
+                  </button>
+                </div>
+              )}
               <span className="text-[11px] font-mono text-slate-400">
                 {selectedElement.width} × {selectedElement.height} mm
               </span>
@@ -2039,6 +2239,116 @@ export function CardCanvaEditor({
               <span className="font-semibold text-slate-700 text-xs">
                 Canva A6 Card Studio · 105 × 148 mm
               </span>
+            </div>
+          )}
+
+          {/* Angle Rotation Controller for any selected element */}
+          {selectedElement && (
+            <div className="flex items-center gap-1 shrink-0 bg-slate-50 border border-slate-200 rounded-xl px-1.5 py-0.5 ml-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = selectedElement.rotation || 0;
+                  const nextRot = (cur - 15 + 360) % 360;
+                  updateSelectedElement({ rotation: nextRot });
+                  const node = nodeRefs.current.get(selectedElement.id);
+                  if (node) {
+                    node.rotation(nextRot);
+                    transformerRef.current?.getLayer()?.batchDraw();
+                  }
+                }}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
+                title="Rotate -15°"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+
+              <div className="flex items-center gap-0.5">
+                <input
+                  type="number"
+                  value={selectedElement.rotation || 0}
+                  onChange={(e) => {
+                    const val = Number(e.target.value) || 0;
+                    const nextRot = ((val % 360) + 360) % 360;
+                    updateSelectedElement({ rotation: nextRot });
+                    const node = nodeRefs.current.get(selectedElement.id);
+                    if (node) {
+                      node.rotation(nextRot);
+                      transformerRef.current?.getLayer()?.batchDraw();
+                    }
+                  }}
+                  className="w-8 text-center font-mono text-xs font-bold text-slate-800 bg-transparent focus:outline-none"
+                  title="Angle in degrees (0 - 360°)"
+                />
+                <span className="text-[10px] font-bold text-slate-400">°</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = selectedElement.rotation || 0;
+                  const nextRot = (cur + 15) % 360;
+                  updateSelectedElement({ rotation: nextRot });
+                  const node = nodeRefs.current.get(selectedElement.id);
+                  if (node) {
+                    node.rotation(nextRot);
+                    transformerRef.current?.getLayer()?.batchDraw();
+                  }
+                }}
+                className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-purple-700 transition-colors cursor-pointer"
+                title="Rotate +15°"
+              >
+                <RotateCw className="h-3 w-3" />
+              </button>
+
+              {/* Quick rotation presets */}
+              <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateSelectedElement({ rotation: 0 });
+                    const node = nodeRefs.current.get(selectedElement.id);
+                    if (node) {
+                      node.rotation(0);
+                      transformerRef.current?.getLayer()?.batchDraw();
+                    }
+                  }}
+                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title="Reset rotation to 0°"
+                >
+                  0°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateSelectedElement({ rotation: 90 });
+                    const node = nodeRefs.current.get(selectedElement.id);
+                    if (node) {
+                      node.rotation(90);
+                      transformerRef.current?.getLayer()?.batchDraw();
+                    }
+                  }}
+                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title="Rotate to 90°"
+                >
+                  90°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateSelectedElement({ rotation: 180 });
+                    const node = nodeRefs.current.get(selectedElement.id);
+                    if (node) {
+                      node.rotation(180);
+                      transformerRef.current?.getLayer()?.batchDraw();
+                    }
+                  }}
+                  className="px-1 text-[10px] font-bold rounded hover:bg-white text-slate-500 hover:text-slate-900 cursor-pointer"
+                  title="Rotate to 180°"
+                >
+                  180°
+                </button>
+              </div>
             </div>
           )}
 
@@ -2087,118 +2397,129 @@ export function CardCanvaEditor({
           </div>
         </div>
 
-        {/* ---------------- FLOATING CARD UTILITY ICONS RIGHT ABOVE CARD (IMAGE 1 & 3) ---------------- */}
-        <div className="flex items-center justify-end gap-1.5 w-[420px] mb-2 px-1">
-          <button
-            type="button"
-            onClick={() => setIsLocked(!isLocked)}
-            className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-              isLocked
-                ? "bg-amber-100 text-amber-800 border-amber-300"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            }`}
-            title={isLocked ? "Unlock Card" : "Lock Card Canvas"}
+        {/* ---------------- SCROLLABLE CANVAS WORKSPACE (Allows smooth full scrolling) ---------------- */}
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 w-full p-6 pb-36 flex flex-col items-center">
+          {/* ---------------- FLOATING CARD UTILITY ICONS RIGHT ABOVE CARD (IMAGE 1 & 3) ---------------- */}
+          <div
+            className="flex items-center justify-end gap-1.5 mb-2 px-1"
+            style={{ width: `${A6_WIDTH_PX * zoomScale}px`, maxWidth: "100%" }}
           >
-            {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-          </button>
-          <button
-            type="button"
-            onClick={handleDuplicateSelected}
-            disabled={!selectedElement}
-            className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
-            title="Duplicate Selected"
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleResetLayout}
-            className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
-            title="Reset to Default A6 Layout"
-          >
-            <RotateCcw className="h-3 w-3" /> Reset Default
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setIsLocked(!isLocked)}
+              className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                isLocked
+                  ? "bg-amber-100 text-amber-800 border-amber-300"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+              }`}
+              title={isLocked ? "Unlock Card" : "Lock Card Canvas"}
+            >
+              {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={handleDuplicateSelected}
+              disabled={!selectedElement}
+              className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 disabled:opacity-30 cursor-pointer"
+              title="Duplicate Selected"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetLayout}
+              className="p-1.5 rounded-lg border bg-white text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+              title="Reset to Default A6 Layout"
+            >
+              <RotateCcw className="h-3 w-3" /> Reset Default
+            </button>
+          </div>
 
-        {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px) ---------------- */}
-        <div
-          className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white overflow-hidden transition-all focus:outline-none"
-          tabIndex={0}
-          style={{
-            width: `${A6_WIDTH_PX * zoomScale}px`,
-            height: `${A6_HEIGHT_PX * zoomScale}px`,
-            transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined,
-            transformOrigin: "top center",
-          }}
-        >
-          <Stage
-            ref={stageRef}
-            width={A6_WIDTH_PX}
-            height={A6_HEIGHT_PX}
-            onMouseDown={(e) => {
-              if (e.target === e.target.getStage()) {
-                setSelectedId(null);
-                setEditingTextId(null);
-              }
+          {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
+          <div
+            className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
+            tabIndex={0}
+            style={{
+              width: `${A6_WIDTH_PX * zoomScale}px`,
+              height: `${A6_HEIGHT_PX * zoomScale}px`,
             }}
           >
-            <Layer>
-              {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
-              {bgImg ? (
-                <KonvaImage
-                  image={bgImg}
-                  x={0}
-                  y={0}
-                  width={A6_WIDTH_PX}
-                  height={A6_HEIGHT_PX}
-                  cornerRadius={20}
-                />
-              ) : (
-                <Rect
-                  x={0}
-                  y={0}
-                  width={A6_WIDTH_PX}
-                  height={A6_HEIGHT_PX}
-                  fill={cardColor}
-                  cornerRadius={20}
-                  stroke={isLightColor(cardColor) ? "#e2e8f0" : undefined}
-                  strokeWidth={isLightColor(cardColor) ? 1.5 : 0}
-                />
-              )}
-
-              {/* 2. Safe Print Guideline (4mm interior boundary) */}
-              <Rect
-                x={SAFE_MARGIN_PX}
-                y={SAFE_MARGIN_PX}
-                width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
-                height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
-                stroke={
-                  isLightColor(cardColor) ? "rgba(100, 116, 139, 0.3)" : "rgba(255, 255, 255, 0.22)"
+            <Stage
+              ref={stageRef}
+              width={A6_WIDTH_PX * zoomScale}
+              height={A6_HEIGHT_PX * zoomScale}
+              scaleX={zoomScale}
+              scaleY={zoomScale}
+              onMouseDown={(e) => {
+                if (e.target === e.target.getStage()) {
+                  setSelectedId(null);
+                  setEditingTextId(null);
                 }
-                strokeWidth={1}
-                dash={[5, 4]}
-                listening={false}
-              />
+              }}
+            >
+              <Layer>
+                {/* 1. Background (Custom Design Artwork or Curated Base Color) */}
+                {bgImg ? (
+                  <KonvaImage
+                    image={bgImg}
+                    x={0}
+                    y={0}
+                    width={A6_WIDTH_PX}
+                    height={A6_HEIGHT_PX}
+                    cornerRadius={20}
+                  />
+                ) : (
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={A6_WIDTH_PX}
+                    height={A6_HEIGHT_PX}
+                    fill={cardColor}
+                    cornerRadius={20}
+                    {...(isLightColor(cardColor) ? { stroke: "#e2e8f0", strokeWidth: 1.5 } : {})}
+                  />
+                )}
 
-              {/* 3. Center Snapping Crosshairs */}
-              {showCenterGuideX && (
-                <Line
-                  points={[A6_WIDTH_PX / 2, 0, A6_WIDTH_PX / 2, A6_HEIGHT_PX]}
-                  stroke="#38bdf8"
-                  strokeWidth={1.5}
-                  dash={[6, 4]}
-                  listening={false}
-                />
-              )}
-              {showCenterGuideY && (
-                <Line
-                  points={[0, A6_HEIGHT_PX / 2, A6_WIDTH_PX, A6_HEIGHT_PX / 2]}
-                  stroke="#38bdf8"
-                  strokeWidth={1.5}
-                  dash={[6, 4]}
-                  listening={false}
-                />
-              )}
+                {/* 2. Safe Print Guideline (4mm interior boundary) */}
+                {showMarginGuides && (
+                  <Rect
+                    x={SAFE_MARGIN_PX}
+                    y={SAFE_MARGIN_PX}
+                    width={A6_WIDTH_PX - SAFE_MARGIN_PX * 2}
+                    height={A6_HEIGHT_PX - SAFE_MARGIN_PX * 2}
+                    stroke={
+                      isLightColor(cardColor)
+                        ? "rgba(100, 116, 139, 0.35)"
+                        : "rgba(255, 255, 255, 0.3)"
+                    }
+                    strokeWidth={1}
+                    dash={[5, 4]}
+                    listening={false}
+                  />
+                )}
+
+                {/* 3. Magnetic Alignment Guiding Lines */}
+                {activeGuides.map((g, idx) =>
+                  g.orientation === "V" ? (
+                    <Line
+                      key={`guide-v-${idx}`}
+                      points={[g.pos, 0, g.pos, A6_HEIGHT_PX]}
+                      stroke={g.color || "#8b3dff"}
+                      strokeWidth={1.5}
+                      dash={[4, 3]}
+                      listening={false}
+                    />
+                  ) : (
+                    <Line
+                      key={`guide-h-${idx}`}
+                      points={[0, g.pos, A6_WIDTH_PX, g.pos]}
+                      stroke={g.color || "#8b3dff"}
+                      strokeWidth={1.5}
+                      dash={[4, 3]}
+                      listening={false}
+                    />
+                  ),
+                )}
 
               {/* 4. Canvas Elements Render Loop */}
               {elements.map((elem) => {
@@ -2262,8 +2583,7 @@ export function CardCanvaEditor({
                       height={heightPx}
                       fill={elem.fill || "#ffffff"}
                       cornerRadius={(elem.cornerRadius || 4.5) * MM_TO_PX}
-                      stroke={elem.stroke || undefined}
-                      strokeWidth={elem.stroke ? 1 : 0}
+                      {...(elem.stroke ? { stroke: elem.stroke, strokeWidth: 1 } : {})}
                       shadowColor="rgba(0, 0, 0, 0.08)"
                       shadowBlur={12}
                       shadowOffsetY={3}
@@ -2447,7 +2767,9 @@ export function CardCanvaEditor({
                 anchorFill="#ffffff"
                 anchorSize={8}
                 anchorCornerRadius={2}
-                rotateAnchorOffset={18}
+                rotateAnchorOffset={24}
+                rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+                rotationSnapTolerance={5}
                 enabledAnchors={[
                   "top-left",
                   "top-center",
@@ -2544,11 +2866,31 @@ export function CardCanvaEditor({
           })()}
         </div>
 
-        {/* ---------------- 4. BOTTOM CANVA STATUS BAR (IMAGE 1) ---------------- */}
-        <div className="w-full max-w-[420px] mt-3 py-1.5 px-3 bg-white border border-slate-200/90 rounded-xl shadow-xs flex items-center justify-between text-xs text-slate-500 z-20">
+        </div>
+      </div>
+
+      {/* ---------------- 4. BOTTOM DOCKED CANVA STATUS BAR ---------------- */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <div className="pointer-events-auto py-1 px-3 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl shadow-lg flex items-center gap-3 text-xs text-slate-600">
           <div className="flex items-center gap-1.5 font-medium">
             <span>A6 Card · 105 × 148 mm</span>
           </div>
+
+          <div className="h-4 w-px bg-slate-200" />
+
+          {/* Toggle Margin Guides */}
+          <button
+            type="button"
+            onClick={() => setShowMarginGuides(!showMarginGuides)}
+            className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer ${
+              showMarginGuides ? "bg-purple-100 text-purple-700" : "text-slate-500 hover:bg-slate-100"
+            }`}
+            title="Toggle print safe margins and guiding lines"
+          >
+            Guides: {showMarginGuides ? "ON" : "OFF"}
+          </button>
+
+          <div className="h-4 w-px bg-slate-200" />
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1">
@@ -2565,7 +2907,7 @@ export function CardCanvaEditor({
             </span>
             <button
               type="button"
-              onClick={() => setZoomScale((s) => Math.min(1.4, Number((s + 0.1).toFixed(2))))}
+              onClick={() => setZoomScale((s) => Math.min(1.5, Number((s + 0.1).toFixed(2))))}
               className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-slate-100 cursor-pointer"
               title="Zoom in"
             >
@@ -2581,6 +2923,7 @@ export function CardCanvaEditor({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Shortcuts Helper Modal */}
       {showShortcutsModal && (

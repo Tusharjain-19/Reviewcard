@@ -5,18 +5,51 @@ export function ContactlessNfcIcon({
   size = 24,
   className = "",
   style,
+  variant = "currentColor",
 }: {
   size?: number | string;
   className?: string;
   style?: React.CSSProperties;
+  variant?: "currentColor" | "color" | "white" | "dark" | "auto";
 }) {
+  if (variant === "color") {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 400 400"
+        fill="none"
+        strokeLinecap="round"
+        className={className}
+        style={style}
+      >
+        <path d="M 120 140 C 148 170 148 200 120 230" stroke="#4285F4" strokeWidth="26" />
+        <path d="M 160 115 C 198 155 198 215 160 255" stroke="#EA4335" strokeWidth="28" />
+        <path d="M 200 90 C 248 140 248 230 200 280" stroke="#FBBC05" strokeWidth="30" />
+        <path d="M 240 65 C 298 125 298 245 240 305" stroke="#34A853" strokeWidth="32" />
+        <text
+          x="200"
+          y="375"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+          fontSize="68"
+          fontWeight="900"
+          textAnchor="middle"
+          letterSpacing="6"
+          fill="#1e293b"
+          stroke="none"
+        >
+          NFC
+        </text>
+      </svg>
+    );
+  }
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 400 400"
       fill="none"
-      stroke="currentColor"
+      stroke={variant === "white" ? "#ffffff" : variant === "dark" ? "#0f172a" : "currentColor"}
       strokeLinecap="round"
       className={className}
       style={style}
@@ -33,7 +66,7 @@ export function ContactlessNfcIcon({
         fontWeight="900"
         textAnchor="middle"
         letterSpacing="6"
-        fill="currentColor"
+        fill={variant === "white" ? "#ffffff" : variant === "dark" ? "#0f172a" : "currentColor"}
         stroke="none"
       >
         NFC
@@ -58,6 +91,7 @@ export interface ReviewCardItemProps {
   initials: string;
   includeStars: boolean;
   includeNfc: boolean;
+  nfcStyle?: "auto" | "color" | "white" | "dark" | undefined;
   isUniversal?: boolean | undefined;
   universalBadge?: "google" | "star" | "nfc" | "heart" | undefined;
   headerTitle?: string | undefined;
@@ -85,6 +119,7 @@ export function ReviewCardItem({
   initials,
   includeStars,
   includeNfc,
+  nfcStyle = "color",
   isUniversal = false,
   universalBadge = "google",
   headerTitle,
@@ -592,14 +627,32 @@ export function ReviewCardItem({
               width: "10mm",
               height: "10mm",
               borderRadius: "50%",
-              border: "0.5mm solid rgba(255,255,255,0.85)",
+              backgroundColor: nfcStyle === "color" ? "#ffffff" : "transparent",
+              border:
+                nfcStyle === "color"
+                  ? "0.4mm solid #e2e8f0"
+                  : nfcStyle === "dark"
+                    ? "0.5mm solid rgba(15,23,42,0.4)"
+                    : "0.5mm solid rgba(255,255,255,0.85)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              boxShadow: nfcStyle === "color" ? "0 2px 6px rgba(0,0,0,0.12)" : "none",
             }}
           >
-            <ContactlessNfcIcon size="5.8mm" style={{ stroke: "#ffffff" }} />
+            <ContactlessNfcIcon
+              size="6mm"
+              variant={
+                nfcStyle === "color"
+                  ? "color"
+                  : nfcStyle === "white"
+                    ? "white"
+                    : nfcStyle === "dark"
+                      ? "dark"
+                      : "currentColor"
+              }
+            />
           </div>
           <div style={{ lineHeight: 1.2, textAlign: "left" }}>
             <div style={{ fontSize: "8.2pt", fontWeight: 700, letterSpacing: "-0.01em" }}>

@@ -21,6 +21,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { ownedBusinessQuery } from "@/lib/queries";
 import { shortUrl } from "@/lib/reviewcard";
 import { exportReviewCardPdf } from "@/lib/print";
@@ -147,6 +148,12 @@ function CardStudio() {
     }
   };
 
+  // NFC & Review Badge Style in Default Design
+  const [nfcStyle, setNfcStyle] = useState<"color" | "auto" | "white" | "dark">("color");
+  const [reviewBadge, setReviewBadge] = useState<
+    "google" | "googleBadge" | "star5" | "location" | "heart"
+  >("google");
+
   // Color change adapter with adaptive element colors
   const handleColorSelect = (newColor: string) => {
     setColor(newColor);
@@ -172,10 +179,73 @@ function CardStudio() {
           };
         }
         if (el.id === "elem-sticker-nfc") {
+          if (nfcStyle === "color" || el.stickerType === "nfcColor") {
+            return {
+              ...el,
+              stickerType: "nfcColor",
+              src: STICKER_SVGS.nfcColor,
+            };
+          }
           return {
             ...el,
             stickerType: light ? "nfc" : "nfcWhite",
             src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
+          };
+        }
+        return el;
+      }),
+    );
+  };
+
+  const handleNfcStyleSelect = (style: "color" | "auto" | "white" | "dark") => {
+    setNfcStyle(style);
+    const light = isLightColor(color);
+    const targetType =
+      style === "color"
+        ? "nfcColor"
+        : style === "white"
+          ? "nfcWhite"
+          : style === "dark"
+            ? "nfcDark"
+            : light
+              ? "nfc"
+              : "nfcWhite";
+    const targetSrc = STICKER_SVGS[targetType];
+
+    setElements((prev) =>
+      prev.map((el) => {
+        if (el.id === "elem-sticker-nfc") {
+          return {
+            ...el,
+            stickerType: targetType,
+            src: targetSrc,
+          };
+        }
+        return el;
+      }),
+    );
+  };
+
+  const handleReviewBadgeSelect = (
+    badge: "google" | "googleBadge" | "star5" | "location" | "heart",
+  ) => {
+    setReviewBadge(badge);
+    const src = STICKER_SVGS[badge];
+    const width =
+      badge === "google" ? 6 : badge === "googleBadge" ? 45 : badge === "star5" ? 33 : 8;
+    const height =
+      badge === "google" ? 6 : badge === "googleBadge" ? 9 : badge === "star5" ? 5.5 : 8;
+    const x = Number(((105 - width) / 2).toFixed(1));
+    setElements((prev) =>
+      prev.map((el) => {
+        if (el.id === "elem-sticker-google") {
+          return {
+            ...el,
+            stickerType: badge,
+            src,
+            width,
+            height,
+            x,
           };
         }
         return el;
@@ -191,6 +261,18 @@ function CardStudio() {
   const handleToggleNfc = (checked: boolean) => {
     setIncludeNfc(checked);
     const light = isLightColor(color);
+    const nfcType =
+      nfcStyle === "color"
+        ? "nfcColor"
+        : nfcStyle === "white"
+          ? "nfcWhite"
+          : nfcStyle === "dark"
+            ? "nfcDark"
+            : light
+              ? "nfc"
+              : "nfcWhite";
+    const nfcSrc = STICKER_SVGS[nfcType];
+
     setElements((prev) => {
       if (checked) {
         if (prev.some((e) => e.id === "elem-sticker-nfc")) return prev;
@@ -199,12 +281,12 @@ function CardStudio() {
           {
             id: "elem-sticker-nfc",
             type: "sticker" as const,
-            stickerType: light ? ("nfc" as const) : ("nfcWhite" as const),
+            stickerType: nfcType,
             x: 23,
             y: 118,
             width: 11,
             height: 11,
-            src: light ? STICKER_SVGS.nfc : STICKER_SVGS.nfcWhite,
+            src: nfcSrc,
           },
           {
             id: "elem-nfc-title",
@@ -319,7 +401,7 @@ function CardStudio() {
         business_id: b.id,
         owner_id: user.user.id,
         name: `${bizName} | Canva A6 Review Card`,
-        design: designPayload,
+        design: designPayload as unknown as Json,
       });
 
       if (error) throw error;
@@ -592,22 +674,154 @@ function CardStudio() {
                     />
                   </div>
 
-                  {/* Badges Toggles */}
-                  <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                    <label className="text-xs font-bold text-slate-700 block">Card Badges</label>
-                    <div className="flex items-center justify-between text-xs py-1">
-                      <span className="flex items-center gap-2 text-slate-700 font-medium">
-                        <ContactlessNfcIcon size={16} className="text-blue-600" />
-                        Real NFC "Tap Phone" Logo
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={includeNfc}
-                        onChange={(e) => handleToggleNfc(e.target.checked)}
-                        className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 cursor-pointer"
-                      />
+                  {/* Badges & Elements Configuration */}
+                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 block">Card Elements & Badges</label>
+                      <span className="text-[10px] text-slate-600 font-medium bg-slate-100 px-1.5 py-0.5 rounded">Default Mode</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs py-1">
+
+                    {/* Replaceable Review Badge / Sticker */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-slate-600">Review Brand Badge</label>
+                        <span className="text-[10px] text-slate-600">Click to replace</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleReviewBadgeSelect("google")}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            reviewBadge === "google"
+                              ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs ring-1 ring-blue-500"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                            <img src={STICKER_SVGS.google} alt="Google 'G'" className="w-4 h-4 object-contain" />
+                          </span>
+                          <span className="truncate">Google 'G' Logo</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleReviewBadgeSelect("googleBadge")}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            reviewBadge === "googleBadge"
+                              ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs ring-1 ring-blue-500"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                            <img src={STICKER_SVGS.googleBadge} alt="Reviews Badge" className="w-4 h-4 object-contain" />
+                          </span>
+                          <span className="truncate">Reviews Badge</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleReviewBadgeSelect("star5")}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            reviewBadge === "star5"
+                              ? "bg-amber-50 border-amber-500 text-amber-800 shadow-xs ring-1 ring-amber-500"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="text-amber-500 text-xs">★★★★★</span>
+                          <span className="truncate">5 Gold Stars</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleReviewBadgeSelect("location")}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            reviewBadge === "location"
+                              ? "bg-red-50 border-red-500 text-red-700 shadow-xs ring-1 ring-red-500"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                            <img src={STICKER_SVGS.location} alt="Location" className="w-4 h-4 object-contain" />
+                          </span>
+                          <span className="truncate">Map Pin Badge</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* NFC Section */}
+                    <div className="space-y-2 pt-1 border-t border-slate-100">
+                      <div className="flex items-center justify-between text-xs py-0.5">
+                        <span className="flex items-center gap-2 text-slate-700 font-medium">
+                          <ContactlessNfcIcon size={16} variant={nfcStyle} className="text-blue-600" />
+                          NFC "Tap Phone" Logo
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={includeNfc}
+                          onChange={(e) => handleToggleNfc(e.target.checked)}
+                          className="h-4 w-4 rounded-sm border-gray-300 text-blue-600 cursor-pointer"
+                        />
+                      </div>
+
+                      {includeNfc && (
+                        <div className="pl-6 space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-600 block">NFC Logo Style:</label>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleNfcStyleSelect("color")}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${
+                                nfcStyle === "color"
+                                  ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs ring-1 ring-blue-500"
+                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span>🌈</span>
+                              <span>Multicolor</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleNfcStyleSelect("auto")}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
+                                nfcStyle === "auto"
+                                  ? "bg-blue-50 border-blue-500 text-blue-700 shadow-xs ring-1 ring-blue-500"
+                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <ContactlessNfcIcon size={14} variant="currentColor" className="text-blue-600" />
+                              <span>Standard</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleNfcStyleSelect("white")}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
+                                nfcStyle === "white"
+                                  ? "bg-slate-800 border-slate-900 text-white shadow-xs ring-1 ring-slate-900"
+                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="w-3.5 h-3.5 rounded-full bg-slate-800 flex items-center justify-center text-white text-[8px]">W</span>
+                              <span>White Badge</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleNfcStyleSelect("dark")}
+                              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-medium transition-all cursor-pointer ${
+                                nfcStyle === "dark"
+                                  ? "bg-slate-800 border-slate-900 text-white shadow-xs ring-1 ring-slate-900"
+                                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="w-3.5 h-3.5 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px]">D</span>
+                              <span>Dark Badge</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Star Rating Toggle */}
+                    <div className="flex items-center justify-between text-xs py-1 border-t border-slate-100">
                       <span className="flex items-center gap-2 text-slate-700 font-medium">
                         <span className="text-amber-500 font-bold">★★★★★</span>
                         5-Star Rating Row
@@ -690,6 +904,7 @@ function CardStudio() {
                       initials={initials}
                       includeStars={includeStars}
                       includeNfc={includeNfc}
+                      nfcStyle={nfcStyle}
                       cardId={b.slug.toUpperCase()}
                       customDesign={customDesign}
                       qrX={customQrX}

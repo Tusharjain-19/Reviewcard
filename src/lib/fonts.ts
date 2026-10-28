@@ -161,7 +161,9 @@ export const CANVA_FONTS: FontOption[] = [
  */
 export function loadGoogleFont(fontFamily: string) {
   if (typeof document === "undefined") return;
-  const cleanName = fontFamily.split(",")[0].trim().replace(/['"]/g, "");
+  const firstPart = fontFamily.split(",")[0];
+  const cleanName = (firstPart || "").trim().replace(/['"]/g, "");
+  if (!cleanName) return;
   // Don't fetch generic fallback system names
   if (["Arial", "system-ui", "sans-serif", "serif", "monospace", "cursive"].includes(cleanName)) {
     return;
