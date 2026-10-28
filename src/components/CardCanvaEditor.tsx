@@ -61,7 +61,7 @@ export const A6_WIDTH_PX = A6_WIDTH_MM * MM_TO_PX; // 420 px
 export const A6_HEIGHT_PX = A6_HEIGHT_MM * MM_TO_PX; // 592 px
 export const SAFE_MARGIN_PX = 4 * MM_TO_PX; // 16 px (4 mm safe print area)
 
-export type CanvasElementType = "text" | "qr" | "logo" | "sticker" | "panel";
+export type CanvasElementType = "text" | "qr" | "logo" | "sticker" | "panel" | "shape" | "line";
 
 export type StickerKey =
   | "google"
@@ -85,6 +85,9 @@ export interface CanvasElement {
   rotation?: number | undefined; // in degrees
   cornerRadius?: number | undefined; // in mm
   stroke?: string | undefined;
+  strokeWidth?: number | undefined;
+  dash?: number[] | undefined;
+  shapeType?: "rectangle" | "circle" | "line" | "curve" | undefined;
   // Text Properties
   text?: string | undefined;
   fontSize?: number | undefined; // in pt
@@ -241,11 +244,14 @@ export function createDefaultA6Elements(params: {
   headline?: string | undefined;
   logoUrl?: string | null | undefined;
   cardColor?: string | undefined;
+  slug?: string | undefined;
 }): CanvasElement[] {
   const bName = params.businessName || "Your Business Name";
   const cat = params.category || "Local Business";
   const cta = params.headline || "Review Us On Google";
   const light = isLightColor(params.cardColor || "#ffffff");
+  const slugClean = (params.slug || "business").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  const subdomainUrl = `${slugClean}.reviewcard.link`;
 
   const textColor = light ? "#0f172a" : "#ffffff";
   const subtextColor = light ? "#475569" : "rgba(255, 255, 255, 0.90)";
@@ -349,34 +355,34 @@ export function createDefaultA6Elements(params: {
     src: STICKER_SVGS.star5,
   });
 
-  // 8. Review Call to Action Headline (Space Grotesk 11pt bold)
+  // 8. Review Call to Action Headline (Space Grotesk 10.5pt bold with safe bottom clearance)
   elements.push({
     id: "elem-cta-headline",
     type: "text",
     x: 10,
-    y: 46,
+    y: 45.5,
     width: 85,
-    height: 7,
+    height: 6,
     text: cta,
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: "Space Grotesk, sans-serif",
     fontWeight: "bold",
     fill: light ? "#1a73e8" : params.cardColor || "#1a73e8",
     align: "center",
   });
 
-  // 9. QR Code Element (44 × 44 mm in White Frame)
+  // 9. QR Code Element (42 × 42 mm in White Frame, starting at y: 56 to prevent any clipping)
   elements.push({
     id: "elem-qr-code",
     type: "qr",
-    x: 30.5,
-    y: 54.5,
-    width: 44,
-    height: 44,
+    x: 31.5,
+    y: 56,
+    width: 42,
+    height: 42,
     qrFrame: "white",
   });
 
-  // 10. Short URL text under QR
+  // 10. Clean Subdomain URL under QR (e.g. business.reviewcard.link)
   elements.push({
     id: "elem-footer-url",
     type: "text",
@@ -384,8 +390,8 @@ export function createDefaultA6Elements(params: {
     y: 100,
     width: 85,
     height: 5,
-    text: "reviewcard.link",
-    fontSize: 7,
+    text: subdomainUrl,
+    fontSize: 7.2,
     fontFamily: "monospace",
     fontWeight: "bold",
     fill: "#64748b",
@@ -471,6 +477,7 @@ export interface CardCanvaEditorProps {
   category?: string | undefined;
   headline?: string | undefined;
   cardColor?: string | undefined;
+  slug?: string | undefined;
   onColorChange?: (color: string) => void;
   elements?: CanvasElement[] | undefined;
   onElementsChange?: ((elements: CanvasElement[]) => void) | undefined;
@@ -498,6 +505,7 @@ export function CardCanvaEditor({
   category,
   headline,
   cardColor = "#ffffff",
+  slug,
   onColorChange,
   elements: controlledElements,
   onElementsChange,
@@ -514,7 +522,7 @@ export function CardCanvaEditor({
 }: CardCanvaEditorProps) {
   // Elements state: controlled or internal (adaptive to Light Mode default)
   const [internalElements, setInternalElements] = useState<CanvasElement[]>(() =>
-    createDefaultA6Elements({ businessName, category, headline, logoUrl, cardColor }),
+    createDefaultA6Elements({ businessName, category, headline, logoUrl, cardColor, slug }),
   );
 
   const elements = controlledElements || internalElements;
@@ -944,10 +952,110 @@ export function CardCanvaEditor({
       headline,
       logoUrl,
       cardColor,
+      slug,
     });
     updateElements(fresh);
     pushHistory(fresh);
     setSelectedId("elem-qr-code");
+  };
+
+  // Add Custom Shapes (Box, Circle, Outline Frame)
+  const handleAddShape = (shape: "rectangle" | "circle" | "outline-box") => {
+    const newId = `elem-shape-${Date.now().toString(36)}`;
+    let newElem: CanvasElement;
+    if (shape === "circle") {
+      newElem = {
+        id: newId,
+        type: "shape",
+        shapeType: "circle",
+        x: 35,
+        y: 50,
+        width: 35,
+        height: 35,
+        fill: "#1a73e8",
+      };
+    } else if (shape === "outline-box") {
+      newElem = {
+        id: newId,
+        type: "shape",
+        shapeType: "rectangle",
+        x: 10,
+        y: 45,
+        width: 85,
+        height: 35,
+        fill: "transparent",
+        stroke: "#1a73e8",
+        strokeWidth: 2,
+        cornerRadius: 3,
+      };
+    } else {
+      // filled rectangle / box
+      newElem = {
+        id: newId,
+        type: "shape",
+        shapeType: "rectangle",
+        x: 10,
+        y: 45,
+        width: 85,
+        height: 35,
+        fill: "#f8fafc",
+        stroke: "#cbd5e1",
+        strokeWidth: 1.5,
+        cornerRadius: 4,
+      };
+    }
+    const next = [...elements, newElem];
+    updateElements(next);
+    pushHistory(next);
+    setSelectedId(newId);
+  };
+
+  // Add Lines and Curved Wave Dividers
+  const handleAddLine = (lineType: "line" | "curve" | "dashed") => {
+    const newId = `elem-line-${Date.now().toString(36)}`;
+    let newElem: CanvasElement;
+    if (lineType === "curve") {
+      newElem = {
+        id: newId,
+        type: "line",
+        shapeType: "curve",
+        x: 15,
+        y: 50,
+        width: 75,
+        height: 12,
+        stroke: "#1a73e8",
+        strokeWidth: 2.5,
+      };
+    } else if (lineType === "dashed") {
+      newElem = {
+        id: newId,
+        type: "line",
+        shapeType: "line",
+        x: 15,
+        y: 50,
+        width: 75,
+        height: 4,
+        stroke: "#64748b",
+        strokeWidth: 2,
+        dash: [6, 4],
+      };
+    } else {
+      newElem = {
+        id: newId,
+        type: "line",
+        shapeType: "line",
+        x: 15,
+        y: 50,
+        width: 75,
+        height: 4,
+        stroke: "#1e293b",
+        strokeWidth: 2,
+      };
+    }
+    const next = [...elements, newElem];
+    updateElements(next);
+    pushHistory(next);
+    setSelectedId(newId);
   };
 
   // Start from Scratch (Blank Card with Movable QR Code)
@@ -1465,6 +1573,92 @@ export function CardCanvaEditor({
                   </div>
                 </div>
               </div>
+
+              {/* Shapes, Boxes, Dividers & Curved Wave Lines */}
+              <div className="pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Shapes className="h-3.5 w-3.5 text-purple-600" />
+                    Shapes, Boxes & Lines
+                  </p>
+                  <span className="text-[10px] text-slate-400 font-medium">Click to insert</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Card Box / Panel */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddShape("rectangle")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-12 h-8 rounded-md bg-slate-100 border border-slate-300 group-hover:scale-105 transition-transform" />
+                    <span className="text-[11px] font-semibold text-slate-700">
+                      Solid Box / Card
+                    </span>
+                  </button>
+
+                  {/* Outline Box */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddShape("outline-box")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-12 h-8 rounded-md border-2 border-blue-500 bg-transparent group-hover:scale-105 transition-transform" />
+                    <span className="text-[11px] font-semibold text-slate-700">Outline Box</span>
+                  </button>
+
+                  {/* Circle */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddShape("circle")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-600 group-hover:scale-105 transition-transform" />
+                    <span className="text-[11px] font-semibold text-slate-700">Circle</span>
+                  </button>
+
+                  {/* Straight Divider Line */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddLine("line")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-12 h-0.5 bg-slate-800 rounded-full my-3.5 group-hover:scale-105 transition-transform" />
+                    <span className="text-[11px] font-semibold text-slate-700">Divider Line</span>
+                  </button>
+
+                  {/* Dashed Line */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddLine("dashed")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <div className="w-12 border-t-2 border-dashed border-slate-600 my-3.5 group-hover:scale-105 transition-transform" />
+                    <span className="text-[11px] font-semibold text-slate-700">Dashed Line</span>
+                  </button>
+
+                  {/* Curved Wave Line */}
+                  <button
+                    type="button"
+                    onClick={() => handleAddLine("curve")}
+                    className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-purple-50/50 hover:border-purple-300 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer group shadow-2xs"
+                  >
+                    <svg
+                      className="w-12 h-6 text-blue-600 group-hover:scale-105 transition-transform"
+                      viewBox="0 0 48 24"
+                      fill="none"
+                    >
+                      <path
+                        d="M2 12 C 14 0, 18 24, 30 12 C 36 6, 42 18, 46 12"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-[11px] font-semibold text-slate-700">Curved Wave</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1534,6 +1728,55 @@ export function CardCanvaEditor({
                       <span className="truncate">{cta}</span>
                       <Plus className="h-3 w-3 text-purple-600 shrink-0" />
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Text Color Section */}
+              <div className="space-y-2 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Palette className="h-3.5 w-3.5 text-purple-600" />
+                    {selectedElement?.type === "text" ? "Selected Text Color" : "Text Color"}
+                  </p>
+                  {selectedElement?.type === "text" && (
+                    <span className="text-[10px] font-mono text-slate-500 uppercase">
+                      {selectedElement.fill || "#000000"}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-6 gap-1.5">
+                  {[
+                    "#000000",
+                    "#1a73e8",
+                    "#0f172a",
+                    "#475569",
+                    "#dc2626",
+                    "#d97706",
+                    "#065f46",
+                    "#7c3aed",
+                    "#ffffff",
+                    "#2563eb",
+                    "#059669",
+                    "#b91c1c",
+                  ].map((col) => (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => {
+                        if (selectedElement?.type === "text") {
+                          updateSelectedElement({ fill: col });
+                        }
+                      }}
+                      style={{ backgroundColor: col }}
+                      className={`h-7 w-full rounded-lg border border-slate-300 transition-transform hover:scale-110 cursor-pointer ${
+                        selectedElement?.type === "text" &&
+                        selectedElement.fill?.toLowerCase() === col.toLowerCase()
+                          ? "ring-2 ring-purple-600 scale-105"
+                          : ""
+                      }`}
+                      title={col}
+                    />
                   ))}
                 </div>
               </div>
@@ -1775,7 +2018,7 @@ export function CardCanvaEditor({
 
         {/* ---------------- CANVA TOP DOCKED PROPERTY BAR (IMAGE 3) ---------------- */}
         <div className="shrink-0 px-4 pt-3 pb-1 flex justify-center z-30">
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs max-w-full overflow-x-auto">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-sm rounded-2xl px-3 py-1.5 flex items-center gap-2 text-slate-800 text-xs max-w-full relative overflow-visible flex-wrap sm:flex-nowrap">
             {selectedElement?.type === "text" ? (
               <>
                 {/* Font Family selector pill (with 140+ Google Fonts Popover) */}
@@ -1796,7 +2039,7 @@ export function CardCanvaEditor({
 
                   {/* 140+ Google Fonts Dropdown Popover */}
                   {showFontPicker && (
-                    <div className="absolute top-10 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 flex flex-col gap-2.5 animate-scale-in">
+                    <div className="absolute top-10 left-0 w-80 max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 z-50 flex flex-col gap-2.5 animate-scale-in">
                       <div className="flex items-center justify-between pb-1 border-b">
                         <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                           <Type className="h-3.5 w-3.5 text-purple-600" />
@@ -1819,9 +2062,18 @@ export function CardCanvaEditor({
                           value={fontSearch}
                           onChange={(e) => setFontSearch(e.target.value)}
                           placeholder="Search 140+ fonts..."
-                          className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
                           autoFocus
                         />
+                        {fontSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setFontSearch("")}
+                            className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
 
                       {/* Category Filter Pills */}
@@ -1851,8 +2103,11 @@ export function CardCanvaEditor({
                         ))}
                       </div>
 
-                      {/* Font List */}
-                      <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1">
+                      {/* Font List with dedicated custom scrollbar & wheel stopPropagation */}
+                      <div
+                        className="max-h-64 overflow-y-auto space-y-0.5 pr-1 overscroll-contain custom-scrollbar select-none"
+                        onWheel={(e) => e.stopPropagation()}
+                      >
                         {filteredFonts.length === 0 ? (
                           <p className="text-xs text-slate-400 text-center py-4">No fonts found</p>
                         ) : (
@@ -1933,107 +2188,133 @@ export function CardCanvaEditor({
 
                 <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-                {/* Text Color button 'A' with color indicator bar & click-to-open popover */}
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setShowTextColorPicker(!showTextColorPicker)}
-                    className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    title="Change Text Color"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="font-serif font-black text-xs text-slate-800 leading-none">
-                        A
-                      </span>
-                      <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
-                    </div>
-                    <span
-                      className="h-1 w-6 rounded-full border border-black/10"
-                      style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
-                    />
-                  </button>
-
-                  {/* Color Palette Popover */}
-                  {showTextColorPicker && (
-                    <div className="absolute top-10 left-0 p-3 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col gap-2.5 w-56 animate-scale-in">
-                      <div className="flex items-center justify-between pb-1 border-b">
-                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <Palette className="h-3.5 w-3.5 text-purple-600" /> Text Color
+                {/* Text Color button 'A' with color indicator bar & Quick Color Chips */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowTextColorPicker(!showTextColorPicker)}
+                      className="h-8 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      title="Change Text Color (Custom Palette & HEX)"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="font-serif font-black text-xs text-slate-800 leading-none">
+                          A
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowTextColorPicker(false)}
-                          className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
-                        >
-                          ✕
-                        </button>
+                        <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
                       </div>
+                      <span
+                        className="h-1 w-6 rounded-full border border-black/10"
+                        style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                      />
+                    </button>
 
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {[
-                          "#000000",
-                          "#ffffff",
-                          "#1a73e8",
-                          "#1e293b",
-                          "#065f46",
-                          "#d97706",
-                          "#dc2626",
-                          "#4338ca",
-                          "#7c3aed",
-                          "#64748b",
-                        ].map((c) => (
+                    {/* Color Palette Popover */}
+                    {showTextColorPicker && (
+                      <div className="absolute top-10 left-0 p-3 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 flex flex-col gap-2.5 w-56 animate-scale-in">
+                        <div className="flex items-center justify-between pb-1 border-b">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <Palette className="h-3.5 w-3.5 text-purple-600" /> Text Color
+                          </span>
                           <button
-                            key={c}
                             type="button"
-                            onClick={() => {
-                              updateSelectedElement({ fill: c });
-                              setShowTextColorPicker(false);
-                            }}
-                            style={{ backgroundColor: c }}
-                            className={`h-7 w-7 rounded-lg border border-slate-300 transition-all hover:scale-110 cursor-pointer ${
-                              selectedElement.fill?.toLowerCase() === c.toLowerCase()
-                                ? "ring-2 ring-purple-600 scale-105"
-                                : ""
-                            }`}
-                            title={c}
-                          />
-                        ))}
-                      </div>
+                            onClick={() => setShowTextColorPicker(false)}
+                            className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5"
+                          >
+                            ✕
+                          </button>
+                        </div>
 
-                      <div className="pt-2 border-t flex flex-col gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                          Custom Hex Color
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shrink-0">
-                            <div
-                              className="absolute inset-0"
-                              style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {[
+                            "#000000",
+                            "#ffffff",
+                            "#1a73e8",
+                            "#1e293b",
+                            "#065f46",
+                            "#d97706",
+                            "#dc2626",
+                            "#4338ca",
+                            "#7c3aed",
+                            "#64748b",
+                          ].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => {
+                                updateSelectedElement({ fill: c });
+                                setShowTextColorPicker(false);
+                              }}
+                              style={{ backgroundColor: c }}
+                              className={`h-7 w-7 rounded-lg border border-slate-300 transition-all hover:scale-110 cursor-pointer ${
+                                selectedElement.fill?.toLowerCase() === c.toLowerCase()
+                                  ? "ring-2 ring-purple-600 scale-105"
+                                  : ""
+                              }`}
+                              title={c}
                             />
+                          ))}
+                        </div>
+
+                        <div className="pt-2 border-t flex flex-col gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Custom Hex Color
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-slate-300 shrink-0">
+                              <div
+                                className="absolute inset-0"
+                                style={{ backgroundColor: selectedElement.fill || "#0f172a" }}
+                              />
+                              <input
+                                type="color"
+                                value={
+                                  selectedElement.fill?.startsWith("#") &&
+                                  selectedElement.fill.length === 7
+                                    ? selectedElement.fill
+                                    : "#0f172a"
+                                }
+                                onChange={(e) => updateSelectedElement({ fill: e.target.value })}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              />
+                            </div>
                             <input
-                              type="color"
-                              value={
-                                selectedElement.fill?.startsWith("#") &&
-                                selectedElement.fill.length === 7
-                                  ? selectedElement.fill
-                                  : "#0f172a"
-                              }
+                              type="text"
+                              value={selectedElement.fill || ""}
                               onChange={(e) => updateSelectedElement({ fill: e.target.value })}
-                              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                              placeholder="#000000"
+                              className="flex-1 h-8 px-2.5 font-mono text-xs border border-slate-200 rounded-lg bg-slate-50 uppercase font-semibold"
+                              maxLength={7}
                             />
                           </div>
-                          <input
-                            type="text"
-                            value={selectedElement.fill || ""}
-                            onChange={(e) => updateSelectedElement({ fill: e.target.value })}
-                            placeholder="#000000"
-                            className="flex-1 h-8 px-2.5 font-mono text-xs border border-slate-200 rounded-lg bg-slate-50 uppercase font-semibold"
-                            maxLength={7}
-                          />
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* 5 Quick 1-Click Color Swatches */}
+                  <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/90 rounded-xl p-1">
+                    {[
+                      { color: "#0f172a", label: "Black" },
+                      { color: "#1a73e8", label: "Google Blue" },
+                      { color: "#dc2626", label: "Red" },
+                      { color: "#d97706", label: "Gold" },
+                      { color: "#ffffff", label: "White" },
+                    ].map((sw) => (
+                      <button
+                        key={sw.color}
+                        type="button"
+                        onClick={() => updateSelectedElement({ fill: sw.color })}
+                        style={{ backgroundColor: sw.color }}
+                        className={`h-4 w-4 rounded-full border border-slate-300 transition-transform hover:scale-125 cursor-pointer ${
+                          selectedElement.fill?.toLowerCase() === sw.color.toLowerCase()
+                            ? "ring-2 ring-purple-600 scale-110"
+                            : ""
+                        }`}
+                        title={sw.label}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* Bold 'B' Toggle */}
@@ -2296,6 +2577,172 @@ export function CardCanvaEditor({
                 <span className="text-[11px] font-mono text-slate-400">
                   {selectedElement.width} × {selectedElement.height} mm
                 </span>
+              </div>
+            ) : selectedElement?.type === "shape" ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-semibold text-slate-700 text-xs flex items-center gap-1">
+                  <Shapes className="h-3.5 w-3.5 text-blue-600" />
+                  {selectedElement.shapeType === "circle" ? "Circle" : "Card Box"}
+                </span>
+
+                {/* Fill color quick-pick */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                  <span className="text-[10px] text-slate-500 font-semibold px-1">Fill:</span>
+                  {[
+                    "#ffffff",
+                    "#f8fafc",
+                    "#1a73e8",
+                    "#0f172a",
+                    "#065f46",
+                    "#dc2626",
+                    "transparent",
+                  ].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => updateSelectedElement({ fill: c })}
+                      className="h-4 w-4 rounded-full border border-slate-300 transition-transform hover:scale-125 cursor-pointer relative"
+                      style={{ backgroundColor: c === "transparent" ? "#ffffff" : c }}
+                      title={c}
+                    >
+                      {c === "transparent" && (
+                        <span className="absolute inset-0 flex items-center justify-center text-[8px] text-red-500 font-bold">
+                          ✕
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Border / Stroke color */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                  <span className="text-[10px] text-slate-500 font-semibold px-1">Border:</span>
+                  {["#2563eb", "#0f172a", "#cbd5e1", "#dc2626", "#d97706", "transparent"].map(
+                    (c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() =>
+                          updateSelectedElement({ stroke: c === "transparent" ? undefined : c })
+                        }
+                        className="h-4 w-4 rounded-full border border-slate-300 transition-transform hover:scale-125 cursor-pointer relative"
+                        style={{ backgroundColor: c === "transparent" ? "#ffffff" : c }}
+                        title={c}
+                      >
+                        {c === "transparent" && (
+                          <span className="absolute inset-0 flex items-center justify-center text-[8px] text-red-500 font-bold">
+                            ✕
+                          </span>
+                        )}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                {/* Thickness */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-7 px-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        strokeWidth: Math.max(1, (selectedElement.strokeWidth || 1.5) - 0.5),
+                      })
+                    }
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-600 hover:bg-white cursor-pointer"
+                  >
+                    <Minus className="h-2.5 w-2.5" />
+                  </button>
+                  <span className="w-8 text-center font-mono text-[11px] font-bold">
+                    {selectedElement.strokeWidth || 1.5}pt
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        strokeWidth: Math.min(8, (selectedElement.strokeWidth || 1.5) + 0.5),
+                      })
+                    }
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-600 hover:bg-white cursor-pointer"
+                  >
+                    <Plus className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              </div>
+            ) : selectedElement?.type === "line" ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-semibold text-slate-700 text-xs flex items-center gap-1">
+                  {selectedElement.shapeType === "curve" ? "Curved Wave Line" : "Divider Line"}
+                </span>
+
+                {/* Line color */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                  {[
+                    "#2563eb",
+                    "#0f172a",
+                    "#64748b",
+                    "#dc2626",
+                    "#d97706",
+                    "#065f46",
+                    "#ffffff",
+                  ].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => updateSelectedElement({ stroke: c })}
+                      className={`h-4 w-4 rounded-full border border-slate-300 transition-transform hover:scale-125 cursor-pointer ${
+                        selectedElement.stroke === c ? "ring-2 ring-purple-600 scale-110" : ""
+                      }`}
+                      style={{ backgroundColor: c }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+
+                {/* Stroke thickness */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-7 px-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        strokeWidth: Math.max(1, (selectedElement.strokeWidth || 2) - 0.5),
+                      })
+                    }
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-600 hover:bg-white cursor-pointer"
+                  >
+                    <Minus className="h-2.5 w-2.5" />
+                  </button>
+                  <span className="w-8 text-center font-mono text-[11px] font-bold">
+                    {selectedElement.strokeWidth || 2}pt
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSelectedElement({
+                        strokeWidth: Math.min(8, (selectedElement.strokeWidth || 2) + 0.5),
+                      })
+                    }
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-600 hover:bg-white cursor-pointer"
+                  >
+                    <Plus className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+
+                {/* Solid vs Dashed Toggle */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSelectedElement({
+                      dash: selectedElement.dash ? undefined : [6, 4],
+                    })
+                  }
+                  className={`px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer border ${
+                    selectedElement.dash
+                      ? "bg-purple-100 text-purple-700 border-purple-300 font-bold"
+                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {selectedElement.dash ? "Dashed" : "Solid"}
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2 shrink-0">
@@ -2676,6 +3123,85 @@ export function CardCanvaEditor({
                         shadowColor="rgba(0, 0, 0, 0.08)"
                         shadowBlur={12}
                         shadowOffsetY={3}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
+                      />
+                    );
+                  }
+
+                  if (elem.type === "shape") {
+                    const isCircle = elem.shapeType === "circle";
+                    return (
+                      <Rect
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        width={widthPx}
+                        height={heightPx}
+                        fill={elem.fill || "transparent"}
+                        cornerRadius={
+                          isCircle
+                            ? widthPx / 2
+                            : elem.cornerRadius
+                              ? elem.cornerRadius * MM_TO_PX
+                              : 0
+                        }
+                        {...(elem.stroke
+                          ? {
+                              stroke: elem.stroke,
+                              strokeWidth: elem.strokeWidth ? elem.strokeWidth * 1.5 : 1.5,
+                            }
+                          : {})}
+                        rotation={elem.rotation || 0}
+                        draggable={!isLocked}
+                        onClick={() => setSelectedId(elem.id)}
+                        onTap={() => setSelectedId(elem.id)}
+                        onDragMove={(e) => handleDragMove(elem.id, e)}
+                        onDragEnd={(e) => handleDragEnd(elem.id, e)}
+                        onTransformEnd={() => handleTransformEnd(elem.id)}
+                      />
+                    );
+                  }
+
+                  if (elem.type === "line") {
+                    const isCurve = elem.shapeType === "curve";
+                    const points = isCurve
+                      ? [
+                          0,
+                          heightPx * 0.5,
+                          widthPx * 0.25,
+                          0,
+                          widthPx * 0.75,
+                          heightPx,
+                          widthPx,
+                          heightPx * 0.5,
+                        ]
+                      : [0, heightPx * 0.5, widthPx, heightPx * 0.5];
+                    return (
+                      <Line
+                        key={elem.id}
+                        ref={(node) => {
+                          if (node) nodeRefs.current.set(elem.id, node);
+                          else nodeRefs.current.delete(elem.id);
+                        }}
+                        id={elem.id}
+                        x={xPx}
+                        y={yPx}
+                        points={points}
+                        tension={isCurve ? 0.5 : 0}
+                        stroke={elem.stroke || elem.fill || "#2563eb"}
+                        strokeWidth={elem.strokeWidth ? elem.strokeWidth * 1.5 : 2}
+                        {...(elem.dash && elem.dash.length > 0 ? { dash: elem.dash } : {})}
                         rotation={elem.rotation || 0}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}

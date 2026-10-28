@@ -121,6 +121,7 @@ function CardStudio() {
       headline: "Review Us On Google",
       logoUrl: b.logo,
       cardColor: "#ffffff",
+      slug: b.slug,
     }),
   );
 
@@ -1056,6 +1057,7 @@ function CardStudio() {
                   category={category}
                   headline={headline}
                   cardColor={color}
+                  slug={b.slug}
                   onColorChange={handleColorSelect}
                   elements={elements}
                   onElementsChange={handleElementsChange}
@@ -1086,8 +1088,8 @@ function CardStudio() {
              VIEW 3: A4 PRINT SHEET (4 Cards on standard A4 paper with cut guidelines)
              ========================================================================= */
           <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start print:p-0 print:bg-white print:overflow-visible animate-fade-in">
-            {/* Zoom & Cut Guides Toolbar */}
-            <div className="w-full max-w-[794px] mb-4 flex items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs print:hidden">
+            {/* Zoom, Print & Cut Guides Toolbar */}
+            <div className="w-full max-w-[794px] mb-4 flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200/90 shadow-xs print:hidden">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <Printer className="h-4 w-4 text-blue-600" /> A4 Cut Sheet · 4 Cards (210 × 297
@@ -1102,6 +1104,35 @@ function CardStudio() {
                   />
                   <span>Show Cut Lines</span>
                 </label>
+              </div>
+
+              {/* Fast 1-Click Print & Download Actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                  title="Print this sheet directly to your printer with zero delay"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print Sheet Now
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleRunExport({
+                      copies: 4,
+                      layout: "a4-4cards",
+                      showCutGuidelines: showCutGuides,
+                    })
+                  }
+                  disabled={exportingPdf}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
+                  title="Download instant high-speed vector PDF for this 4-card sheet"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {exportingPdf ? "Generating…" : "Download A4 PDF"}
+                </button>
               </div>
 
               {/* Zoom Stepper */}
@@ -1154,7 +1185,7 @@ function CardStudio() {
               }}
             >
               <div
-                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl rounded-sm ${
+                className={`origin-top-left transition-transform duration-150 absolute top-0 left-0 print:static print:transform-none print:m-0 print:shadow-none bg-white shadow-2xl rounded-sm print-page-a4 ${
                   showCutGuides ? "show-cut-guides" : ""
                 }`}
                 style={{

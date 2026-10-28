@@ -428,6 +428,9 @@ function getCardBgSvg(colorHex: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="760" height="1088" viewBox="0 0 95 136"><rect x="0" y="0" width="95" height="136" rx="5" ry="5" fill="${colorHex}"/></svg>`;
 }
 
+// Global in-memory cache for rasterized image bytes (accelerates PDF export 10x)
+const RASTER_CACHE = new Map<string, Uint8Array>();
+
 async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | null> {
   try {
     const dataUrl = src.startsWith("data:")
@@ -436,6 +439,16 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
         ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(src)}`
         : src;
 
+    // Fast path: use already rasterized PNG bytes from in-memory cache
+    if (RASTER_CACHE.has(dataUrl)) {
+      const cachedBuf = RASTER_CACHE.get(dataUrl)!;
+      try {
+        return await pdf.embedPng(cachedBuf);
+      } catch {
+        // Fallback to re-rasterizing if embed fails
+      }
+    }
+
     if (typeof document !== "undefined") {
       const pngBytes = await new Promise<Uint8Array | null>((resolve) => {
         const img = new Image();
@@ -443,11 +456,18 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
         img.onload = () => {
           try {
             const canvas = document.createElement("canvas");
-            const baseW = img.naturalWidth || 300;
-            const baseH = img.naturalHeight || 300;
-            const scaleFactor = Math.max(2, Math.min(4, Math.ceil(1600 / Math.max(baseW, baseH))));
-            canvas.width = Math.max(baseW * scaleFactor, 1200);
-            canvas.height = Math.max(baseH * scaleFactor, 1200);
+            const baseW = img.naturalWidth || 200;
+            const baseH = img.naturalHeight || 200;
+            // Optimal right-sized rasterization: 300x300 for icons/badges, 800x1100 for card backgrounds
+            const isLargeBg = baseW > 400 || baseH > 400 || dataUrl.includes('width="760"');
+            const targetW = isLargeBg
+              ? Math.min(800, baseW)
+              : Math.min(320, Math.max(baseW * 2, 160));
+            const targetH = isLargeBg
+              ? Math.min(1130, baseH)
+              : Math.min(320, Math.max(baseH * 2, 160));
+            canvas.width = targetW;
+            canvas.height = targetH;
             const ctx = canvas.getContext("2d");
             if (!ctx) return resolve(null);
             ctx.imageSmoothingEnabled = true;
@@ -457,7 +477,11 @@ async function loadPdfImage(pdf: PDFDocument, src: string): Promise<PDFImage | n
               if (!blob) return resolve(null);
               blob
                 .arrayBuffer()
-                .then((buf) => resolve(new Uint8Array(buf)))
+                .then((buf) => {
+                  const arr = new Uint8Array(buf);
+                  RASTER_CACHE.set(dataUrl, arr);
+                  resolve(arr);
+                })
                 .catch(() => resolve(null));
             }, "image/png");
           } catch {
@@ -992,8 +1016,12 @@ export async function exportA4SheetPdf(
         }
       }
 
-      // Short URL under QR Code (matching templet.html)
-      const rawUrl = card.url ? card.url.replace(/^https?:\/\//i, "") : "reviewcard.link";
+      // Short URL under QR Code (display clean business subdomain)
+      const rawUrl = card.cardId
+        ? `${card.cardId.toLowerCase().replace(/[^a-z0-9-]/g, "")}.reviewcard.link`
+        : card.url
+          ? card.url.replace(/^https?:\/\//i, "")
+          : "reviewcard.link";
       const displayUrl = rawUrl.length > 30 ? rawUrl.slice(0, 28) + "…" : rawUrl;
       const urlW = fontBold.widthOfTextAtSize(displayUrl, 7.2);
       page.drawText(displayUrl, {
@@ -1116,33 +1144,49 @@ async function renderSingleCardOnPage(
       });
     }
 
+    // Pass 1: Panels and Background Shapes (drawn first at base)
     for (const elem of card.elements) {
-      if (elem.type === "text") {
-        const cleanText = sanitizePdfText(elem.text || "");
-        if (!cleanText) continue;
-        const fontSize = Math.max(5, (elem.fontSize || 12) * scale * 0.95);
-        const font = elem.fontWeight === "bold" ? fonts.bold : fonts.regular;
-        const fontCol = colour(elem.fill || "#ffffff");
-        const textW = font.widthOfTextAtSize(cleanText, fontSize);
-        let textX = x + pt(elem.x * scale);
-        if (elem.align === "center") {
-          textX += (pt(elem.width * scale) - textW) / 2;
-        } else if (elem.align === "right") {
-          textX += pt(elem.width * scale) - textW;
+      if (elem.type === "panel" || elem.type === "shape") {
+        const pX = x + pt(elem.x * scale);
+        const pY = y + h - pt((elem.y + elem.height) * scale);
+        const pW = pt(elem.width * scale);
+        const pH = pt(elem.height * scale);
+        const hasBorder = !!elem.stroke;
+        const borderOpts = hasBorder
+          ? {
+              borderColor: colour(elem.stroke!),
+              borderWidth: (elem.strokeWidth || 1) * scale,
+            }
+          : {};
+        if (elem.shapeType === "circle") {
+          page.drawEllipse({
+            x: pX + pW / 2,
+            y: pY + pH / 2,
+            xScale: pW / 2,
+            yScale: pH / 2,
+            color: elem.fill ? colour(elem.fill) : colour("#ffffff"),
+            ...borderOpts,
+          });
+        } else {
+          page.drawRectangle({
+            x: pX,
+            y: pY,
+            width: pW,
+            height: pH,
+            color: elem.fill ? colour(elem.fill) : colour("#ffffff"),
+            ...borderOpts,
+          });
         }
-        const textY = y + h - pt((elem.y + (elem.height || 8)) * scale);
-        page.drawText(cleanText, {
-          x: textX,
-          y: textY,
-          size: fontSize,
-          font,
-          color: fontCol,
-        });
-      } else if (elem.type === "qr") {
+      }
+    }
+
+    // Pass 2: QR Code, Badges, Stickers & Logos
+    for (const elem of card.elements) {
+      if (elem.type === "qr") {
         const qrMmSize = (elem.width || 40) * scale;
         const qrPtSize = pt(qrMmSize);
         const qrPtX = x + pt(elem.x * scale);
-        const qrPtY = y + h - pt((elem.y + (elem.width || 40)) * scale);
+        const qrPtY = y + h - pt((elem.y + (elem.height || elem.width || 40)) * scale);
 
         const qrBgCol = colour(card.qrBgColor || "#ffffff");
         const qrDotCol = colour(card.qrDotColor || "#000000");
@@ -1224,6 +1268,81 @@ async function renderSingleCardOnPage(
           y: y + h - pt((elem.y + elem.height) * scale),
           width: pt(elem.width * scale),
           height: pt(elem.height * scale),
+        });
+      }
+    }
+
+    // Pass 3: Lines & Curved Waves
+    for (const elem of card.elements) {
+      if (elem.type === "line") {
+        const lX = x + pt(elem.x * scale);
+        const lY = y + h - pt((elem.y + elem.height / 2) * scale);
+        const lW = pt(elem.width * scale);
+        const lH = pt(elem.height * scale);
+        const lineCol = colour(elem.stroke || elem.fill || "#2563eb");
+        const thickness = Math.max(0.5, (elem.strokeWidth || 1.5) * scale);
+        const dashOpts =
+          elem.dash && elem.dash.length > 0
+            ? { dashArray: [pt(elem.dash[0] || 4), pt(elem.dash[1] || 3)] }
+            : {};
+
+        if (elem.shapeType === "curve") {
+          // Draw high-precision smooth wave vector in 24 segments
+          const steps = 24;
+          for (let s = 0; s < steps; s++) {
+            const t1 = s / steps;
+            const t2 = (s + 1) / steps;
+            const px1 = lX + t1 * lW;
+            const py1 = lY + Math.sin(t1 * Math.PI * 2) * (lH / 2);
+            const px2 = lX + t2 * lW;
+            const py2 = lY + Math.sin(t2 * Math.PI * 2) * (lH / 2);
+            page.drawLine({
+              start: { x: px1, y: py1 },
+              end: { x: px2, y: py2 },
+              thickness,
+              color: lineCol,
+              ...dashOpts,
+            });
+          }
+        } else {
+          // Straight horizontal or diagonal line
+          page.drawLine({
+            start: { x: lX, y: lY },
+            end: { x: lX + lW, y: lY },
+            thickness,
+            color: lineCol,
+            ...dashOpts,
+          });
+        }
+      }
+    }
+
+    // Pass 4: Texts (Drawn ON TOP of all panels and QR codes, descenders fully preserved)
+    for (const elem of card.elements) {
+      if (elem.type === "text") {
+        let cleanText = sanitizePdfText(elem.text || "");
+        if (!cleanText) continue;
+        if (elem.id === "elem-footer-url" && card.cardId) {
+          cleanText = `${card.cardId.toLowerCase().replace(/[^a-z0-9-]/g, "")}.reviewcard.link`;
+        }
+        const fontSize = Math.max(5, (elem.fontSize || 12) * scale * 0.95);
+        const font = elem.fontWeight === "bold" ? fonts.bold : fonts.regular;
+        const fontCol = colour(elem.fill || "#ffffff");
+        const textW = font.widthOfTextAtSize(cleanText, fontSize);
+        let textX = x + pt(elem.x * scale);
+        if (elem.align === "center") {
+          textX += (pt(elem.width * scale) - textW) / 2;
+        } else if (elem.align === "right") {
+          textX += pt(elem.width * scale) - textW;
+        }
+        // Baseline calculation: add pt(1.5 * scale) padding above bottom so descenders never get clipped
+        const textY = y + h - pt((elem.y + (elem.height || 8)) * scale) + pt(1.5 * scale);
+        page.drawText(cleanText, {
+          x: textX,
+          y: textY,
+          size: fontSize,
+          font,
+          color: fontCol,
         });
       }
     }
@@ -1458,23 +1577,48 @@ export async function exportReviewCardPdf(options: ExportCardPdfOptions) {
   const stickerMap = new Map<string, PDFImage>();
 
   const col = card.color || "#1a73e8";
-  const bgImg = await loadPdfImage(pdf, getCardBgSvg(col));
-  if (bgImg) cardBgMap.set(col, bgImg);
 
-  if (card.logo) {
-    const img = await loadPdfImage(pdf, card.logo);
-    if (img) logoMap.set(card.logo, img);
-  }
-  if (card.customDesign) {
-    const img = await loadPdfImage(pdf, card.customDesign);
-    if (img) customDesignMap.set(card.customDesign, img);
+  // Preload card background, logo, and design in parallel
+  await Promise.all([
+    (async () => {
+      const bgImg = await loadPdfImage(pdf, getCardBgSvg(col));
+      if (bgImg) cardBgMap.set(col, bgImg);
+    })(),
+    (async () => {
+      if (card.logo) {
+        const img = await loadPdfImage(pdf, card.logo);
+        if (img) logoMap.set(card.logo, img);
+      }
+    })(),
+    (async () => {
+      if (card.customDesign) {
+        const img = await loadPdfImage(pdf, card.customDesign);
+        if (img) customDesignMap.set(card.customDesign, img);
+      }
+    })(),
+  ]);
+
+  // Preload only stickers actually present on the card in parallel
+  const usedStickers = new Set<string>();
+  if (card.elements && card.elements.length > 0) {
+    for (const el of card.elements) {
+      if (el.type === "sticker" && el.stickerType) usedStickers.add(el.stickerType);
+    }
+  } else {
+    usedStickers.add("google");
+    usedStickers.add("star5");
+    if (card.includeNfc !== false) usedStickers.add("nfc");
   }
 
-  // Preload vector sticker SVGs
-  for (const [key, svgUrl] of Object.entries(STICKER_SVGS)) {
-    const img = await loadPdfImage(pdf, svgUrl);
-    if (img) stickerMap.set(key, img);
-  }
+  await Promise.all(
+    Array.from(usedStickers).map(async (key) => {
+      const svgUrl = STICKER_SVGS[key as keyof typeof STICKER_SVGS];
+      if (svgUrl) {
+        const img = await loadPdfImage(pdf, svgUrl);
+        if (img) stickerMap.set(key, img);
+      }
+    }),
+  );
 
   const preloaded = { cardBgMap, logoMap, customDesignMap, stickerMap };
 

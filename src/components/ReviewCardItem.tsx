@@ -115,6 +115,30 @@ export function ReviewCardItem({
   cardHeight = 148,
   elements,
 }: ReviewCardItemProps) {
+  const isDarkCard = useMemo(() => {
+    const c = (color || "#1a73e8").replace("#", "");
+    if (c.length < 6) return true;
+    const r = parseInt(c.slice(0, 2), 16);
+    const g = parseInt(c.slice(2, 4), 16);
+    const b = parseInt(c.slice(4, 6), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness < 180;
+  }, [color]);
+
+  const cleanShortUrl = useMemo(() => {
+    if (cardId) {
+      const cleanSlug = cardId.toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return `${cleanSlug}.reviewcard.link`;
+    }
+    if (!url) return "reviewcard.link";
+    try {
+      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+      return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
+    } catch {
+      return url.replace(/^https?:\/\//i, "");
+    }
+  }, [cardId, url]);
+
   // If arbitrary canvas elements are supplied from the Canva Studio, render them directly
   if (elements && elements.length > 0) {
     return (
@@ -346,26 +370,6 @@ export function ReviewCardItem({
     );
   }
 
-  const isDarkCard = useMemo(() => {
-    const c = (color || "#1a73e8").replace("#", "");
-    if (c.length < 6) return true;
-    const r = parseInt(c.slice(0, 2), 16);
-    const g = parseInt(c.slice(2, 4), 16);
-    const b = parseInt(c.slice(4, 6), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness < 180;
-  }, [color]);
-
-  const cleanShortUrl = useMemo(() => {
-    if (!url) return "reviewcard.link";
-    try {
-      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
-      return `${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
-    } catch {
-      return url.replace(/^https?:\/\//i, "");
-    }
-  }, [url]);
-
   const cardW = cardWidth ? `${cardWidth}mm` : "95mm";
   const cardH = cardHeight ? `${cardHeight}mm` : "136mm";
 
@@ -578,9 +582,10 @@ export function ReviewCardItem({
             fontFamily: "'Space Grotesk', system-ui, -apple-system, sans-serif",
             fontSize: (headline || "").length > 28 ? "9.5pt" : "11pt",
             fontWeight: 700,
-            lineHeight: 1.2,
-            color: color,
+            lineHeight: 1.25,
+            color: color === "#ffffff" || color === "#f8fafc" ? "#1a73e8" : color,
             marginBottom: "2mm",
+            paddingBottom: "0.5mm",
             letterSpacing: "-0.01em",
             maxWidth: "92%",
             overflow: "hidden",
