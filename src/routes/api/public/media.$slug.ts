@@ -12,8 +12,19 @@ export const Route = createFileRoute("/api/public/media/$slug")({
 
           // 1. Fetch published business record using publishable key (always available)
           const key = process.env["SUPABASE_PUBLISHABLE_KEY"] ?? "";
-          const client = createClient<Database>(process.env["SUPABASE_URL"] ?? "", key, {
+          const supabaseUrl = process.env["SUPABASE_URL"] ?? "";
+          const client = createClient<Database>(supabaseUrl, key, {
             auth: { persistSession: false, autoRefreshToken: false },
+            global: {
+              fetch: (input, init) => {
+                const h = new Headers(init?.headers);
+                if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
+                  h.delete("Authorization");
+                }
+                h.set("apikey", key);
+                return fetch(input, { ...init, headers: h });
+              },
+            },
           });
 
           const { data: b } = await client
@@ -44,33 +55,68 @@ export const Route = createFileRoute("/api/public/media/$slug")({
               return new Response(buffer, {
                 headers: {
                   "Content-Type": mime,
-                  "Cache-Control": "public,max-age=300",
+                  "Cache-Control":
+                    "public,max-age=86400,s-maxage=86400,stale-while-revalidate=604800",
                   "X-Content-Type-Options": "nosniff",
                 },
               });
             }
           }
 
-          // 3. Otherwise attempt storage download via admin client if path exists
+          // 3. Storage media retrieval (path exists in published business record)
           const path = bData[kind];
           if (typeof path !== "string") return new Response(null, { status: 404 });
 
+          // 3a. Storage download via client (allowed by Supabase RLS policy `media_business_image_read`)
           try {
-            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-            const { data: blob, error } = await supabaseAdmin.storage
+            const { data: blob, error } = await client.storage
               .from("business-media")
               .download(path);
             if (!error && blob) {
-              return new Response(blob, {
+              const arrayBuffer = await blob.arrayBuffer();
+              return new Response(arrayBuffer, {
                 headers: {
                   "Content-Type": blob.type || "image/png",
-                  "Cache-Control": "public,max-age=120",
+                  "Cache-Control":
+                    "public,max-age=86400,s-maxage=86400,stale-while-revalidate=604800",
                   "X-Content-Type-Options": "nosniff",
                 },
               });
             }
           } catch {
-            // Silently fall through to 404 if storage download fails
+            // Continue to signed URL fallback
+          }
+
+          // 3b. Fallback: generate signed URL and redirect
+          try {
+            const signed = await client.storage.from("business-media").createSignedUrl(path, 86400);
+            if (signed.data?.signedUrl) {
+              return Response.redirect(signed.data.signedUrl, 307);
+            }
+          } catch {
+            // Continue to admin fallback
+          }
+
+          // 3c. Optional admin client fallback if service role key is configured
+          if (process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              const { data: blob, error } = await supabaseAdmin.storage
+                .from("business-media")
+                .download(path);
+              if (!error && blob) {
+                const arrayBuffer = await blob.arrayBuffer();
+                return new Response(arrayBuffer, {
+                  headers: {
+                    "Content-Type": blob.type || "image/png",
+                    "Cache-Control": "public,max-age=86400,s-maxage=86400",
+                    "X-Content-Type-Options": "nosniff",
+                  },
+                });
+              }
+            } catch {
+              // Ignore admin fallback failure
+            }
           }
 
           return new Response(null, { status: 404 });

@@ -199,11 +199,36 @@ export const publicBusiness = createServerFn({ method: "GET" })
     };
     delete b.logoOriginal;
     delete b.logoOriginalPath;
-    // Deliver public logo via stable route if path exists, or directly via compressed data URL
+    // Deliver public logo and cover: generate signed URL directly from Supabase CDN,
+    // with automatic fallback to stable public media route and compressed inline data URL
     if (b.logoPath) {
-      b.logo = `/api/public/media/${encodeURIComponent(b.slug)}?kind=logo`;
+      try {
+        const signed = await client.storage
+          .from("business-media")
+          .createSignedUrl(b.logoPath, 86400);
+        if (signed.data?.signedUrl) {
+          b.logo = signed.data.signedUrl;
+        } else {
+          b.logo = `/api/public/media/${encodeURIComponent(b.slug)}?kind=logo`;
+        }
+      } catch {
+        b.logo = `/api/public/media/${encodeURIComponent(b.slug)}?kind=logo`;
+      }
     }
-    if (b.coverPath) b.cover = `/api/public/media/${encodeURIComponent(b.slug)}?kind=cover`;
+    if (b.coverPath) {
+      try {
+        const signed = await client.storage
+          .from("business-media")
+          .createSignedUrl(b.coverPath, 86400);
+        if (signed.data?.signedUrl) {
+          b.cover = signed.data.signedUrl;
+        } else {
+          b.cover = `/api/public/media/${encodeURIComponent(b.slug)}?kind=cover`;
+        }
+      } catch {
+        b.cover = `/api/public/media/${encodeURIComponent(b.slug)}?kind=cover`;
+      }
+    }
     return b;
   });
 
