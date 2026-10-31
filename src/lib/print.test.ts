@@ -123,4 +123,25 @@ describe("Print specifications", () => {
       expect(Number.isNaN(garbageCol.red)).toBe(false);
     });
   });
+
+  describe("Custom Image Canvas Elements", () => {
+    it("allows image type in canvas elements with coordinates, dimensions, and opacity", () => {
+      const imgElem = {
+        id: "elem-img-test",
+        type: "image" as const,
+        x: 15,
+        y: 20,
+        width: 35,
+        height: 35,
+        src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        opacity: 0.9,
+        cornerRadius: 4,
+      };
+
+      expect(imgElem.type).toBe("image");
+      expect(imgElem.width).toBe(35);
+      expect(imgElem.opacity).toBe(0.9);
+      expect(imgElem.cornerRadius).toBe(4);
+    });
+  });
 });

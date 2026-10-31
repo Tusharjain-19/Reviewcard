@@ -1139,6 +1139,7 @@ async function renderSingleCardOnPage(
     logoMap: Map<string, PDFImage>;
     customDesignMap: Map<string, PDFImage>;
     stickerMap: Map<string, PDFImage>;
+    imageMap?: Map<string, PDFImage>;
   },
 ) {
   const primaryCol = colour(card.color || "#1a73e8");
@@ -1276,6 +1277,7 @@ async function renderSingleCardOnPage(
           y: logoY + pt(1 * scale),
           width: logoW - pt(2 * scale),
           height: logoH - pt(2 * scale),
+          opacity: elem.opacity !== undefined ? elem.opacity : 1,
         });
       } else if (
         elem.type === "sticker" &&
@@ -1288,6 +1290,16 @@ async function renderSingleCardOnPage(
           y: y + h - pt((elem.y + elem.height) * scale),
           width: pt(elem.width * scale),
           height: pt(elem.height * scale),
+          opacity: elem.opacity !== undefined ? elem.opacity : 1,
+        });
+      } else if (elem.type === "image" && elem.src && preloaded.imageMap?.has(elem.src)) {
+        const customImg = preloaded.imageMap.get(elem.src)!;
+        page.drawImage(customImg, {
+          x: x + pt(elem.x * scale),
+          y: y + h - pt((elem.y + elem.height) * scale),
+          width: pt(elem.width * scale),
+          height: pt(elem.height * scale),
+          opacity: elem.opacity !== undefined ? elem.opacity : 1,
         });
       }
     }
@@ -1366,6 +1378,7 @@ async function renderSingleCardOnPage(
           size: fontSize,
           font,
           color: fontCol,
+          opacity: elem.opacity !== undefined ? elem.opacity : 1,
         });
       }
     }
@@ -1643,7 +1656,21 @@ export async function exportReviewCardPdf(options: ExportCardPdfOptions) {
     }),
   );
 
-  const preloaded = { cardBgMap, logoMap, customDesignMap, stickerMap };
+  // Preload custom image elements in parallel
+  const imageMap = new Map<string, PDFImage>();
+  if (card.elements && card.elements.length > 0) {
+    const customImages = card.elements.filter((el) => el.type === "image" && el.src);
+    await Promise.all(
+      customImages.map(async (el) => {
+        if (el.src && !imageMap.has(el.src)) {
+          const img = await loadPdfImage(pdf, el.src);
+          if (img) imageMap.set(el.src, img);
+        }
+      }),
+    );
+  }
+
+  const preloaded = { cardBgMap, logoMap, customDesignMap, stickerMap, imageMap };
 
   if (layout === "a6-single") {
     // Exact A6 page (105 x 148 mm)

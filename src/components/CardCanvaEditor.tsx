@@ -51,6 +51,8 @@ import {
   ArrowUp,
   ArrowDown,
   Edit3,
+  Blend,
+  SlidersHorizontal,
 } from "lucide-react";
 import { CANVA_FONTS, loadGoogleFont } from "@/lib/fonts";
 
@@ -62,7 +64,8 @@ export const A6_WIDTH_PX = A6_WIDTH_MM * MM_TO_PX; // 420 px
 export const A6_HEIGHT_PX = A6_HEIGHT_MM * MM_TO_PX; // 592 px
 export const SAFE_MARGIN_PX = 4 * MM_TO_PX; // 16 px (4 mm safe print area)
 
-export type CanvasElementType = "text" | "qr" | "logo" | "sticker" | "panel" | "shape" | "line";
+export type CanvasElementType =
+  "text" | "qr" | "logo" | "sticker" | "panel" | "shape" | "line" | "image";
 
 export type StickerKey =
   | "google"
@@ -89,6 +92,7 @@ export interface CanvasElement {
   strokeWidth?: number | undefined;
   dash?: number[] | undefined;
   shapeType?: "rectangle" | "circle" | "line" | "curve" | undefined;
+  opacity?: number | undefined;
   // Text Properties
   text?: string | undefined;
   fontSize?: number | undefined; // in pt
@@ -100,6 +104,7 @@ export interface CanvasElement {
   // Sticker / Image Properties
   src?: string | undefined;
   stickerType?: StickerKey | undefined;
+  fit?: ("cover" | "contain" | "fill") | undefined;
   // QR Specific Properties
   qrFrame?: ("white" | "none" | "dark") | undefined;
   [key: string]: unknown;
@@ -451,6 +456,90 @@ function useLoadedImage(url?: string | null): HTMLImageElement | null {
   return image;
 }
 
+interface CanvasImageNodeProps {
+  elem: CanvasElement;
+  isLocked: boolean;
+  nodeRefs: React.MutableRefObject<Map<string, Konva.Node>>;
+  onSelect: (id: string) => void;
+  onDragMove: (id: string, e: Konva.KonvaEventObject<DragEvent>) => void;
+  onDragEnd: (id: string, e: Konva.KonvaEventObject<DragEvent>) => void;
+  onTransformEnd: (id: string) => void;
+}
+
+function CanvasImageNode({
+  elem,
+  isLocked,
+  nodeRefs,
+  onSelect,
+  onDragMove,
+  onDragEnd,
+  onTransformEnd,
+}: CanvasImageNodeProps) {
+  const loadedImg = useLoadedImage(elem.src);
+  const xPx = elem.x * MM_TO_PX;
+  const yPx = elem.y * MM_TO_PX;
+  const widthPx = elem.width * MM_TO_PX;
+  const heightPx = elem.height * MM_TO_PX;
+  const cornerRadiusPx = (elem.cornerRadius || 0) * MM_TO_PX;
+
+  return (
+    <Group
+      ref={(node) => {
+        if (node) nodeRefs.current.set(elem.id, node);
+        else nodeRefs.current.delete(elem.id);
+      }}
+      id={elem.id}
+      x={xPx}
+      y={yPx}
+      width={widthPx}
+      height={heightPx}
+      rotation={elem.rotation || 0}
+      opacity={elem.opacity !== undefined ? elem.opacity : 1}
+      draggable={!isLocked}
+      onClick={() => onSelect(elem.id)}
+      onTap={() => onSelect(elem.id)}
+      onDragMove={(e) => onDragMove(elem.id, e)}
+      onDragEnd={(e) => onDragEnd(elem.id, e)}
+      onTransformEnd={() => onTransformEnd(elem.id)}
+    >
+      {/* Stroke / border rectangle if stroke is defined */}
+      {elem.stroke && (
+        <Rect
+          x={0}
+          y={0}
+          width={widthPx}
+          height={heightPx}
+          stroke={elem.stroke}
+          strokeWidth={elem.strokeWidth ? elem.strokeWidth * 1.5 : 2}
+          cornerRadius={cornerRadiusPx}
+        />
+      )}
+      {loadedImg ? (
+        <KonvaImage
+          image={loadedImg}
+          x={0}
+          y={0}
+          width={widthPx}
+          height={heightPx}
+          cornerRadius={cornerRadiusPx}
+          shadowColor="rgba(0,0,0,0.12)"
+          shadowBlur={6}
+          shadowOffsetY={2}
+        />
+      ) : (
+        <Rect
+          x={0}
+          y={0}
+          width={widthPx}
+          height={heightPx}
+          fill="#f1f5f9"
+          cornerRadius={cornerRadiusPx}
+        />
+      )}
+    </Group>
+  );
+}
+
 export interface CardCanvaEditorProps {
   customDesign?: string | null | undefined;
   customDesignName?: string | undefined;
@@ -589,8 +678,28 @@ export function CardCanvaEditor({
     });
   }, [fontCategory, fontSearch]);
 
-  // File input ref for uploads drawer
+  // File input ref for uploads drawer (custom card background)
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // File input ref for adding image elements onto card
+  const imageElementInputRef = useRef<HTMLInputElement | null>(null);
+  // File input ref for replacing selected image element
+  const replaceImageInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Gallery of user uploaded images in current session
+  const [userUploadedImages, setUserUploadedImages] = useState<
+    Array<{ id: string; name: string; url: string; addedAt: number }>
+  >([]);
+
+  // Drag over canvas state
+  const [isDraggingOverCanvas, setIsDraggingOverCanvas] = useState(false);
+
+  // Clickable & editable font size input state
+  const [fontSizeInput, setFontSizeInput] = useState<string>("");
+
+  // Transparency Popover State (0% - 100%)
+  const [showTransparencyPopover, setShowTransparencyPopover] = useState(false);
+  const [opacityInput, setOpacityInput] = useState<string>("100");
+  const transparencyPopoverRef = useRef<HTMLDivElement | null>(null);
 
   // References
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -641,10 +750,41 @@ export function CardCanvaEditor({
         elem.id === selectedId ? { ...elem, ...updates } : elem,
       );
       updateElements(next);
-      pushHistory(next);
     },
-    [selectedId, elements, updateElements, pushHistory],
+    [selectedId, elements, updateElements],
   );
+
+  // Sync font size input with selected text element
+  useEffect(() => {
+    if (selectedElement?.type === "text" && selectedElement.fontSize !== undefined) {
+      setFontSizeInput(String(selectedElement.fontSize));
+    }
+  }, [selectedElement?.id, selectedElement?.fontSize, selectedElement?.type]);
+
+  // Sync opacity input with selected element
+  useEffect(() => {
+    if (selectedElement) {
+      const pct = Math.round(
+        (selectedElement.opacity !== undefined ? selectedElement.opacity : 1) * 100,
+      );
+      setOpacityInput(String(pct));
+    }
+  }, [selectedElement]);
+
+  // Close transparency popover on outside click
+  useEffect(() => {
+    if (!showTransparencyPopover) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        transparencyPopoverRef.current &&
+        !transparencyPopoverRef.current.contains(e.target as Node)
+      ) {
+        setShowTransparencyPopover(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showTransparencyPopover]);
 
   // Drag handlers with magnetic smart guiding lines snapping
   const handleDragMove = (id: string, e: Konva.KonvaEventObject<DragEvent>) => {
@@ -825,6 +965,152 @@ export function CardCanvaEditor({
     pushHistory(next);
     setSelectedId(newId);
   }, [clipboardElement, elements, updateElements, pushHistory]);
+
+  // Insert an image element onto the card canvas
+  const insertImageElement = useCallback(
+    (dataUrl: string, name = "Image", customX?: number, customY?: number) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const natW = img.naturalWidth || 400;
+        const natH = img.naturalHeight || 400;
+        const ratio = natW / natH;
+        let wMm = 38;
+        let hMm = Number((wMm / ratio).toFixed(1));
+        if (hMm > 52) {
+          hMm = 52;
+          wMm = Number((hMm * ratio).toFixed(1));
+        }
+        const posX = customX !== undefined ? customX : Number(((A6_WIDTH_MM - wMm) / 2).toFixed(1));
+        const posY =
+          customY !== undefined ? customY : Number(((A6_HEIGHT_MM - hMm) / 2).toFixed(1));
+
+        const newId = `elem-img-${Date.now().toString(36)}`;
+        const newElem: CanvasElement = {
+          id: newId,
+          type: "image",
+          x: Math.max(2, Math.min(A6_WIDTH_MM - wMm - 2, posX)),
+          y: Math.max(2, Math.min(A6_HEIGHT_MM - hMm - 2, posY)),
+          width: wMm,
+          height: hMm,
+          src: dataUrl,
+          rotation: 0,
+          opacity: 1,
+          cornerRadius: 0,
+        };
+
+        const next = [...elements, newElem];
+        updateElements(next);
+        pushHistory(next);
+        setSelectedId(newId);
+
+        // Also add to uploaded images gallery if not already present
+        setUserUploadedImages((prev) => {
+          if (prev.some((item) => item.url === dataUrl)) return prev;
+          return [
+            {
+              id: `upload-${Date.now().toString(36)}`,
+              name,
+              url: dataUrl,
+              addedAt: Date.now(),
+            },
+            ...prev,
+          ];
+        });
+      };
+      img.src = dataUrl;
+    },
+    [elements, updateElements, pushHistory],
+  );
+
+  const handleImageElementUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        if (dataUrl) {
+          insertImageElement(dataUrl, file.name);
+        }
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    [insertImageElement],
+  );
+
+  const handleReplaceImageUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !selectedId) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        if (dataUrl) {
+          updateSelectedElement({ src: dataUrl });
+          setUserUploadedImages((prev) => {
+            if (prev.some((item) => item.url === dataUrl)) return prev;
+            return [
+              {
+                id: `upload-${Date.now().toString(36)}`,
+                name: file.name,
+                url: dataUrl,
+                addedAt: Date.now(),
+              },
+              ...prev,
+            ];
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    },
+    [selectedId, updateSelectedElement],
+  );
+
+  // Window paste listener for system clipboard images / screenshots & elements
+  useEffect(() => {
+    const onWindowPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const items = e.clipboardData?.items;
+      if (items && items.length > 0) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item && item.type.indexOf("image") !== -1) {
+            const file = item.getAsFile();
+            if (file) {
+              e.preventDefault();
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                const dataUrl = ev.target?.result as string;
+                if (dataUrl) {
+                  insertImageElement(dataUrl, "Pasted Image");
+                }
+              };
+              reader.readAsDataURL(file);
+              return;
+            }
+          }
+        }
+      }
+
+      // If no image on system clipboard, paste copied element
+      if (clipboardElement) {
+        e.preventDefault();
+        handlePaste();
+      }
+    };
+
+    window.addEventListener("paste", onWindowPaste);
+    return () => window.removeEventListener("paste", onWindowPaste);
+  }, [clipboardElement, handlePaste, insertImageElement]);
 
   // Layer Reordering ([ and ])
   const moveLayer = useCallback(
@@ -1106,10 +1392,8 @@ export function CardCanvaEditor({
         return;
       }
 
-      // Paste
+      // Paste: Let native 'paste' event fire so system clipboard images & screenshots are captured
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
-        e.preventDefault();
-        handlePaste();
         return;
       }
 
@@ -1769,7 +2053,7 @@ export function CardCanvaEditor({
           {/* TAB 3: UPLOADS & BUSINESS LOGO */}
           {activeDrawerTab === "uploads" && (
             <div className="space-y-4">
-              {/* Hidden file input */}
+              {/* Hidden file inputs */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1777,61 +2061,105 @@ export function CardCanvaEditor({
                 className="hidden"
                 onChange={onUploadFile}
               />
+              <input
+                ref={imageElementInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                className="hidden"
+                onChange={handleImageElementUpload}
+              />
+              <input
+                ref={replaceImageInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+                className="hidden"
+                onChange={handleReplaceImageUpload}
+              />
 
-              {/* Upload Button matching Canva purple */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (onUploadClick) onUploadClick();
-                  else fileInputRef.current?.click();
-                }}
-                className="w-full py-3 px-4 rounded-xl bg-[#7d2ae8] hover:bg-[#6b21a8] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-              >
-                <UploadCloud className="h-4 w-4" />
-                Upload files
-              </button>
+              {/* SECTION 1: PHOTO & GRAPHIC ELEMENTS */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-purple-600" /> Card Images & Graphics
+                  </p>
+                  <span className="text-[10px] text-slate-400">Resizable</span>
+                </div>
 
-              {/* Uploaded Custom Artwork Card */}
-              {customDesign && (
-                <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-12 w-9 rounded-md bg-cover bg-center border border-slate-300 shadow-2xs shrink-0"
-                      style={{ backgroundImage: `url(${customDesign})` }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-800 truncate">
-                        {customDesignName || "Custom Card Background"}
-                      </p>
-                      <p className="text-[10px] text-slate-500">A6 105 × 148 mm Artwork</p>
+                {/* Upload Image Button */}
+                <button
+                  type="button"
+                  onClick={() => imageElementInputRef.current?.click()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" />
+                  Upload Image or Graphic
+                </button>
+
+                {/* Clipboard & Drag/Drop Tip Card */}
+                <div className="p-2.5 rounded-xl bg-purple-50/70 border border-purple-200/80 text-[11px] text-purple-900 space-y-1">
+                  <p className="font-semibold flex items-center gap-1 text-purple-950">
+                    <span>💡</span> Quick Image Tips
+                  </p>
+                  <p className="text-purple-800 leading-relaxed text-[10.5px]">
+                    Press{" "}
+                    <kbd className="font-mono bg-white px-1 py-0.2 rounded border border-purple-200 font-bold text-[10px]">
+                      Ctrl+V
+                    </kbd>{" "}
+                    to paste any copied screenshot or web image directly onto your card!
+                  </p>
+                  <p className="text-purple-800 leading-relaxed text-[10.5px]">
+                    Or drag and drop image files straight onto the card stage.
+                  </p>
+                </div>
+
+                {/* Uploaded Image Gallery Grid */}
+                {userUploadedImages.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <p className="text-[11px] font-semibold text-slate-600">
+                      Recent Uploads ({userUploadedImages.length})
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                      {userUploadedImages.map((img) => (
+                        <div
+                          key={img.id}
+                          className="group relative rounded-lg border border-slate-200 overflow-hidden bg-slate-50 aspect-square flex items-center justify-center cursor-pointer hover:border-purple-400 hover:shadow-xs transition-all"
+                          onClick={() => insertImageElement(img.url, img.name)}
+                          title={`Click to add "${img.name}" to card`}
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-purple-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-[10px] font-bold text-white bg-purple-600/90 px-1.5 py-0.5 rounded shadow-xs">
+                              + Add
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUserUploadedImages((prev) => prev.filter((x) => x.id !== img.id));
+                            }}
+                            className="absolute top-1 right-1 h-4 w-4 rounded-full bg-slate-900/70 text-white flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-600"
+                            title="Remove from recents"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 cursor-pointer"
-                    >
-                      Replace
-                    </button>
-                    <span className="text-slate-300">·</span>
-                    <button
-                      type="button"
-                      onClick={onRemoveUpload}
-                      className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 cursor-pointer flex items-center gap-0.5"
-                    >
-                      <Trash2 className="h-3 w-3 inline" /> Remove
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Business Logo Section */}
-              <div className="space-y-2 pt-2 border-t">
+              {/* SECTION 2: BUSINESS LOGO */}
+              <div className="space-y-2 pt-3 border-t border-slate-200">
                 <p className="text-xs font-bold text-slate-700">Business Logo</p>
                 {logoUrl ? (
-                  <div className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 bg-white">
-                    <div className="h-12 w-12 rounded-full border border-slate-200 overflow-hidden flex items-center justify-center bg-white shadow-xs shrink-0">
+                  <div className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 bg-white shadow-2xs">
+                    <div className="h-11 w-11 rounded-full border border-slate-200 overflow-hidden flex items-center justify-center bg-white shadow-xs shrink-0">
                       <img src={logoUrl} alt="Logo" className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1858,7 +2186,7 @@ export function CardCanvaEditor({
                           pushHistory(next);
                           setSelectedId(newId);
                         }}
-                        className="mt-1 text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer"
+                        className="mt-0.5 text-[11px] font-bold text-purple-700 hover:text-purple-900 cursor-pointer"
                       >
                         + Insert Logo on Card
                       </button>
@@ -1866,8 +2194,62 @@ export function CardCanvaEditor({
                   </div>
                 ) : (
                   <p className="text-[11px] text-slate-500 italic">
-                    No logo uploaded yet. Upload one from Settings or use the button above.
+                    No logo uploaded yet. Upload one from Settings or use the image button above.
                   </p>
+                )}
+              </div>
+
+              {/* SECTION 3: FULL CARD BACKGROUND ARTWORK (A6) */}
+              <div className="space-y-2 pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-700">Card Background Artwork (A6)</p>
+                  <span className="text-[10px] text-slate-400">105 × 148 mm</span>
+                </div>
+
+                {customDesign ? (
+                  <div className="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-12 w-9 rounded-md bg-cover bg-center border border-slate-300 shadow-2xs shrink-0"
+                        style={{ backgroundImage: `url(${customDesign})` }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">
+                          {customDesignName || "Custom Card Background"}
+                        </p>
+                        <p className="text-[10px] text-slate-500">Full Background Layer</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 cursor-pointer"
+                      >
+                        Replace
+                      </button>
+                      <span className="text-slate-300">·</span>
+                      <button
+                        type="button"
+                        onClick={onRemoveUpload}
+                        className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 cursor-pointer flex items-center gap-0.5"
+                      >
+                        <Trash2 className="h-3 w-3 inline" /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onUploadClick) onUploadClick();
+                      else fileInputRef.current?.click();
+                    }}
+                    className="w-full py-2 px-3 rounded-xl border border-dashed border-slate-300 hover:border-purple-400 text-slate-600 hover:text-purple-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-white"
+                  >
+                    <UploadCloud className="h-3.5 w-3.5" />
+                    Upload Full Card Artwork
+                  </button>
                 )}
               </div>
             </div>
@@ -2138,34 +2520,86 @@ export function CardCanvaEditor({
 
                 <div className="h-5 w-px bg-slate-200 shrink-0" />
 
-                {/* Font Size Stepper (like Image 3 "- 12 +") */}
-                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl h-8 px-1 shrink-0">
+                {/* Font Size Stepper (Clickable & Editable Input, matches user pill: - 6.8 +) */}
+                <div className="flex items-center bg-white hover:bg-slate-50/80 border border-slate-200/90 rounded-full h-8 px-1.5 shrink-0 shadow-2xs focus-within:ring-2 focus-within:ring-purple-500/30 focus-within:border-purple-500 transition-all">
                   <button
                     type="button"
-                    onClick={() =>
-                      updateSelectedElement({
-                        fontSize: Math.max(7, (selectedElement.fontSize || 12) - 1),
-                      })
-                    }
-                    className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
-                    title="Decrease font size"
+                    onClick={() => {
+                      const cur = selectedElement.fontSize || 12;
+                      const step = cur <= 10 ? 0.5 : 1;
+                      const next = Math.max(4, Number((cur - step).toFixed(1)));
+                      updateSelectedElement({ fontSize: next });
+                      setFontSizeInput(String(next));
+                    }}
+                    className="h-6 w-6 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Decrease font size (-0.5pt if ≤10, -1pt if >10)"
                   >
-                    <Minus className="h-3 w-3" />
+                    <Minus className="h-3 w-3 stroke-[2.5]" />
                   </button>
-                  <span className="w-7 text-center font-mono text-xs font-bold text-slate-800">
-                    {selectedElement.fontSize || 12}
-                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={fontSizeInput}
+                    onChange={(e) => {
+                      const valStr = e.target.value;
+                      setFontSizeInput(valStr);
+                      const num = parseFloat(valStr);
+                      if (!isNaN(num) && num >= 4 && num <= 72) {
+                        updateSelectedElement({ fontSize: Number(num.toFixed(1)) });
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    onBlur={() => {
+                      const num = parseFloat(fontSizeInput);
+                      if (isNaN(num) || num < 4) {
+                        const fallback = 4;
+                        setFontSizeInput(String(fallback));
+                        updateSelectedElement({ fontSize: fallback });
+                      } else if (num > 72) {
+                        const fallback = 72;
+                        setFontSizeInput(String(fallback));
+                        updateSelectedElement({ fontSize: fallback });
+                      } else {
+                        const clean = Number(num.toFixed(1));
+                        setFontSizeInput(String(clean));
+                        updateSelectedElement({ fontSize: clean });
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        (e.target as HTMLInputElement).blur();
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const cur = parseFloat(fontSizeInput) || selectedElement.fontSize || 12;
+                        const step = e.shiftKey ? 5 : cur < 10 ? 0.5 : 1;
+                        const next = Math.min(72, Number((cur + step).toFixed(1)));
+                        updateSelectedElement({ fontSize: next });
+                        setFontSizeInput(String(next));
+                      } else if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const cur = parseFloat(fontSizeInput) || selectedElement.fontSize || 12;
+                        const step = e.shiftKey ? 5 : cur <= 10 ? 0.5 : 1;
+                        const next = Math.max(4, Number((cur - step).toFixed(1)));
+                        updateSelectedElement({ fontSize: next });
+                        setFontSizeInput(String(next));
+                      }
+                    }}
+                    className="w-11 text-center font-bold text-[13px] text-slate-900 bg-transparent focus:bg-purple-50/60 focus:outline-none rounded-md py-0.5 cursor-text select-all tracking-tight transition-colors"
+                    title="Click to type font size (e.g. 6.8, 12, 16) · Arrow Up/Down to step"
+                  />
                   <button
                     type="button"
-                    onClick={() =>
-                      updateSelectedElement({
-                        fontSize: Math.min(48, (selectedElement.fontSize || 12) + 1),
-                      })
-                    }
-                    className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 transition-colors cursor-pointer"
-                    title="Increase font size"
+                    onClick={() => {
+                      const cur = selectedElement.fontSize || 12;
+                      const step = cur < 10 ? 0.5 : 1;
+                      const next = Math.min(72, Number((cur + step).toFixed(1)));
+                      updateSelectedElement({ fontSize: next });
+                      setFontSizeInput(String(next));
+                    }}
+                    className="h-6 w-6 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Increase font size (+0.5pt if <10, +1pt if ≥10)"
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-3 w-3 stroke-[2.5]" />
                   </button>
                 </div>
 
@@ -2727,6 +3161,124 @@ export function CardCanvaEditor({
                   {selectedElement.dash ? "Dashed" : "Solid"}
                 </button>
               </div>
+            ) : selectedElement?.type === "image" ? (
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <span className="font-semibold text-slate-700 text-xs flex items-center gap-1.5">
+                  <ImageIcon className="h-4 w-4 text-purple-600" /> Image
+                </span>
+                <span className="text-[11px] font-mono text-purple-600 font-semibold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                  {selectedElement.width} × {selectedElement.height} mm
+                </span>
+
+                {/* Opacity Selector */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-1 py-0.5 rounded-lg text-xs">
+                  <span className="text-[10px] text-slate-500 font-semibold">Opacity:</span>
+                  {[1, 0.8, 0.5, 0.25].map((op) => (
+                    <button
+                      key={op}
+                      type="button"
+                      onClick={() => updateSelectedElement({ opacity: op })}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                        (selectedElement.opacity ?? 1) === op
+                          ? "bg-purple-600 text-white"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      {Math.round(op * 100)}%
+                    </button>
+                  ))}
+                </div>
+
+                {/* Rounded Corners */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-1 py-0.5 rounded-lg text-xs">
+                  <span className="text-[10px] text-slate-500 font-semibold">Corners:</span>
+                  {[
+                    { label: "Sharp", val: 0 },
+                    { label: "Round", val: 4 },
+                    { label: "Pill", val: 10 },
+                    { label: "Circle", val: Math.round(selectedElement.width / 2) },
+                  ].map((c) => (
+                    <button
+                      key={c.label}
+                      type="button"
+                      onClick={() => updateSelectedElement({ cornerRadius: c.val })}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer ${
+                        (selectedElement.cornerRadius ?? 0) === c.val
+                          ? "bg-purple-600 text-white"
+                          : "text-slate-600 hover:bg-white"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Border Color */}
+                <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 p-0.5 rounded-lg">
+                  <span className="text-[10px] text-slate-500 font-semibold px-1">Border:</span>
+                  {["transparent", "#ffffff", "#0f172a", "#2563eb", "#f59e0b", "#dc2626"].map(
+                    (col) => (
+                      <button
+                        key={col}
+                        type="button"
+                        onClick={() =>
+                          updateSelectedElement({
+                            stroke: col === "transparent" ? undefined : col,
+                            strokeWidth:
+                              col === "transparent"
+                                ? undefined
+                                : selectedElement.strokeWidth || 1.5,
+                          })
+                        }
+                        className={`h-4 w-4 rounded-full border border-slate-300 transition-transform hover:scale-125 cursor-pointer relative ${
+                          (selectedElement.stroke ?? "transparent") === col
+                            ? "ring-2 ring-purple-600 scale-110"
+                            : ""
+                        }`}
+                        style={{ backgroundColor: col === "transparent" ? "#ffffff" : col }}
+                        title={col}
+                      >
+                        {col === "transparent" && (
+                          <span className="absolute inset-0 flex items-center justify-center text-[8px] text-red-500 font-bold">
+                            ✕
+                          </span>
+                        )}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                {/* Replace Image Button */}
+                <button
+                  type="button"
+                  onClick={() => replaceImageInputRef.current?.click()}
+                  className="h-7 px-2.5 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                  title="Replace with another image"
+                >
+                  <UploadCloud className="h-3 w-3" />
+                  <span>Replace</span>
+                </button>
+
+                {/* Layer Ordering Buttons */}
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-0.5 h-7 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => moveLayer("down")}
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Send Backward ([)"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLayer("up")}
+                    className="h-5 w-5 rounded flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                    title="Bring Forward (])"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center gap-2 shrink-0">
                 <Layers className="h-3.5 w-3.5 text-purple-600" />
@@ -2846,6 +3398,175 @@ export function CardCanvaEditor({
               </div>
             )}
 
+            {/* Transparency / Opacity Popover Button (Available for all selected elements 0% - 100%) */}
+            {selectedElement && (
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowTransparencyPopover(!showTransparencyPopover)}
+                  className={`h-8 px-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    showTransparencyPopover ||
+                    (selectedElement.opacity !== undefined && selectedElement.opacity < 1)
+                      ? "bg-purple-100 text-purple-700 border-purple-300 shadow-2xs font-bold ring-1 ring-purple-400"
+                      : "bg-slate-50 hover:bg-white text-slate-700 border-slate-200"
+                  }`}
+                  title="Element Transparency (0% to 100%)"
+                >
+                  {/* Checkerboard opacity icon badge */}
+                  <div className="h-4 w-4 rounded-sm border border-slate-300 overflow-hidden relative shadow-2xs bg-[linear-gradient(45deg,#cbd5e1_25%,transparent_25%),linear-gradient(-45deg,#cbd5e1_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#cbd5e1_75%),linear-gradient(-45deg,transparent_75%,#cbd5e1_75%)] bg-size-[6px_6px] bg-position-[0_0,0_3px,3px_-3px,-3px_0px]">
+                    <div
+                      className="w-full h-full bg-purple-600 transition-opacity"
+                      style={{
+                        opacity:
+                          selectedElement.opacity !== undefined ? selectedElement.opacity : 1,
+                      }}
+                    />
+                  </div>
+                  <span className="font-mono text-xs font-bold">
+                    {Math.round(
+                      (selectedElement.opacity !== undefined ? selectedElement.opacity : 1) * 100,
+                    )}
+                    %
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                </button>
+
+                {/* Cool Glassmorphic Transparency Popover */}
+                {showTransparencyPopover && (
+                  <div
+                    ref={transparencyPopoverRef}
+                    className="absolute top-10 right-0 w-68 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/90 p-3.5 z-50 flex flex-col gap-3 animate-scale-in"
+                  >
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                      <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                        <Blend className="h-3.5 w-3.5 text-purple-600" />
+                        Transparency
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowTransparencyPopover(false)}
+                        className="text-slate-400 hover:text-slate-600 text-xs font-bold p-0.5 rounded-full hover:bg-slate-100"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {/* Slider + Editable Number Input Box (0 to 100) */}
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={Math.round(
+                          (selectedElement.opacity !== undefined ? selectedElement.opacity : 1) *
+                            100,
+                        )}
+                        onChange={(e) => {
+                          const num = Number(e.target.value);
+                          setOpacityInput(String(num));
+                          updateSelectedElement({ opacity: Number((num / 100).toFixed(2)) });
+                        }}
+                        className="flex-1 accent-purple-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                      />
+                      <div className="flex items-center bg-white border border-slate-200 rounded-xl px-2 py-1 shrink-0 w-16 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 shadow-2xs">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={opacityInput}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                            setOpacityInput(raw);
+                            if (raw !== "") {
+                              const num = Math.max(0, Math.min(100, parseInt(raw, 10)));
+                              updateSelectedElement({ opacity: Number((num / 100).toFixed(2)) });
+                            }
+                          }}
+                          onBlur={() => {
+                            const num = parseInt(opacityInput, 10);
+                            const valid = isNaN(num) ? 100 : Math.max(0, Math.min(100, num));
+                            setOpacityInput(String(valid));
+                            updateSelectedElement({ opacity: Number((valid / 100).toFixed(2)) });
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            } else if (e.key === "ArrowUp") {
+                              e.preventDefault();
+                              const cur = parseInt(opacityInput, 10) || 0;
+                              const step = e.shiftKey ? 10 : 1;
+                              const next = Math.min(100, cur + step);
+                              setOpacityInput(String(next));
+                              updateSelectedElement({ opacity: Number((next / 100).toFixed(2)) });
+                            } else if (e.key === "ArrowDown") {
+                              e.preventDefault();
+                              const cur = parseInt(opacityInput, 10) || 0;
+                              const step = e.shiftKey ? 10 : 1;
+                              const next = Math.max(0, cur - step);
+                              setOpacityInput(String(next));
+                              updateSelectedElement({ opacity: Number((next / 100).toFixed(2)) });
+                            }
+                          }}
+                          className="w-8 font-mono text-xs font-bold text-slate-800 bg-transparent text-right focus:outline-none"
+                        />
+                        <span className="text-[11px] font-bold text-slate-400 ml-0.5">%</span>
+                      </div>
+                    </div>
+
+                    {/* Checkerboard Live Preview Bar */}
+                    <div className="h-6 w-full rounded-lg border border-slate-200 overflow-hidden relative bg-[linear-gradient(45deg,#cbd5e1_25%,transparent_25%),linear-gradient(-45deg,#cbd5e1_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#cbd5e1_75%),linear-gradient(-45deg,transparent_75%,#cbd5e1_75%)] bg-size-[8px_8px] bg-position-[0_0,0_4px,4px_-4px,-4px_0px] flex items-center justify-center shadow-inner">
+                      <div
+                        className="absolute inset-0 bg-linear-to-r from-purple-600 to-indigo-600 transition-opacity"
+                        style={{
+                          opacity:
+                            selectedElement.opacity !== undefined ? selectedElement.opacity : 1,
+                        }}
+                      />
+                      <span className="relative z-10 text-[10px] font-bold text-white drop-shadow-xs">
+                        {Math.round(
+                          (selectedElement.opacity !== undefined ? selectedElement.opacity : 1) *
+                            100,
+                        )}
+                        % Opacity
+                      </span>
+                    </div>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                      {[
+                        { label: "100%", val: 1 },
+                        { label: "75%", val: 0.75 },
+                        { label: "50%", val: 0.5 },
+                        { label: "25%", val: 0.25 },
+                        { label: "0%", val: 0 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setOpacityInput(String(Math.round(preset.val * 100)));
+                            updateSelectedElement({ opacity: preset.val });
+                          }}
+                          className={`flex-1 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                            Math.abs(
+                              (selectedElement.opacity !== undefined
+                                ? selectedElement.opacity
+                                : 1) - preset.val,
+                            ) < 0.05
+                              ? "bg-purple-600 text-white border-purple-600 shadow-2xs"
+                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="h-5 w-px bg-slate-200 ml-auto shrink-0" />
 
             {/* Action Icons: Undo, Redo, Duplicate, Delete */}
@@ -2956,13 +3677,52 @@ export function CardCanvaEditor({
 
           {/* ---------------- INTERACTIVE A6 CARD STAGE (420 x 592 px scaled) ---------------- */}
           <div
-            className="relative rounded-2xl shadow-xl border border-slate-300/80 bg-white transition-all focus:outline-none"
+            className={`relative rounded-2xl shadow-xl border bg-white transition-all focus:outline-none ${
+              isDraggingOverCanvas
+                ? "border-purple-500 ring-4 ring-purple-200"
+                : "border-slate-300/80"
+            }`}
             tabIndex={0}
             style={{
               width: `${A6_WIDTH_PX * zoomScale}px`,
               height: `${A6_HEIGHT_PX * zoomScale}px`,
             }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (e.dataTransfer.types.includes("Files")) {
+                setIsDraggingOverCanvas(true);
+              }
+            }}
+            onDragLeave={() => setIsDraggingOverCanvas(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDraggingOverCanvas(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file && file.type.startsWith("image/")) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const dropXpx = (e.clientX - rect.left) / zoomScale;
+                const dropYpx = (e.clientY - rect.top) / zoomScale;
+                const dropXmm = Math.round(dropXpx / MM_TO_PX);
+                const dropYmm = Math.round(dropYpx / MM_TO_PX);
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const dataUrl = ev.target?.result as string;
+                  if (dataUrl) {
+                    insertImageElement(dataUrl, file.name, dropXmm, dropYmm);
+                  }
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
           >
+            {isDraggingOverCanvas && (
+              <div className="absolute inset-0 z-50 bg-purple-600/20 backdrop-blur-xs rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-purple-600 pointer-events-none animate-fade-in">
+                <UploadCloud className="h-10 w-10 text-purple-700 animate-bounce" />
+                <span className="text-sm font-bold text-purple-900 mt-2 bg-white/90 px-3 py-1 rounded-full shadow-sm">
+                  Drop image to insert on card
+                </span>
+              </div>
+            )}
             <Stage
               ref={stageRef}
               width={A6_WIDTH_PX * zoomScale}
@@ -3074,7 +3834,13 @@ export function CardCanvaEditor({
                         fill={elem.fill || "#ffffff"}
                         align={elem.align || "center"}
                         rotation={elem.rotation || 0}
-                        opacity={editingTextId === elem.id ? 0 : 1}
+                        opacity={
+                          editingTextId === elem.id
+                            ? 0
+                            : elem.opacity !== undefined
+                              ? elem.opacity
+                              : 1
+                        }
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3107,6 +3873,7 @@ export function CardCanvaEditor({
                         shadowBlur={12}
                         shadowOffsetY={3}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3146,6 +3913,7 @@ export function CardCanvaEditor({
                             }
                           : {})}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3186,6 +3954,7 @@ export function CardCanvaEditor({
                         strokeWidth={elem.strokeWidth ? elem.strokeWidth * 1.5 : 2}
                         {...(elem.dash && elem.dash.length > 0 ? { dash: elem.dash } : {})}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3211,6 +3980,7 @@ export function CardCanvaEditor({
                         width={widthPx}
                         height={heightPx}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3268,6 +4038,7 @@ export function CardCanvaEditor({
                         width={widthPx}
                         height={heightPx}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3330,6 +4101,7 @@ export function CardCanvaEditor({
                         width={widthPx}
                         height={heightPx}
                         rotation={elem.rotation || 0}
+                        opacity={elem.opacity !== undefined ? elem.opacity : 1}
                         draggable={!isLocked}
                         onClick={() => setSelectedId(elem.id)}
                         onTap={() => setSelectedId(elem.id)}
@@ -3350,6 +4122,21 @@ export function CardCanvaEditor({
                           />
                         )}
                       </Group>
+                    );
+                  }
+
+                  if (elem.type === "image") {
+                    return (
+                      <CanvasImageNode
+                        key={elem.id}
+                        elem={elem}
+                        isLocked={isLocked}
+                        nodeRefs={nodeRefs}
+                        onSelect={(id) => setSelectedId(id)}
+                        onDragMove={handleDragMove}
+                        onDragEnd={handleDragEnd}
+                        onTransformEnd={handleTransformEnd}
+                      />
                     );
                   }
 
@@ -3545,7 +4332,7 @@ export function CardCanvaEditor({
                 </kbd>
               </div>
               <div className="flex justify-between py-1 border-b">
-                <span>Paste element:</span>
+                <span>Paste element or image:</span>
                 <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded border text-[11px]">
                   Ctrl + V
                 </kbd>

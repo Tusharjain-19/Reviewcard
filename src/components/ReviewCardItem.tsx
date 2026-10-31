@@ -168,6 +168,7 @@ export function ReviewCardItem({
                   lineHeight: 1.25,
                   transform: elem.rotation ? `rotate(${elem.rotation}deg)` : undefined,
                   transformOrigin: "center center",
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
@@ -196,6 +197,7 @@ export function ReviewCardItem({
                         : "transparent",
                   borderRadius: elem.qrFrame !== "none" ? "2.5mm" : "0",
                   boxShadow: elem.qrFrame !== "none" ? "0 4px 12px rgba(0,0,0,0.18)" : "none",
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -233,6 +235,7 @@ export function ReviewCardItem({
                   borderRadius: "50%",
                   backgroundColor: "#ffffff",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
                   overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
@@ -274,6 +277,7 @@ export function ReviewCardItem({
                   borderRadius: `${elem.cornerRadius || 4.5}mm`,
                   boxShadow: "0 3px 12px rgba(0,0,0,0.08)",
                   border: elem.stroke ? `0.4mm solid ${elem.stroke}` : undefined,
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
                   boxSizing: "border-box",
                 }}
               />
@@ -295,9 +299,49 @@ export function ReviewCardItem({
                   width: `${elem.width}mm`,
                   height: `${elem.height}mm`,
                   objectFit: "contain",
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
                   transform: elem.rotation ? `rotate(${elem.rotation}deg)` : undefined,
                 }}
               />
+            );
+          }
+          if (elem.type === "image") {
+            const imgSrc = elem.src;
+            if (!imgSrc) return null;
+            return (
+              <div
+                key={elem.id}
+                style={{
+                  position: "absolute",
+                  left: `${elem.x}mm`,
+                  top: `${elem.y}mm`,
+                  width: `${elem.width}mm`,
+                  height: `${elem.height}mm`,
+                  transform: elem.rotation ? `rotate(${elem.rotation}deg)` : undefined,
+                  transformOrigin: "center center",
+                  opacity: elem.opacity !== undefined ? elem.opacity : 1,
+                  borderRadius: elem.cornerRadius ? `${elem.cornerRadius}mm` : undefined,
+                  border: elem.stroke
+                    ? `${elem.strokeWidth || 1}px solid ${elem.stroke}`
+                    : undefined,
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxSizing: "border-box",
+                }}
+              >
+                <img
+                  src={imgSrc}
+                  alt="Card Graphic"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: elem.fit || "cover",
+                    display: "block",
+                  }}
+                />
+              </div>
             );
           }
           return null;
